@@ -1,0 +1,31 @@
+REM keyword param1 param2
+REM CubeLocationMarkLength 6  // default is 5
+REM CubeLocationMarkThickness 2 // default is 1
+// LimitZoom NO // default is YES
+REM MaxZoomedSizeOfSmallestSite 6.0 // default is 1.5 inches
+
+AllowMultipleInstances yes
+UseWhiteForZero yes
+
+// UsePlatform yes // makes TAP use the "platform" icon default is the ship icon
+
+//Fixed Oil setting for only one oil -- pre-weathered when building the cubes
+// FixedOilItemNum  7  // note: always use 7 (Non_Weathering) unless you want TAP to weather the oil according to its formulas. 
+// FixedOilItemAlias  "my weathered crude" // name shown to the user
+
+// UseThreatZoneAnalysis no
+
+// for "Description" tags, You can put the text in double quotes if you want leading spaces.  
+DescriptionOffset 42  // pixels, default is 40 
+DescriptionLine1 Test TAP
+DescriptionLine2 Continuous release scenarios for two
+DescriptionLine3 You can put whatever info you want here
+
+ResponseTimeLabel "Analysis threshold"
+ResponseTimeInitialPercent 95 // default is 90
+
+//
+AboutTapDataFileName "About Florida Straits TAP" // this string is used for the menu item, and should correspond to the file name (when a ".txt" extension is added) in the TAPDAT folder.
+
+ShowDecimalPercentages yes
+
