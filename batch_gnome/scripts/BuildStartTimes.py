@@ -9,7 +9,7 @@ import os, random
 
 random.seed(1) # so that all runs get the same sequence
 
-import BatchGnome
+import batch_gnome
 
 class GapSet:
     def __init__(self, Times, MaxGap):
@@ -172,7 +172,7 @@ def FindStarts(Start, End, AllGaps, RunTime):
         #print setup.Seasons[i][0]
         for time in StartTimes[i]:
             stats[time.year] = stats.setdefault(time.year, 1) + 1
-            outfile.write(BatchGnome.DT2str(time)+"\n")
+            outfile.write(batch_gnome.DT2str(time)+"\n")
         outfile.close()
         for year, num in stats.items():
             print year, num

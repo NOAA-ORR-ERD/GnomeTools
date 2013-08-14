@@ -16,12 +16,11 @@ import nose
 
 ## now to test the volume computation on the grid:
 #from tap_comp_volume import comp_volume
-from cy_tap_comp_volume import comp_volume
-
-import TAP_mod
+from batch_gnome.cy_tap_comp_volume import comp_volume
+from batch_gnome import tap_mod
 
 # set up a grid:
-grid = TAP_mod.Grid(min_long=-10, max_long=10, min_lat=-5, max_lat=5,num_lat=5,num_long=10)
+grid = tap_mod.Grid(min_long=-10, max_long=10, min_lat=-5, max_lat=5,num_lat=5,num_long=10)
 
 def test_one_particle():
     positions = np.array(( (1.5, 2.5), ), np.float32)

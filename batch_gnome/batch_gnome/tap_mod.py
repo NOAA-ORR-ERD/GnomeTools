@@ -514,7 +514,7 @@ def CompTAPIICube(FileList, OutputTimes, Receptors):
 ##    return Cube, Cube2
     return Cube
 
-def CompThicknessCubeOld(FileList, OutputTimes, Receptors, Weather = None, data_type='byte'):
+def CompThicknessCubeOld(FileList, OutputTimes, Grid, Weather = None, data_type='byte'):
     """
 
     CompThicknessCube computes the average thickness of the oil over
@@ -530,10 +530,19 @@ def CompThicknessCubeOld(FileList, OutputTimes, Receptors, Weather = None, data_
     If Weather is None, then there is no change in volume.
         
     """
+    # G = Grid
+    # min_long
+    # max_long, min_lat, max_lat,num_lat,num_long = Grid
+    # dlat = (G.max_lat-G.min_lat) / G.num_lat
+    # dlong = (G.max_long-G.min_long) / G.num_long
 
-    min_long, max_long, min_lat, max_lat,num_lat,num_long = Receptors.grid
-    dlat = (max_lat-min_lat) / num_lat
-    dlong = (max_long-min_long) / num_long
+    min_long = Grid.min_long
+    min_lat  = Grid.min_lat
+    num_lat  = Grid.num_lat
+    num_long = Grid.num_long
+    dlat     = Grid.dlat
+    dlong    = Grid.dlong
+    NumSites = Grid.num_cells
 
     if Weather:
         A, B = Weather
@@ -552,7 +561,7 @@ def CompThicknessCubeOld(FileList, OutputTimes, Receptors, Weather = None, data_
     TimeStepHours = TimeStep / 3600
     OutputSteps = np.array( [0] + OutputTimes, np.int32 )*60*60/int(TimeStep) # in units of time step
     # Allocate the Cube
-    NumSpills, NumSites, NumTimes = len(FileList),len(Receptors),len(OutputTimes)
+    NumSpills, NumTimes = len(FileList), len(OutputTimes)
     Cube = np.zeros((NumTimes,NumSites,NumSpills), np.float32)
 
     start = time.time() # just for timing how long it takes to run

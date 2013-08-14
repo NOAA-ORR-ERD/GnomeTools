@@ -7,18 +7,13 @@ import os, sys
 import numpy as np
 
 
-## fixme: this really needs a better structure
-sys.path.append( os.path.split(os.path.split(os.path.abspath(__file__))[0])[0])
-
-from lib import TAP_mod, tap_comp_volume
-reload(tap_comp_volume)
-reload(TAP_mod)
+from batch_gnome import tap_mod, tap_comp_volume
 
 
 # some test data
 infilename = "micro_test.bin"
                                                 
-(Trajectory,(NumTimesteps,NumLEs),HeaderData,Flags) = TAP_mod.ReadTrajectory(infilename)
+(Trajectory,(NumTimesteps,NumLEs),HeaderData,Flags) = tap_mod.ReadTrajectory(infilename)
 
 print Flags
 print Flags.dtype
@@ -27,7 +22,7 @@ max = Trajectory.max(axis=0).max(axis=0)
 min = Trajectory.min(axis=0).min(axis=0)
 
 # set up a grid:
-grid = TAP_mod.Grid(min[0], max[0], min[1], max[1], 10, 10)
+grid = tap_mod.Grid(min[0], max[0], min[1], max[1], 10, 10)
 print grid
 
 # loop through the time steps:

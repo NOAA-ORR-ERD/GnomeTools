@@ -3,7 +3,7 @@
 """
 tests of the netcdf file reading code
 
-designed to be run with nose
+designed to be run with nose or py.test
 
 """
 
@@ -13,14 +13,13 @@ sys.path.append("../lib")
 
 import numpy as np
 import netCDF4
-import nose
 
 ## assorted info about test file
 data_file = "micro_test.nc"
 num_LEs = 10
 
 
-import nc_particles
+from batch_gnome import nc_particles
 
 def test_can_open():
     trajectory = nc_particles.nc_particle_file(data_file)

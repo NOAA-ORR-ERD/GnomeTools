@@ -16,7 +16,7 @@ import nose
 
 ## Testing the weather curve calculation
 #from tap_comp_volume import weather_curve, comp_volume
-from OilWeathering import weather_curve, OilTypes
+from batch_gnome.oil_weathering import weather_curve, OilTypes
 
 @nose.tools.raises(ValueError)
 def test_weather_all_add_up():

@@ -6,14 +6,11 @@ test of the BuildStartTimes code
 not much here, but enough to test the Gaps syntax...
 
 """
-
-import nose
-
 import sys
 
 import datetime 
 
-sys.path.append("../Scripts")
+sys.path.append("../scripts")
 
 import BuildStartTimes
 

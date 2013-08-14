@@ -7,20 +7,17 @@ tests of the performance of the comp_volume code
 
 import sys, time
 
-sys.path.append("../lib")
-
 import numpy as np
 
 ## Testing the weather curve calculation
-from tap_comp_volume import comp_volume
-from tap_comp_volume import weather_curve
+from batch_gnome.tap_comp_volume import comp_volume, weather_curve
 
-from cy_tap_comp_volume import comp_volume as cy_comp_volume
-from cy_tap_comp_volume import weather_curve as cy_weather_curve
+from batch_gnome.cy_tap_comp_volume import comp_volume as cy_comp_volume
+from batch_gnome.cy_tap_comp_volume import weather_curve as cy_weather_curve
 
 
 ## now to test the volume computation on the grid:
-import TAP_mod
+from batch_gnome import tap_mod
 
 def test_weather():
     mass = (np.random.random((10000,)) * 100).astype(np.float32) 
@@ -46,7 +43,7 @@ def test_weather():
         print "No match!!! somethign is wrong!!!"
 
 # set up a grid:
-grid = TAP_mod.Grid(min_long=-10, max_long=10, min_lat=-5, max_lat=5,num_lat=5,num_long=10)
+grid = tap_mod.Grid(min_long=-10, max_long=10, min_lat=-5, max_lat=5,num_lat=5,num_long=10)
 
 def test_multiple_LEs():
     positions = ( np.random.random((10000, 2)) * 
