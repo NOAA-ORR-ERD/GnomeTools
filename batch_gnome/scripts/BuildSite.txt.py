@@ -33,9 +33,9 @@ for s in setup.PresetLOCS:
 # now write the BNA of the receptor sites:
 if setup.ReceptorType == "Grid":
     #file.write("This is where the receptors go\n")
-    import TAP_mod
+    from batch_gnome import tap_mod
     Grid = setup.Grid
-    Receptors = TAP_mod.Grid(Grid.min_long, Grid.max_long, Grid.min_lat, Grid.max_lat,Grid.num_lat,Grid.num_long)
+    Receptors = tap_mod.Grid(Grid.min_long, Grid.max_long, Grid.min_lat, Grid.max_lat,Grid.num_lat,Grid.num_long)
     file.write("%i SITES // number of sites\n"%Receptors.num_cells)
     Receptors.WriteBNA(file)
 

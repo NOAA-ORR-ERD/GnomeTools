@@ -6,13 +6,13 @@ from datetime import datetime, timedelta
 
 from TAP_Setup import setup
 
-import BatchGnome
+from batch_gnome import batch_gnome
 
 # create command file dir if it doesn't exist
 print "RootDir is", setup.RootDir
 
 print "Setting up Master Command File"
-cfile = BatchGnome.CommandFile()
+cfile = batch_gnome.CommandFile()
 cfile.SaveFilePath   = os.curdir
 cfile.SaveFileName   = setup.SaveFileName
 cfile.RunLength      = setup.TrajectoryRunLength
@@ -60,11 +60,11 @@ for Season in setup.StartTimeFiles:
             if setup.ReleaseLength == 0:
                 end_time = None
             else:
-                end_time = BatchGnome.str2DT(start_time) + timedelta(hours=setup.ReleaseLength)
-                end_time = BatchGnome.DT2str(end_time)
-            Run = BatchGnome.TapRun(start_time,
+                end_time = batch_gnome.str2DT(start_time) + timedelta(hours=setup.ReleaseLength)
+                end_time = batch_gnome.DT2str(end_time)
+            Run = batch_gnome.TapRun(start_time,
                                     end_time,
-                                    BatchGnome.ConvertToNW(Site),
+                                    batch_gnome.ConvertToNW(Site),
                                     filename,
                                     OutputFilePath,
                                     Windage=setup.LE_Windage)	

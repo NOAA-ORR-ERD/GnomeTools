@@ -56,23 +56,21 @@ With this package, you will find the following directories:
 
 `tests` -- Some test code.
 
-`tests/Sample_run` -- A complete sample set up for doing TAP.
+`sample_run` -- A complete sample set up for doing TAP.
 
 # Running the Scripts
 
 ## Preparation 
 
-If you do not have binaries pre-build, you will need to build one extension:
- 
-In the `lib` dir, run:
- 
-    python setup.py build_ext --inplace 
+The batch_gnome package has to be bulit and installed. I like to install it in "develop' mode:
+  
+    python setup.py develop
 
-This should build the TAP extension required. There will be some compiler warnings, but hopefully no errors.
+This should build the TAP extension required,and install eveythogn in batch_gnome where Python can find it.
 
 ## Setting up your GNOME, etc.
  
-Create a directory to put all of your setup in -- see the `Sample_run` dir for an example -- you may want to make of copy of that, and edit from there.
+Create a directory to put all of your setup in -- see the `sample_run` dir for an example -- you may want to make of copy of that, and edit from there.
  
 In your setup dir, create/Edit a `Setup_TAP.py` file -- this holds all configuration information for your setup -- the sample is commented, hopefully you can figure it out!
 

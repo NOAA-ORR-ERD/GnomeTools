@@ -8,7 +8,6 @@ This has not been well set up to work universally. It's only been tested on one 
 """
 import os, shutil
 from TAP_Setup import setup
-import BatchGnome
 
 TAPViewerDir = os.path.join(setup.RootDir, setup.TAPViewerPath)
 

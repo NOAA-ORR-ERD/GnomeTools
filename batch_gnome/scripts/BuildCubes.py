@@ -29,8 +29,9 @@ import os, glob
 
 # read the Setup_TAP.py file
 from TAP_Setup import setup
+from batch_gnome import tap_mod, batch_gnome, oil_weathering
 
-import TAP_mod, BatchGnome, OilWeathering
+
 print "\n--- Running Build cubes ---"
 
 
@@ -65,7 +66,7 @@ for ( (Season,junk), CubeRootName ) in zip(setup.Seasons, setup.CubesRootNames):
 if setup.ReceptorType == "Grid":
     Grid = setup.Grid
     
-    Receptors = TAP_mod.Grid(Grid.min_long,
+    Receptors = tap_mod.Grid(Grid.min_long,
                              Grid.max_long,
                              Grid.min_lat,
                              Grid.max_lat,
@@ -107,22 +108,22 @@ if setup.ReceptorType == "Grid":
                 if setup.OilWeatheringType is not None:
                     raise NotImplimentedError("weathering not implimented for cumulative cubes")
                 print "computing cumulative cubes"
-                Cube = TAP_mod.CompTAPIICube(TrajFiles,
+                Cube = tap_mod.CompTAPIICube(TrajFiles,
                                              setup.OutputTimes,
                                              Receptors,
-                                             OilWeathering.OilTypes[setup.OilWeatheringType])
+                                             oil_weathering.OilTypes[setup.OilWeatheringType])
             elif setup.CubeType == "Volume":
                 print "computing volume cubes"
-                Cube = TAP_mod.CompThicknessCube(TrajFiles,
+                Cube = tap_mod.CompThicknessCube(TrajFiles,
                                                  setup.OutputTimes,
                                                  Receptors,
-                                                 OilWeathering.OilTypes[setup.OilWeatheringType])
+                                                 oil_weathering.OilTypes[setup.OilWeatheringType])
                 types = {'float32': np.float32,
                          'uint8'  : np.uint8,
                          'uint16' : np.uint16,
                          }
                 try:
-                    Cube = TAP_mod.transform(Cube, setup.NumLEs, n = 1.5, dtype=types[setup.CubeDataType])
+                    Cube = tap_mod.transform(Cube, setup.NumLEs, n = 1.5, dtype=types[setup.CubeDataType])
                 except KeyError:
                     raise ValueError("Unsupported Cube Data Type: %s"%CubeDataType)
             

@@ -9,7 +9,7 @@ import os, random
 
 random.seed(1) # so that all runs get the same sequence
 
-import batch_gnome
+from batch_gnome import batch_gnome
 
 class GapSet:
     def __init__(self, Times, MaxGap):

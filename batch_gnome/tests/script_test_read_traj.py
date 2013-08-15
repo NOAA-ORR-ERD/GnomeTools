@@ -1,21 +1,19 @@
+#!/usr/bin/env python
+
 """
 module to test trajectory reading
+
+NOTE: this is the old, deprecated binary format -- you really want the netcdf format now.
+
 """
 
 import numpy as np
 
-print "running test"
-import TAP_mod
-reload(TAP_mod)
+from batch_gnome import tap_mod
 
-import TAP_Setup as setup
+traj_file = r"small_test_10000LE.bin"
 
-print "run length: %s hours, %s days"%(setup.TrajectoryRunLength, setup.TrajectoryRunLength/24.)
-
-traj_file = r"..\..\Trajectories\Spring\001\time001.bin"
-#traj_file = r"..\..\Trajectories\test2.bin"
-
-(Trajectory,(NumTimesteps,NumLEs),HeaderData,flags) = TAP_mod.ReadTrajectory(traj_file)
+(Trajectory,(NumTimesteps,NumLEs),HeaderData,flags) = tap_mod.ReadTrajectory(traj_file)
     
 print  "NumTimesteps", NumTimesteps
 print "NumLEs", NumLEs

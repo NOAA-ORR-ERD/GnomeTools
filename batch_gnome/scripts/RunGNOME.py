@@ -13,6 +13,9 @@ NOTE: only works on Windows and with the GUI gnome on Mac at the moment.
 import sys, os, time, math
 from TAP_Setup import setup
 
+if not os.path.exists(setup.GNOME):
+    raise Exception("The GNOME executable must be in the location specified in TAP_Setup (%s)"%setup.GNOME)
+
 startTime = time.time()
 
 ##Start up GNOMES (in background)

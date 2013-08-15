@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+
+########
+# NOTE: this may not be used at all at this point.
+#
+# The code in here is now in teh py_gnome repository anyway
+#######
+
 """
 hazmatPy module
 

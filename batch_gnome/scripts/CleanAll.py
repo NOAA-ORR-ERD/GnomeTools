@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 
 CleanAll
@@ -5,7 +7,10 @@ CleanAll
 
 A script that cleans up all the stuff used for TAP batch mode
 
+
 """
+
+raise NotImplementedError("This hasn't been written yet -- but it's a good idea!")
 
 import os
 
@@ -17,7 +22,6 @@ def CleanAll(copy=True):
     """
     if copy:
         # create a back-up dir
-        for i in range(100):
-            
+        pass
     # remove StartTimes
     
