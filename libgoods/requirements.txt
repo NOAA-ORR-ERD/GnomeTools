@@ -1,0 +1,9 @@
+# libgoods
+setuptools
+numpy>=1.7.0   
+#pytest>=2.3.4
+#sphinx
+
+# requires netcdf-4 binaries to be correctly installed
+netCDF4 
+

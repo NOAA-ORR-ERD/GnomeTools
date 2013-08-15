@@ -15,7 +15,7 @@ setup(
     long_description=open("README.md").read(),
     packages = ["libgoods",],
     scripts = ["scripts/sample_script.py",
-              ]
+              ],
     author = "Amy MacFadyen",
     author_email = "amy.macfadyen@noaa.gov",
     url="http://www.response.restoration.noaa.gov/gnome",

@@ -3,4 +3,9 @@
 """
 __init__.py for libgoods package
 """
-pass
+
+# find data_files
+import os
+
+data_files_dir = os.path.join(os.path.split(__file__)[0],"data_files")
+
