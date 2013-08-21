@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+
+'''
+This script is used to change the dates in an existing netCDF file to user specified dates
+This is used to "fake" input for drills so that an existing currents file can have
+the dates corresponding to the drill
+
+'''
+from libgoods import data_files_dir
+from netCDF4 import Dataset, num2date, date2num
+import datetime as dt
+import os 
+
+input_file = os.path.join(data_files_dir,'CREOFS.nc')
+drill_start = dt.datetime(2013,8,23,8,0,0)
+
+nc = Dataset(input_file,'a')
+t = nc.variables['time']
+
+print 'Start date: ', num2date(t[0],t.units)
+print 'End date: ', num2date(t[-1],t.units)
+
+drill_start_nc_units = date2num(drill_start,t.units)
+tdiff = drill_start_nc_units - t[0]
+new_t = t[:] + tdiff
+
+print 'New start date: ', num2date(new_t[0],t.units)
+print 'New end date: ', num2date(new_t[-1],t.units)
+
+nc.variables['time'][:] = new_t
+
+nc.close()
+
+
