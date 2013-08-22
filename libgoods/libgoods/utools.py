@@ -62,26 +62,20 @@ class ugrid:
             self.atts['nbe'][an_att] = getattr(nbe,an_att)
         self.data['nbe'] = nbe[:]
         
-    def get_data(self,var_map,tindex=None,nindex=None):
+    def get_data(self,var_map,tindex=None,nindex=None,zindex=0):
     
         ''' 
         var_map is a dict mapping model variable names to common names
         tindex can be used to subset in time --> tindex = [start,stop,step]
-        nindex will be implemented for subsetting grid
+        nindex is for subsetting grid -- list of nodes/elements to get u/v on
+        zindex is for z layer (FVCOM has surface at zindex = 0, SELFE zindex = -1)
         '''
-        
-        if tindex is None:
-            self.data['time_ss'] = self.data['time']
-            tindex = [0,len(self.data['time']),1]
-        else:
-            self.data['time_ss'] = self.data['time'][tindex[0]:tindex[1]:tindex[2]]
-            
-        if nindex is None:
-            self.data['lon_ss'] = self.data['lon']
-            self.data['lat_ss'] = self.data['lat']
-            self.data['nbe_ss'] = self.data['nbe']
-            self.data['nv_ss'] = self.data['nv']
     
+        if tindex:
+            self.data['time_ss'] = self.data['time'][tindex[0]:tindex[1]:tindex[2]]
+        else:
+            tindex = [0,len(self.data['time']),1]
+                        
         u = self.Dataset.variables[var_map['u_velocity']]
         self.atts['u'] = dict()
         for an_att in u.ncattrs():
@@ -93,15 +87,15 @@ class ugrid:
         
         if nindex is None:
             if len(u.shape)==3:
-                self.data['u'] = u[tindex[0]:tindex[1]:tindex[2],-1,:] #!!!!!!!!!!!!!REMEMBER to chance z index
-                self.data['v'] = v[tindex[0]:tindex[1]:tindex[2],-1,:]    
+                self.data['u'] = u[tindex[0]:tindex[1]:tindex[2],zindex,:]
+                self.data['v'] = v[tindex[0]:tindex[1]:tindex[2],zindex,:]    
             elif len(u.shape)==2:
                 self.data['u'] = u[tindex[0]:tindex[1]:tindex[2],:]
                 self.data['v'] = v[tindex[0]:tindex[1]:tindex[2],:]
             else:
                 print "Error:velocity is not 2 or 3 dimensional"
                 raise
-        else:
+        else: #Spatial subset -- under development but *mostly* working
             if u.shape[-1] == max(self.data['nbe'].shape):
                 # velocities on elements
                 id = np.where(np.diff(self.eles_in_ss) > 1)[0]
@@ -110,11 +104,11 @@ class ugrid:
                 id = np.where(np.diff(self.nodes_in_ss) > 1)[0]
             id2 = [-1]; id2.extend(id)
             firsttime = 1
-            print 'Number of opendap calls: ', len(id2)+1 
+            print 'Number of contiguous segments: ', len(id2)+1 
             firsttime = 1
             for ii in range(len(id2)):
-                if not mod(ii,20):
-                    print ii,'of ', len(id2)-1
+                if not np.mod(ii,20):
+                    print ii,'of ', len(id2)
                 sid = id2[ii]+1
                 try:
                     fid = id2[ii+1]
@@ -144,10 +138,9 @@ class ugrid:
             self.data['u'] = self.data['u'].data
         if type(self.data['v']) is np.ma.core.MaskedArray:
             self.data['v'] = self.data['v'].data
-        self.atts['v']['fill_value'] = self.atts['v']['missing_value']         
-#         self.data['v'] = (self.data['v'] > 9999).choose(self.data['v'],self.atts['v']['missing_value'])
-        self.atts['u']['fill_value'] = self.atts['u']['missing_value']         
-#         self.data['u'] = (self.data['u'] > 9999).choose(self.data['u'],self.atts['u']['missing_value'])
+        
+        #self.atts['v']['fill_value'] = self.atts['v']['missing_value']         
+        #self.atts['u']['fill_value'] = self.atts['u']['missing_value']         
 
     def read_bndry_file(self,bnd_file): 
  
@@ -182,6 +175,8 @@ class ugrid:
             ow1 = 1; ow2 = 124;
         elif grid.lower() == 'ngofs':
             ow1 = 1; ow2 = 180;
+        elif grid.lower() == 'creofs':
+            ow = [68408,68409,68410,68411,68412,68414,68604,68605,68606,68607,68608,68791,68792,68793,68962,68963,68964,68965,69130,69131,69132,69133,69303,69304,69305,69479,69481,69669,69670,69671,69672,69674,69675,69866,69867,69868,69869,69870,70062,70063,70064,70065,70271,70272,70489,70490,70704,70705,70927,70928,71144,71346,71520,71683,71844,72001,72154,72281,72377,72462,72532,72583,72631,72676,72720,72765,72810,72851,72897,72939,72981,73023,73061,73099,73138,73178,73215,73251,73283,73313,73346,73381,73417,73453,73454,73481,73502,73523]
         else:
             if grid.lower() != 'subset':
                 print 'No grid match -- setting all to open water'
@@ -249,9 +244,9 @@ class ugrid:
             else:
                 obnd.append(nextpt)
                 bnd.remove(nextpt)
-        
-        #iterate thru boundary polygons, reorder if necessary, write to file      
-        print 'Reordering and writing to file' 
+
+        #iterate thru boundary polygons, reverse order if necessary, write to file      
+        print 'Checking topology and writing to file' 
         f = open(bndry_file,'w') 
         for key,val in polydict.iteritems():
             area = 0.0
@@ -270,19 +265,25 @@ class ugrid:
                     p2 = val[i+1]
                 except IndexError:
                     p2 = val[0]
-                     
+                      
                 if grid != 'subset':
-                    if p1 >= ow1 and p1<=ow2 and p2>=ow1 and p2<=ow2:
-                        lw = 1
-                    else:
-                        lw = 0
+                    try:
+                        if p1 >= ow1 and p1<=ow2 and p2>=ow1 and p2<=ow2:
+                            lw = 1
+                        else:
+                            lw = 0
+                    except NameError: #list of nodes
+                        if ow.count(p1) + ow.count(p2) == 2:
+                            lw = 1
+                        else:
+                            lw = 0
                 else:
                     lw = 1
                     for sid,seg in enumerate(self.ss_land_bry_segs):
                         if seg.count(p1) + seg.count(p2) == 2: #matching seg
                             lw = 0
                             break
-                         
+                          
                 line = ' '.join(map(str,[p1,p2,key-1,lw]))
                 f.write(line + '\n')      
         f.close()    
@@ -299,14 +300,43 @@ class ugrid:
         # Global Attributes
         setattr(nc,'grid_type','Triangular')
         
+        # test u/v dimensions
+        if self.data['u'].shape != self.data['v'].shape:
+            print 'u/v dimensions differ'
+            raise
+        
+        # determine if its a subset in time
+        t_key = 'time'
+        try:
+            if self.data['u'].shape[0] == len(self.data['time_ss']):
+                t_key = 'time_ss'
+        except KeyError:
+            if self.data['u'].shape[0] != len(self.data['time']):
+                print 'Dimensions of u/v do not match time variable'
+                raise
+                
+        lon_key = 'lon'; lat_key = 'lat'
+        nv_key = 'nv'; nbe_key = 'nbe'
+        # determine if its a subset of the grid
+        try:
+            if self.data['u'].shape[-1] == len(self.data['lon_ss']) or \
+                self.data['u'].shape[-1] == self.data['nbe_ss'].shape[-1]:
+                lon_key = 'lon_ss'; lat_key = 'lat_ss'
+                nv_key = 'nv_ss'; nbe_key = 'nbe_ss'
+        except KeyError:
+            if self.data['u'].shape[-1] != len(self.data['lon']) and \
+                self.data['u'].shape[-1] != self.data['nbe'].shape[-1]:
+                print 'Dimensions of u/v do not match grid variables'
+                raise 
+                
         # add Dimensions
-        nc.createDimension('node',len(self.data['lon_ss']))
-        nc.createDimension('nele',np.shape(self.data['nbe_ss'])[1])
+        nc.createDimension('time',None)
+        nc.createDimension('node',len(self.data[lon_key]))
+        nc.createDimension('nele',np.shape(self.data[nbe_key])[1])
         nc.createDimension('nbnd',len(self.data['bnd']))
         nc.createDimension('nbi',4)
-        #nc.createDimension('sigma',1) #coming soon?
-        nc.createDimension('time',None)
         nc.createDimension('three',3)
+        #nc.createDimension('sigma',1) #coming soon?
         
         # create variables
         nc_time = nc.createVariable('time','f4',('time',))
@@ -315,8 +345,8 @@ class ugrid:
         nc_nbe = nc.createVariable('nbe','int32',('three','nele'))
         nc_nv = nc.createVariable('nv','int32',('three','nele'))
         nc_bnd = nc.createVariable('bnd','int32',('nbnd','nbi'))
-                
-        if self.data['u'].shape[-1] == len(self.data['lon_ss']): #velocities on nodes
+        
+        if self.data['u'].shape[-1] == len(self.data[lon_key]): #velocities on nodes
             nc_u = nc.createVariable('u','f4',('time','node'))
             nc_v = nc.createVariable('v','f4',('time','node'))
         else: #velocities on elements
@@ -328,18 +358,18 @@ class ugrid:
         ref_year = int(ref_time[0:4])
         if ref_year < 1970:
             print 'Adjusting reference time'
-            self.data['time_ss'],self.atts['time']['units'] = \
-                nctools.adjust_time(self.data['time_ss'],self.atts['time']['units'])
+            self.data[t_key],self.atts['time']['units'] = \
+                nctools.adjust_time(self.data[t_key],self.atts['time']['units'])
         
         #add data to netcdf file
-        nc_time[:] = self.data['time_ss']
-        nc_lon[:] = self.data['lon_ss']
-        nc_lat[:] = self.data['lat_ss']
+        nc_time[:] = self.data[t_key]
+        nc_lon[:] = self.data[lon_key]
+        nc_lat[:] = self.data[lat_key]
         nc_u[:] = self.data['u']
         nc_v[:] = self.data['v']
         nc_bnd[:] = self.data['bnd']
-        nc_nbe[:] = self.data['nbe_ss']
-        nc_nv[:] = self.data['nv_ss']
+        nc_nbe[:] = self.data[nbe_key]
+        nc_nv[:] = self.data[nv_key]
         
         #add variable attributes to netcdf file
         for an_att in self.atts['time'].iteritems():
@@ -462,5 +492,7 @@ class ugrid:
                     face_face[face_num, edge_num] = i
                 else:
                     edges[edge] = (i, j)
-        self.data['nbe'] = (face_face + 1).transpose()
+        nbe = (face_face + 1)
+        nbe = nbe[:,[2,0,1]].transpose()
+        self.data['nbe'] = nbe
         self.atts['nbe'] = {'long_name': 'elements surrounding element'}

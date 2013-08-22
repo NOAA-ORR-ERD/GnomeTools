@@ -4,6 +4,24 @@ import datetime as dt
 import os 
 import numpy as np
 
+'''
+Sample script to retrieve data from unstructured grid netcdf "file" (can be
+OPeNDAP url), generate necessary grid topology (boundary info), and write 
+GNOME compatible output.
+
+The boundary file is saved to the data files directory so it only needs 
+to be generated once (unless you are subsetting the grid).
+
+To process multiple files (urls) either
+a) pass the filenames/urls in as a list -- this creates a netcdf4 MFDataset and is
+a good option for not too many files (all output is written to one nc file for GNOME 
+in this case)
+b) add a file list loop -- in this case put it after the grid topo vars are loaded (as
+this only has to be done once). See NGOFS_multifile_example.py
+
+'''
+
+
 # specify local file or opendap url -- in this case files are one time step, not aggregated
 data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/CREOFS/MODELS/201308/nos.creofs.fields.f000.20130820.t03z.nc'
 '''Some CO-OPS model notes:
@@ -39,7 +57,8 @@ var_map = { 'longitude':'lon', \
           }  
 
 # class instantiation creates a netCDF Dataset object as an attribute
-creofs = utools.ugrid(flist)
+# creofs = utools.ugrid(flist) #multiple files
+creofs = utools.ugrid(data_url) #single file output
 
 # get longitude, latitude, and time variables
 print 'Downloading data dimensions'
@@ -54,6 +73,8 @@ try:
     creofs.get_grid_topo(var_map)
 except KeyError: #model output on server doesn't have nbe
     creofs.build_face_face_connectivity()
+# GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
+creofs.atts['nbe']['order'] = 'ccw'
 
 # GNOME requires boundary info -- this file can be read form data_files directory
 # if saved or generated
@@ -68,10 +89,7 @@ except IOError:
 # get the data
 print 'Downloading data'
 #creofs.get_data(var_map,tindex=[0,1,1]) #First time step only
-creofs.get_data(var_map) #All time steps in file
- 
-# GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
-creofs.atts['nbe']['order'] = 'ccw'
+creofs.get_data(var_map,zindex=-1) #All time steps in file
  
 print 'Writing to GNOME file'
 creofs.write_unstruc_grid(os.path.join(data_files_dir, 'creofs_example.nc'))

@@ -3,6 +3,22 @@ from libgoods import utools, nctools, data_files_dir
 import datetime as dt
 import os 
 
+'''
+Sample script to retrieve data from unstructured grid netcdf "file" (can be
+OPeNDAP url), generate necessary grid topology (boundary info), and write 
+GNOME compatible output.
+
+The boundary file is saved to the data files directory so it only needs 
+to be generated once (unless you are subsetting the grid).
+
+To process multiple files (urls) either
+a) pass the filenames/urls in as a list -- this creates a netcdf4 MFDataset and is
+a good option for not too many files (all output is written to one nc file for GNOME 
+in this case)
+b) add a file list loop -- in this case put it after the grid topo vars are loaded (as
+this only has to be done once). See NGOFS_multifile_example.py
+
+'''
 # specify local file or opendap url
 data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NGOFS/MODELS/201308/nos.ngofs.fields.f000.20130801.t03z.nc'
 
@@ -32,6 +48,8 @@ nctools.show_tbounds(ngofs.time)
 # get grid topo variables (nbe, nv)
 print 'Downloading grid topo variables'
 ngofs.get_grid_topo(var_map)
+# GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
+ngofs.atts['nbe']['order'] = 'cw'
 
 # GNOME requires boundary info -- this file can be read form data_files directory
 # if saved or generated
@@ -47,9 +65,6 @@ except IOError:
 print 'Downloading data'
 #ngofs.get_data(var_map,tindex=[0,1,1]) #First time step only
 ngofs.get_data(var_map) #All time steps in file
- 
-# GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
-ngofs.atts['nbe']['order'] = 'cw'
  
 print 'Writing to GNOME file'
 ngofs.write_unstruc_grid(os.path.join(data_files_dir, 'ngofs_example.nc'))

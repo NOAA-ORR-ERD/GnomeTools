@@ -3,6 +3,23 @@ from libgoods import utools, nctools, data_files_dir
 import datetime as dt
 import os 
 
+'''
+Sample script to retrieve data from unstructured grid netcdf "file" (can be
+OPeNDAP url), generate necessary grid topology (boundary info), and write 
+GNOME compatible output.
+
+The boundary file is saved to the data files directory so it only needs 
+to be generated once (unless you are subsetting the grid).
+
+To process multiple files (urls) either
+a) pass the filenames/urls in as a list -- this creates a netcdf4 MFDataset and is
+a good option for not too many files (all output is written to one nc file for GNOME 
+in this case)
+b) add a file list loop -- in this case put it after the grid topo vars are loaded (as
+this only has to be done once). See NGOFS_multifile_example.py
+
+'''
+
 # specify local file or opendap url
 data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/archives/necofs_mb'
 
