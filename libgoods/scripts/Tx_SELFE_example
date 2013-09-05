@@ -23,7 +23,7 @@ this only has to be done once). See NGOFS_multifile_example.py
 '''
 
 # specify local file or opendap url 
-data_file = os.path.join(data_files_dir,'170_hvel.nc')
+data_file = os.path.join(data_files_dir,'tx_selfe_native_output.nc')
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,

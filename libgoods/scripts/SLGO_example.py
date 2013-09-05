@@ -226,7 +226,7 @@ def main():
             sdate = sdate_plus1
     
     # write a filelist of the output netCDF files -- can load this into GNOME as a pointer to all the files
-    f = open(os.path.join(data_files_dir,'SLGO_filelist.txt'),'w')
+    f = open(os.path.join(data_files_dir,model + '_filelist.txt'),'w')
     f.write('NetCDF Files\n')
     f.write('\n'.join(['[FILE] ' + file for file in ofns]))
     f.close()
