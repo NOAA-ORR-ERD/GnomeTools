@@ -21,7 +21,7 @@ this only has to be done once). See NGOFS_multifile_example.py
 '''
 
 # specify local file or opendap url
-data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NGOFS/MODELS/201308/nos.ngofs.fields.f000.20130801.t03z.nc'
+data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NGOFS/MODELS/201309/nos.ngofs.fields.f000.20130901.t03z.nc'
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -44,7 +44,7 @@ print 'Downloading data dimensions'
 ngofs.get_dimensions(var_map)
 
 #display available time range for model output
-nctools.show_tbounds(ngofs.time)
+nctools.show_tbounds(ngofs.Dataset.variables['time'])
 
 # get grid topo variables (nbe, nv)
 print 'Downloading grid topo variables'
@@ -55,7 +55,7 @@ ngofs.atts['nbe']['order'] = 'cw'
 #subsetting
 print 'Subsetting'
 nl = 31; sl = 26.5
-wl = -91; el = -87.5
+wl = -90; el = -88.5
 
 # Find all nodes and complete elements in subset box, lat/lon subset variables
 ngofs.find_nodes_eles_in_ss(nl,sl,wl,el)
@@ -68,7 +68,9 @@ ngofs.find_nodes_eles_in_ss(nl,sl,wl,el)
 ss_bndry_file = os.path.join(data_files_dir, 'ngofs_ss.bry')
 try:
     ngofs.read_bndry_file(ss_bndry_file)
+    print 'Read previously generated boundary file'
 except IOError:
+    print 'Creating boundary file'
     bndry_file = os.path.join(data_files_dir, 'ngofs.bry') #already exists (no check!)
     ngofs.ss_land_bry_segs = ngofs.remap_bry_nodes(bndry_file)
     ngofs.write_bndry_file('subset',ss_bndry_file)

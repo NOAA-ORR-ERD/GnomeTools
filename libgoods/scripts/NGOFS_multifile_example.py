@@ -11,16 +11,24 @@ GNOME compatible output.
 The boundary file is saved to the data files directory so it only needs 
 to be generated once (unless you are subsetting the grid).
 
-To process multiple files (urls) either
-a) pass the filenames/urls in as a list -- this creates a netcdf4 MFDataset and is
+To process multiple files (urls) this script passes the filenames/urls in as a list 
+-- this creates a netcdf4 MFDataset and is
 a good option for not too many files (all output is written to one nc file for GNOME 
 in this case)
-b) add a file list loop -- in this case put it after the grid topo vars are loaded (as
-this only has to be done once). See NGOFS_multifile_example.py
-
+Compare with NGOFS_multifile_example2 in this case, we use
+a file list loop after the grid topo vars are loaded (as
+this only has to be done once). 
 '''
+
 # specify local file or opendap url
-data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NGOFS/MODELS/201309/nos.ngofs.fields.f000.20130913.t09z.nc'
+file_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NGOFS/MODELS/201309/nos.ngofs.fields.f000.20130913.t09z.nc'
+
+fstem = file_url.split('/nos.')[0]
+fname = file_url.split('/')[-1].split('f000')
+flist = []
+for hh in range(49):
+    flist.append(fstem + '/' + fname[0] + 'f' + str(hh).zfill(3) + fname[1])
+
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -35,8 +43,11 @@ var_map = { 'longitude':'lon', \
             'eles_surrounding_ele':'nbe',\
           }  
 
-# class instantiation creates a netCDF Dataset object as an attribute
-ngofs = utools.ugrid(data_url)
+# class instantiation creates a netCDF Dataset object as an attribute -- 
+# use the first file in the list only
+print flist
+print type(flist)
+ngofs = utools.ugrid(flist)
 
 # get longitude, latitude, and time variables
 print 'Downloading data dimensions'
@@ -51,7 +62,13 @@ ngofs.get_grid_topo(var_map)
 # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
 ngofs.atts['nbe']['order'] = 'cw'
 
-# GNOME requires boundary info -- this file can be read form data_files directory
+
+# get the data
+print 'Downloading data'
+#ngofs.get_data(var_map,tindex=[0,1,1]) #First time step only
+ngofs.get_data(var_map) #All time steps in file
+ 
+ # GNOME requires boundary info -- this file can be read form data_files directory
 # if saved or generated
 print 'Loading/generating boundary segments'
 bndry_file = os.path.join(data_files_dir, 'ngofs.bry')
@@ -60,11 +77,6 @@ try:
 except IOError:
     ngofs.write_bndry_file('ngofs',bndry_file)
     ngofs.read_bndry_file(bndry_file)
-
-# get the data
-print 'Downloading data'
-#ngofs.get_data(var_map,tindex=[0,1,1]) #First time step only
-ngofs.get_data(var_map) #All time steps in file
- 
+    
 print 'Writing to GNOME file'
-ngofs.write_unstruc_grid(os.path.join(data_files_dir, 'ngofs_example.nc'))
+ngofs.write_unstruc_grid(os.path.join(data_files_dir, 'ngofs_multifile_example.nc'))

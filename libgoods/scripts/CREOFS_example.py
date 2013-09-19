@@ -65,7 +65,7 @@ print 'Downloading data dimensions'
 creofs.get_dimensions(var_map)
 
 #display available time range for model output
-nctools.show_tbounds(creofs.time)
+nctools.show_tbounds(creofs.Dataset.variables['time'])
 
 # get grid topo variables (nbe, nv)
 print 'Downloading grid topo variables'

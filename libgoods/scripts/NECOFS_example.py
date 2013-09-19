@@ -44,7 +44,7 @@ print 'Downloading data dimensions'
 necofs.get_dimensions(var_map)
 
 #display available time range for model output
-nctools.show_tbounds(necofs.time)
+nctools.show_tbounds(necofs.Dataset.variables['time'])
 
 # determine subset indices (temporal)
 print 'Determining subset indices'

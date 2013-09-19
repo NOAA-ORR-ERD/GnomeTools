@@ -41,11 +41,11 @@ class ugrid:
         lon = lon[:]
         self.data['lon'] = (lon > 180).choose(lon,lon-360)
         
-        self.time = self.Dataset.variables[var_map['time']]
+        time = self.Dataset.variables[var_map['time']]
         self.atts['time'] = dict()
-        for an_att in self.time.ncattrs():
-            self.atts['time'][an_att] = getattr(self.time,an_att)
-        self.data['time'] = self.time[:]
+        for an_att in time.ncattrs():
+            self.atts['time'][an_att] = getattr(time,an_att)
+        self.data['time'] = time[:]
     
     
     def get_grid_topo(self,var_map):
