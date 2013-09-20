@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-setup.py for the libgoods package
+setup.py for the post_gnome package
 """
 
 # This setup is suitable for "python setup.py develop".
@@ -9,17 +9,18 @@ setup.py for the libgoods package
 from setuptools import setup
 
 setup(
-    name = "libgoods",
+    name = "post_gnome",
     version = "0.1.0",
-    description = "utilities for pre and post processing data for GNOME",
-    long_description=open("README.md").read(),
-    packages = ["libgoods",],
-    scripts = ["scripts/sample_script.py",
-              ],
-    author = "Amy MacFadyen",
-    author_email = "amy.macfadyen@noaa.gov",
+    description = "utilities for post processing data for GNOME",
+    long_description=open("README.rst").read(),
+    packages = ["post_gnome",],
+    #scripts = ["scripts/sample_script.py",
+    #          ],
+    author = "Chris Barker",
+    author_email = "Chris.Barker@noaa.gov",
     url="http://www.response.restoration.noaa.gov/gnome",
     license = "LICENSE.txt",
+#    keywords = "graphics cython drawing",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Topic :: Utilities",
