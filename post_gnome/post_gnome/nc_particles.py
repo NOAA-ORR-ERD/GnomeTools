@@ -216,7 +216,7 @@ class Reader(object):
         self.data_index = np.zeros((len(self.times)+1,), dtype=np.int32 )
         self.data_index[1:] = np.cumsum(self.particle_count)
 
-    def get_all_timesteps_flat(self, variables=['latitude','longitude']):
+    def get_all_timesteps(self, variables=['latitude','longitude']):
          """
          returns the requested variables data from all timesteps as a
          dictionary keyed by the variable names
@@ -232,7 +232,11 @@ class Reader(object):
          """
          data = {}
          for var in variables:
-             data[var] = self.nc.variables[var][:]      
+            data[var] = []
+            for i in range(len(self.times)):
+                ind1 = self.data_index[i]
+                ind2 = self.data_index[i+1]
+                data[var].append( self.nc.variables[var][ind1:ind2] )      
          return data
     
     def get_units(self, variable):

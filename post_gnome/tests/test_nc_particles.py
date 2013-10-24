@@ -75,11 +75,16 @@ def test_read_first_timestep():
 def test_read_third_timestep():
     pf = nc_particles.Reader(test_filename)
     particles = pf.get_timestep(2, ['latitude','status_code'])
-    print particles
+
     ## checking against data in "nc_particle_build_sample.py"
     assert np.array_equal(particles['latitude'], (28.0, 28.0))
     assert np.array_equal(particles['status_code'], (2, 3) )
 
+def test_read_all_timesteps():
+    pf = nc_particles.Reader(test_filename)
+    particles = pf.get_all_timesteps(['latitude','status_code'])
+    assert np.array_equal(particles['latitude'][2], (28.0, 28.0))
+    assert np.array_equal(particles['status_code'][2], (2, 3) )
 
 def test_data_not_there():
     pf = nc_particles.Reader(test_filename)

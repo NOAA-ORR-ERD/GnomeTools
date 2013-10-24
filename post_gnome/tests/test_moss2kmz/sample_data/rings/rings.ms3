@@ -1,0 +1,31 @@
+0, SPILLID: rings
+0, FROM: HAZMAT Trajectory Analysis
+0, CONTACT: NOAA/HAZMAT (206) 526-6317
+0, ISSUED: 1045, 8/12/09
+0, VALIDFOR: 0900, 8/12/09
+0, ADDLEDATA:
+0, CAVEAT: These estimates are based on the latest available information.  Please refer to
+0, CAVEAT: the trajectory analysis briefing and your Scientific Support Coordinator (SSC) for
+0, CAVEAT: more complete information.  This output shows estimated distributions of heavy,
+0, CAVEAT: light, and medium concentrations as well as an outer confidence line.  The
+0, CAVEAT: confidence line is based on potential errors in the pollutant transport process.
+0, FROMLOGO: gnome.bmp
+0, LIGHTHEAVYRANGE: 3,5
+1, Relative
+2, Distribution*
+3, Light
+4, Medium
+5, Heavy
+6, Confidence
+7, limit
+8, These estimates are based on the latest available information.  Please refer to
+9, the trajectory analysis briefing and your Scientific Support Coordinator (SSC) for
+10, more complete information.  This output shows estimated distributions of heavy,
+11, light, and medium concentrations as well as an outer confidence line.  The
+12, confidence line is based on potential errors in the pollutant transport process.
+13, rings -- HAZMAT Trajectory Analysis
+14, Estimate for: 0900, 8/12/09
+15, Prepared: 1045, 8/12/09 -- NOAA/HAZMAT (206) 526-6317
+16, Light
+17, Heavy
+18, * this scale bar shows the meaning of the distribution terms at the current time
