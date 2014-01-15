@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os, sys
-from shapely.geometry import Polygon, MultiPolygon
 
 class MossPolygon():
     def __init__(self):
@@ -36,6 +35,9 @@ def ReadMossPolygons(mossBaseFileName, printDiagnostic = False):
         1-INDICATES FIRST POINT OF ISLAND POLYGON
     
     '''
+    # import shapely here so it won't be imported if not needed
+    from shapely.geometry import Polygon, MultiPolygon
+
     # what about MAPBOUND, EXTENDEDOUTLOOKTHREAT
     attributesToRead = ["MAPLAND","FORECASTHEAVY","FORECASTMEDIUM","FORECASTLIGHT","FORECASTUNCERTAINTY"]
     
@@ -449,7 +451,8 @@ def ReadSpillInfo(mossBaseFileName):
     spillInfo = {} 
     extension = ".ms3"
     if os.path.exists(mossBaseFileName + extension):
-        inFile = file(mossBaseFileName + extension, 'rU')
+        "reading spill info from:", mossBaseFileName + extension
+        inFile = open(mossBaseFileName + extension, 'rU')
         while True:       
             line = inFile.readline()
             if not line: break # end of this file
@@ -481,7 +484,7 @@ def ReadSpillInfo(mossBaseFileName):
             spillInfo.setdefault(key, "") # setdefault will set the key to the default only if it is not already set
                 
     else:
-        print "File does not exist:",mossBaseFileName + extension
+        print "File does not exist:", mossBaseFileName + extension
     return spillInfo
 
     

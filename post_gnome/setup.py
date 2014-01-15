@@ -15,6 +15,8 @@ setup(
     long_description=open("README.rst").read(),
     packages = ["post_gnome",],
     scripts = ["scripts/gnome_nc2kmz.py",
+               "scripts/moss2kmz_series.py",
+               "scripts/moss2kmz_simple.py",
               ],
     author = "Chris Barker",
     author_email = "Chris.Barker@noaa.gov",
