@@ -34,6 +34,7 @@ except IndexError:
     # use the default
     outfilename = 'hycom_grid.bna' 
 
+print "reading:", infilename
 nc = netCDF4.Dataset(infilename)
 
 
@@ -61,6 +62,7 @@ mask = nc.variables['mask'][:]
 print "grid size is:",  nx, ny
 
 #generate the bna
+print "writing out:", outfilename
 bna = open(outfilename, 'w')
 
 # loop through the grid boxes:
@@ -77,6 +79,8 @@ for i in xrange(nx):# nx
             count += 1
 
 bna.close()
+
+print "done"
 
 
 

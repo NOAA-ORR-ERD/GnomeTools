@@ -15,6 +15,7 @@ setup(
     long_description=open("README.md").read(),
     packages = ["libgoods",],
     scripts = ["scripts/NECOFS_example.py",
+               "scripts/hycom2bna.py",
               ],
     author = "Amy MacFadyen",
     author_email = "amy.macfadyen@noaa.gov",
