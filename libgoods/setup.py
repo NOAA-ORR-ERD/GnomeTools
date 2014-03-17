@@ -5,17 +5,19 @@ setup.py for the libgoods package
 """
 
 # This setup is suitable for "python setup.py develop".
-
 from setuptools import setup
+
+from libgoods import __version__
 
 setup(
     name = "libgoods",
-    version = "0.1.0",
+    version = __version__,
     description = "utilities for pre-processing input data for GNOME",
     long_description=open("README.md").read(),
     packages = ["libgoods",],
     scripts = ["scripts/NECOFS_example.py",
                "scripts/hycom2bna.py",
+               "scripts/nc_time_shift.py",
               ],
     author = "Amy MacFadyen",
     author_email = "amy.macfadyen@noaa.gov",
