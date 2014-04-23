@@ -103,9 +103,9 @@ class ugrid:
                 # velocities on nodes
                 id = np.where(np.diff(self.nodes_in_ss) > 1)[0]
             id2 = [-1]; id2.extend(id)
-            firsttime = 1
+
             print 'Number of contiguous segments: ', len(id2)+1 
-            firsttime = 1
+            firsttime = True
             for ii in range(len(id2)):
                 if not np.mod(ii,20):
                     print ii,'of ', len(id2)
@@ -127,8 +127,8 @@ class ugrid:
                 if firsttime:
                     self.data['u'] = this_u.copy()
                     self.data['v'] = this_v.copy()
-                    ax = len(this_u)
-                    firsttime = 0
+                    firsttime = False
+                    ax = this_u.ndim-1
                 else:  
                     self.data['u'] = np.concatenate((self.data['u'],this_u),axis=ax)
                     self.data['v'] = np.concatenate((self.data['v'],this_v),axis=ax)
@@ -177,6 +177,9 @@ class ugrid:
             ow1 = 1; ow2 = 180;
         elif grid.lower() == 'creofs':
             ow = [68408,68409,68410,68411,68412,68414,68604,68605,68606,68607,68608,68791,68792,68793,68962,68963,68964,68965,69130,69131,69132,69133,69303,69304,69305,69479,69481,69669,69670,69671,69672,69674,69675,69866,69867,69868,69869,69870,70062,70063,70064,70065,70271,70272,70489,70490,70704,70705,70927,70928,71144,71346,71520,71683,71844,72001,72154,72281,72377,72462,72532,72583,72631,72676,72720,72765,72810,72851,72897,72939,72981,73023,73061,73099,73138,73178,73215,73251,73283,73313,73346,73381,73417,73453,73454,73481,73502,73523]
+        elif grid.lower() == 'sfbofs':
+            ow = [1,2,3,4,5,97,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,144,51,52,53,54,55,150,56,57,58,59,60,61,62,63,64,65,66,162,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91]
+            #ow1 = 1; ow2 = 105;
         else:
             if grid.lower() != 'subset':
                 print 'No grid match -- setting all to open water'
@@ -430,7 +433,7 @@ class ugrid:
         self.eles_in_ss = np.array(self.eles_in_ss)
 
         print 'Remapping nodes and elements'
-        #now remap nbe2, nv2 to number of remaining nodes, and elements
+        #now remap nbe_ss, nv_ss to number of remaining nodes, and elements
         nv_ssr = nv_ss.copy()
         nbe_ssr = nbe_ss.copy()
         for ii in range(len(self.eles_in_ss)):
@@ -439,7 +442,7 @@ class ugrid:
                 nv_ssr[jj,ii] = nid+1
                 if nbe_ss[jj,ii] != 0:
                     eid = np.searchsorted(self.eles_in_ss, nbe_ss[jj,ii], side='left')
-                    if self.eles_in_ss[eid] != nbe_ss[jj,ii]:
+                    if eid >= len(self.eles_in_ss) or self.eles_in_ss[eid] != nbe_ss[jj,ii]:
                         nbe_ssr[jj,ii] = 0
                     else:
                         nbe_ssr[jj,ii] = eid+1
@@ -451,6 +454,10 @@ class ugrid:
         
     def remap_bry_nodes(self,bndry_file):
       
+        #find all the land segments and re-number to match new subset node numbers
+        #The outer boundary will be determined in write_bndry file then this segment
+        #info will be used to mark land segments
+        
         print 'Remapping boundary segs to new subset node numbers'
   
         f = open(bndry_file)
