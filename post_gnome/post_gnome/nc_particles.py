@@ -71,6 +71,9 @@ var_attributes = {'time': {'long_name':'time since the beginning of the simulati
 var_attributes['lon'] = var_attributes['longitude']
 var_attributes['lat'] = var_attributes['latitude']
 
+## variables used to support the stucture of the file, rather than data
+## used to remove them from the list of available data variables
+SPECIAL_VARIABLES = ['time','particle_count']
 
 class Writer(object):
     def __init__ (self, filename,
@@ -179,7 +182,7 @@ class Writer(object):
 
 class Reader(object):
     """
-    class to handle reading a nc_particle file
+    Class to handle reading a nc_particle file
 
     (such as those written by GNOME or the Writer class above)
     """
@@ -193,7 +196,7 @@ class Reader(object):
         """
 
         if type(nc_file) == netCDF4.Dataset:
-            # already open -- jsut use it
+            # already open -- just use it
             self.nc = nc_file
         else:
             # open a new one
@@ -215,6 +218,14 @@ class Reader(object):
         # build the index:
         self.data_index = np.zeros((len(self.times)+1,), dtype=np.int32 )
         self.data_index[1:] = np.cumsum(self.particle_count)
+
+    @property
+    def variables(self):
+        """
+        return the names of all the variables associated with the particles
+        """
+        return [ var for var in self.nc.variables.keys() if var not in SPECIAL_VARIABLES]
+
 
     def get_all_timesteps(self, variables=['latitude','longitude']):
          """
@@ -247,7 +258,6 @@ class Reader(object):
         :type variable: string
         """
         return self.nc.variables[variable].units
-
 
     def get_timestep(self, timestep, variables=['latitude','longitude']):
         """
