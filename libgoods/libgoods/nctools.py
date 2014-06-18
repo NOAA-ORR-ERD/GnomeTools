@@ -1,8 +1,18 @@
 #!/usr/bin/env python
 
-from netCDF4 import num2date, date2num, date2index
+from netCDF4 import Dataset, num2date, date2num, date2index
 import glob, os
 import math
+import datetime as dt
+
+def show_ncfile_tbounds(filename,tvar='time'):
+    
+    t = Dataset(filename).variables[tvar]
+    print 'Start date: ', num2date(t[0],t.units)
+    try:
+        print 'End date: ', num2date(t[-1],t.units)
+    except IndexError:
+        print num2date(t[0],t.units)
 
 def show_tbounds(t):
     
@@ -39,6 +49,19 @@ def make_filelist_for_GNOME(file_dir,file_match='*.*',outfilename='filelist.txt'
     f.write('NetCDF Files\n')
     f.write('\n'.join(['[FILE] ' + os.path.split(file)[-1] for file in flist]))
     f.close()
+
+def coops_make_flist(model,sdate,edate):
+    flist = []
+    stem = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/' + model.upper() + '/MODELS/'
+    while sdate <= edate:
+        ym = str(sdate.year) + str(sdate.month).zfill(2)
+        ymd = ym + str(sdate.day).zfill(2)
+        h = str(sdate.hour).zfill(2)
+        fname = stem + ym + '/nos.tbofs.fields.nowcast.' + ymd + '.t' + h + 'z.nc'
+        flist.append(fname)
+        sdate = sdate + dt.timedelta(days=.25) #nowcast files are 6 hourly
+    #201301/nos.tbofs.fields.nowcast.20130118.t00z.nc
+    return flist
 
 def utmToLatLng(zone, easting, northing, northernHemisphere=True):
     # Convert UTM coordinates to lat/lon
