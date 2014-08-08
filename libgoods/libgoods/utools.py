@@ -63,8 +63,8 @@ class ugrid:
                 self.atts['nbe'][an_att] = getattr(nbe,an_att)
             self.data['nbe'] = nbe[:]
         except KeyError:
-            pass
-        
+            self.build_face_face_connectivity()
+
     def get_data(self,var_map,tindex=None,nindex=None,zindex=0):
     
         ''' 
@@ -190,7 +190,8 @@ class ugrid:
         else:
             if grid.lower() != 'subset':
                 print 'No grid match -- setting all to open water'
-                ow1 = 1; ow2 = 1e6 #set all to open water
+                #ow1 = 1; ow2 = 1e6 #set all to open water
+                ow1 = 1; ow2 = 1;
         
         if grid.lower() == 'subset':
             lon = self.data['lon_ss']
