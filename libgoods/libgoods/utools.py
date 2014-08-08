@@ -56,11 +56,14 @@ class ugrid:
             self.atts['nv'][an_att] = getattr(nv,an_att)
         self.data['nv'] = nv[:]
         
-        nbe = self.Dataset.variables[var_map['eles_surrounding_ele']]
-        self.atts['nbe'] = dict()
-        for an_att in nbe.ncattrs():
-            self.atts['nbe'][an_att] = getattr(nbe,an_att)
-        self.data['nbe'] = nbe[:]
+        try:
+            nbe = self.Dataset.variables[var_map['eles_surrounding_ele']]
+            self.atts['nbe'] = dict()
+            for an_att in nbe.ncattrs():
+                self.atts['nbe'][an_att] = getattr(nbe,an_att)
+            self.data['nbe'] = nbe[:]
+        except KeyError:
+            pass
         
     def get_data(self,var_map,tindex=None,nindex=None,zindex=0):
     
@@ -171,6 +174,8 @@ class ugrid:
         #open water nodes -- determined by plotting grid
         if grid.lower() == 'gom2':
             ow1 = 1; ow2 = 60;
+        elif grid.lower() == 'gom3':
+            ow1 = 1; ow2 = 120;
         elif grid.lower() == 'massb':
             ow1 = 1; ow2 = 124;
         elif grid.lower() == 'ngofs':
@@ -180,6 +185,8 @@ class ugrid:
         elif grid.lower() == 'sfbofs':
             ow = [1,2,3,4,5,97,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,144,51,52,53,54,55,150,56,57,58,59,60,61,62,63,64,65,66,162,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91]
             #ow1 = 1; ow2 = 105;
+        elif grid.lower() == 'wfs':
+            ow1 = 1; ow2 = 190;
         else:
             if grid.lower() != 'subset':
                 print 'No grid match -- setting all to open water'
@@ -401,6 +408,53 @@ class ugrid:
         
         nc.close()
     
+    def write_unstruc_grid_only(self,ofn):
+        
+        """
+        
+        Write netCDF file (netCDF3) of grid variables for unstructured (triangular) grid
+        
+        """  
+        nc = Dataset(ofn,'w',format='NETCDF3_CLASSIC')
+        
+        # Global Attributes
+        setattr(nc,'grid_type','Triangular')
+
+        # add Dimensions
+        nc.createDimension('node',len(self.data['lon']))
+        nc.createDimension('nele',np.shape(self.data['nbe'])[1])
+        nc.createDimension('nbnd',len(self.data['bnd']))
+        nc.createDimension('nbi',4)
+        nc.createDimension('three',3)
+        #nc.createDimension('sigma',1) #coming soon?
+        
+        # create variables
+        nc_lon = nc.createVariable('lon','f4',('node'))
+        nc_lat = nc.createVariable('lat','f4',('node'))
+        nc_nbe = nc.createVariable('nbe','int32',('three','nele'))
+        nc_nv = nc.createVariable('nv','int32',('three','nele'))
+        nc_bnd = nc.createVariable('bnd','int32',('nbnd','nbi'))
+        
+        #add data to netcdf file
+        nc_lon[:] = self.data['lon']
+        nc_lat[:] = self.data['lat']
+        nc_bnd[:] = self.data['bnd']
+        nc_nbe[:] = self.data['nbe']
+        nc_nv[:] = self.data['nv']
+        
+        for an_att in self.atts['lon'].iteritems():
+            setattr(nc_lon,an_att[0],an_att[1])   
+        for an_att in self.atts['lat'].iteritems():
+            setattr(nc_lat,an_att[0],an_att[1])       
+        for an_att in self.atts['bnd'].iteritems():
+            setattr(nc_bnd,an_att[0],an_att[1])
+        for an_att in self.atts['nbe'].iteritems():
+            setattr(nc_nbe,an_att[0],an_att[1])
+        for an_att in self.atts['nv'].iteritems():
+            setattr(nc_nv,an_att[0],an_att[1])
+        
+        nc.close()
+        
     def find_nodes_eles_in_ss(self,nl,sl,wl,el):
        
         print 'Total number of eles: ', self.data['nbe'].shape[1]

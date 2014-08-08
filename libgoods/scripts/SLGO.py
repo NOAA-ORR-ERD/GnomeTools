@@ -5,9 +5,9 @@ import numpy as np
 from netCDF4 import Dataset, date2num
 
 '''
-!!!This script was written to be a stand alone without needing to 
-install the libgoods package -- however, here I modify it to use
-the libgoods data_files_dir 
+!!!This script does not need the libgoods package -- just using the data_files_dir
+for convenience 
+When reg_grid module added then update to use netCDF writing method
 '''
 from libgoods import data_files_dir
 
