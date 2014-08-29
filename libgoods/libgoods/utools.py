@@ -252,10 +252,14 @@ class ugrid:
                 polydict[pnum] = obnd
                 pnum = pnum+1
                 obnd = [bnd.pop(1),]
+            elif len(bnd) == 1:
+                polydict[pnum] = obnd
+                pnum = pnum+1
+                bnd.remove(nextpt)
             else:
                 obnd.append(nextpt)
                 bnd.remove(nextpt)
-
+        
         #iterate thru boundary polygons, reverse order if necessary, write to file      
         print 'Checking topology and writing to file' 
         f = open(bndry_file,'w') 
