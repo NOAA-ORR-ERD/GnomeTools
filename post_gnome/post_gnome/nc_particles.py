@@ -206,7 +206,7 @@ class Reader(object):
 
         time = self.nc.variables['time']
         units = time.getncattr('units')
-        self.times = netCDF4.num2date(time, units)
+        self.times = netCDF4.num2date(time[:], units)
         self.time_units = units
                 
         self.particle_count = self.nc.variables['particle_count']
