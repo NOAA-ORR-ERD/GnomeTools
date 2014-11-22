@@ -191,8 +191,10 @@ class Reader(object):
         initialize a file reader.
 
         :param nc_file: the netcdf file to read. If a netCDF4 Dataset, it will be used,
-                        if a string a new netCDF Dataset will be opened.
-        :type nc_file: string or netCDF4 Dataset:
+                        if a string, a new netCDF Dataset will be opened for reading
+                        using that filename
+        :type nc_file: string or netCDF4 Dataset object
+
         """
 
         if type(nc_file) == netCDF4.Dataset:
@@ -206,14 +208,7 @@ class Reader(object):
         units = time.getncattr('units')
         self.times = netCDF4.num2date(time[:], units)
         self.time_units = units
-        
-        # #Defined mass in the same way as done above for time.
-        ## note -- there may not be a mass variable...
-        # mass = self.nc.variables['mass']
-        # units_mass = mass.getncattr('units')
-        # self.mass = mass
-        # self.mass_units = units_mass
-        
+                
         self.particle_count = self.nc.variables['particle_count']
         # build the index:
         self.data_index = np.zeros((len(self.times)+1,), dtype=np.int32 )
@@ -272,12 +267,8 @@ class Reader(object):
                        variable names, and the values are numpy arrays
                        of the data.
         """
-        data = {}
-        for var in variables:
-            ind1 = self.data_index[timestep]
-            ind2 = self.data_index[timestep+1]
-            data[var] = self.nc.variables[var][ind1:ind2]      
-        return data
+        ind1, ind2 = self.data_index[timestep:timestep+2]
+        return {var:self.nc.variables[var][ind1:ind2] for var in variables}
         
     def get_individual_trajectory(self, particle_id, variables=['latitude','longitude']):
         """
