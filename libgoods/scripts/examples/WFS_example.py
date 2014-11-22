@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from libgoods import utools, nctools, data_files_dir
-import datetime as dt
 import os 
 
 '''

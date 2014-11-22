@@ -50,18 +50,6 @@ def make_filelist_for_GNOME(file_dir,file_match='*.*',outfilename='filelist.txt'
     f.write('\n'.join(['[FILE] ' + os.path.split(file)[-1] for file in flist]))
     f.close()
 
-def coops_make_flist(model,sdate,edate):
-    flist = []
-    stem = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/' + model.upper() + '/MODELS/'
-    while sdate <= edate:
-        ym = str(sdate.year) + str(sdate.month).zfill(2)
-        ymd = ym + str(sdate.day).zfill(2)
-        h = str(sdate.hour).zfill(2)
-        fname = stem + ym + '/nos.tbofs.fields.nowcast.' + ymd + '.t' + h + 'z.nc'
-        flist.append(fname)
-        sdate = sdate + dt.timedelta(days=.25) #nowcast files are 6 hourly
-    #201301/nos.tbofs.fields.nowcast.20130118.t00z.nc
-    return flist
 
 def utmToLatLng(zone, easting, northing, northernHemisphere=True):
     # Convert UTM coordinates to lat/lon

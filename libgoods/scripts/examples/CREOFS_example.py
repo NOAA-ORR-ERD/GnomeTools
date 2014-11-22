@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 from libgoods import utools, nctools, data_files_dir
-import datetime as dt
 import os 
-import numpy as np
+
 
 '''
 Sample script to retrieve data from unstructured grid netcdf "file" (can be
@@ -23,7 +22,7 @@ this only has to be done once). See NGOFS_multifile_example.py
 
 
 # specify local file or opendap url -- in this case files are one time step, not aggregated
-data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/CREOFS/MODELS/201308/nos.creofs.fields.f000.20130820.t03z.nc'
+data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/CREOFS/MODELS/201408/nos.creofs.fields.f000.20140825.t03z.nc'
 '''Some CO-OPS model notes:
 nos.OFS.fields.fHHH.YYYYMMDD.tCCz.nc
 OFS  is cbofs, dbofs, tbofs, ngofs, or creofs to stand for the name of operational forecast systems for Chesapeake Bay, Delaware Bay, Tampa Bay, North Gulf of Mexico, and Columbia River Estuary.

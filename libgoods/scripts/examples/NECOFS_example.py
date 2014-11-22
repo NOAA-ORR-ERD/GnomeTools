@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from libgoods import utools, nctools, data_files_dir
-import datetime as dt
 import os 
 
 '''
@@ -22,8 +21,8 @@ this only has to be done once). See NGOFS_multifile_example.py
 
 # specify local file or opendap url
 #data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/archives/necofs_mb'
-data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_GOM3_FORECAST.nc'
-
+data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_FVCOM_OCEAN_MASSBAY_FORECAST.nc'
+#data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_GOM3_FORECAST.nc' 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
 # and ADCIRC which have different variable names
@@ -65,17 +64,17 @@ necofs.get_data(var_map) #All time steps in file
 
 # GNOME requires boundary info -- this file can be read form data_files directory
 # if saved or generated
-bndry_file = os.path.join(data_files_dir, 'GOM3.bry')
+bndry_file = os.path.join(data_files_dir, 'MassBay.bry')
 # try:
 #     necofs.read_bndry_file(bndry_file)
 # except IOError:
 #     necofs.write_bndry_file('GOM3',bndry_file)
 #     necofs.read_bndry_file(bndry_file)
 
-necofs.write_bndry_file('GOM3',bndry_file)
+necofs.write_bndry_file('massb',bndry_file)
 necofs.read_bndry_file(bndry_file)
 # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
 necofs.atts['nbe']['order'] = 'cw'
 
 print 'Writing to GNOME file'
-necofs.write_unstruc_grid(os.path.join(data_files_dir, 'NECOFS_example.nc'))
+necofs.write_unstruc_grid(os.path.join(data_files_dir, 'NECOFS_massb_example.nc'))

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from libgoods import utools, nctools, data_files_dir
-import datetime as dt
 import os 
 
 '''
@@ -20,7 +19,7 @@ this only has to be done once). See sfbofs_multifile_example.py
 
 '''
 # specify local file or opendap url
-data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/SFBOFS/MODELS/201402/nos.sfbofs.fields.f000.20140220.t09z.nc'
+data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/SFBOFS/MODELS/201409/nos.sfbofs.fields.f000.20140915.t09z.nc'
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,

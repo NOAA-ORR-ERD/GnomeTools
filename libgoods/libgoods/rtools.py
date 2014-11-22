@@ -1,18 +1,13 @@
 #!/usr/bin/env python
 import numpy as np
-from netCDF4 import Dataset, num2date, date2num, date2index
-from libgoods import nctools
+from netCDF4 import Dataset
 
 class rgrid:
     """
-    A class for dealing with unstructured grid model output and converting to GNOME format
-    Although I use variable names consistent with FVCOM, by passing in a var_map dict the 
-    variable names can be customized for SELFE or ADCIRC
-    
-    Right now the attribute specifying whether the elements are orderd clockwise or counter
-    clockwise needs to be manually added before writing to GNOME format (GNOME requres this, 
-    but its not often specified in the model output)
-        
+    A class for dealing with regular grid model output and converting to GNOME format
+    By passing in a var_map dict the 
+    variable names can be customized for different models or datasets
+            
     """
     
     def __init__(self,FileName=None):

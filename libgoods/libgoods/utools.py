@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-from netCDF4 import Dataset, MFDataset, num2date, date2num, date2index
+from netCDF4 import Dataset, MFDataset, num2date
 from libgoods import nctools
 
 class ugrid:
@@ -28,41 +28,55 @@ class ugrid:
             
     def get_dimensions(self,var_map):
         
-        lat = self.Dataset.variables[var_map['latitude']]
-        self.atts['lat'] = dict()
-        for an_att in lat.ncattrs():
-            self.atts['lat'][an_att] = getattr(lat,an_att)
-        self.data['lat'] = lat[:]
+        try:
+            lat = self.Dataset.variables[var_map['latitude']]
+            self.atts['lat'] = dict()
+            for an_att in lat.ncattrs():
+                self.atts['lat'][an_att] = getattr(lat,an_att)
+            self.data['lat'] = lat[:]
+            
+            lon = self.Dataset.variables[var_map['longitude']]
+            self.atts['lon'] = dict()
+            for an_att in lon.ncattrs():
+                self.atts['lon'][an_att] = getattr(lon,an_att)
+            lon = lon[:]
+            self.data['lon'] = (lon > 180).choose(lon,lon-360)
+        except KeyError:
+            print 'Lat/lon variables missing or named differently'
+            pass
         
-        lon = self.Dataset.variables[var_map['longitude']]
-        self.atts['lon'] = dict()
-        for an_att in lon.ncattrs():
-            self.atts['lon'][an_att] = getattr(lon,an_att)
-        lon = lon[:]
-        self.data['lon'] = (lon > 180).choose(lon,lon-360)
+        try:
+            time = self.Dataset.variables[var_map['time']]
+            self.atts['time'] = dict()
+            for an_att in time.ncattrs():
+                self.atts['time'][an_att] = getattr(time,an_att)
+            self.data['time'] = time[:]
+            self.data['dtime'] = num2date(self.data['time'],time.units)
+        except KeyError:
+            pass
         
-        time = self.Dataset.variables[var_map['time']]
-        self.atts['time'] = dict()
-        for an_att in time.ncattrs():
-            self.atts['time'][an_att] = getattr(time,an_att)
-        self.data['time'] = time[:]
-    
-    
     def get_grid_topo(self,var_map):
         
         nv = self.Dataset.variables[var_map['nodes_surrounding_ele']]
         self.atts['nv'] = dict()
         for an_att in nv.ncattrs():
             self.atts['nv'][an_att] = getattr(nv,an_att)
-        self.data['nv'] = nv[:]
+        if nv.shape[0] > nv.shape[1]: #nv should be nv[num_faces,num_eles]
+            self.data['nv'] = nv[:].transpose()
+        else:
+            self.data['nv'] = nv[:]
         
         try:
             nbe = self.Dataset.variables[var_map['eles_surrounding_ele']]
             self.atts['nbe'] = dict()
             for an_att in nbe.ncattrs():
-                self.atts['nbe'][an_att] = getattr(nbe,an_att)
-            self.data['nbe'] = nbe[:]
+                self.atts['nbe'][an_att] = getattr(nbe,an_att)               
+            if nbe.shape[0] > nbe.shape[1]: #nbe should be nbe[num_faces,num_eles]
+                self.data['nbe'] = nbe[:].transpose()
+            else:
+                self.data['nbe'] = nbe[:]
         except KeyError:
+            print 'Building face-face connectivity'
             self.build_face_face_connectivity()
 
     def get_data(self,var_map,tindex=None,nindex=None,zindex=0):
@@ -107,19 +121,19 @@ class ugrid:
                 id = np.where(np.diff(self.nodes_in_ss) > 1)[0]
             id2 = [-1]; id2.extend(id)
 
-            print 'Number of contiguous segments: ', len(id2)+1 
+            #print 'Number of contiguous segments: ', len(id2)+1 
             firsttime = True
             for ii in range(len(id2)):
-                if not np.mod(ii,20):
-                    print ii,'of ', len(id2)
+                #if not np.mod(ii,20):
+                    #print ii,'of ', len(id2)
                 sid = id2[ii]+1
                 try:
                     fid = id2[ii+1]
                 except IndexError:
                     fid = -1
                 if  len(u.shape) == 3:
-                    this_u = u[tindex[0]:tindex[1]:tindex[2],0,self.eles_in_ss[sid]-1:self.eles_in_ss[fid]]
-                    this_v = v[tindex[0]:tindex[1]:tindex[2],0,self.eles_in_ss[sid]-1:self.eles_in_ss[fid]]
+                    this_u = u[tindex[0]:tindex[1]:tindex[2],zindex,self.eles_in_ss[sid]-1:self.eles_in_ss[fid]]
+                    this_v = v[tindex[0]:tindex[1]:tindex[2],zindex,self.eles_in_ss[sid]-1:self.eles_in_ss[fid]]
                 elif len(u.shape)==2:
                     this_u = u[tindex[0]:tindex[1]:tindex[2],self.eles_in_ss[sid]-1:self.eles_in_ss[fid]]
                     this_v = v[tindex[0]:tindex[1]:tindex[2],self.eles_in_ss[sid]-1:self.eles_in_ss[fid]]
@@ -143,8 +157,8 @@ class ugrid:
             self.data['v'] = self.data['v'].data
         
         #self.atts['v']['fill_value'] = self.atts['v']['missing_value']         
-        #self.atts['u']['fill_value'] = self.atts['u']['missing_value']         
-
+        #self.atts['u']['fill_value'] = self.atts['u']['missing_value']       
+        
     def read_bndry_file(self,bnd_file): 
  
         bnd = []
@@ -156,7 +170,7 @@ class ugrid:
         self.data['bnd'] = np.array(bnd)
         self.atts['bnd'] = {'long_name':'Boundary segment information required for GNOME model'} 
     
-    def write_bndry_file(self,grid,bndry_file):
+    def write_bndry_file(self,grid,bndry_file=None):
           
         '''
         Determine boundary nodes, generate ordered list of segments
@@ -166,8 +180,12 @@ class ugrid:
         grid: 'GOM2','MassB', or, 'NGOFS'
         Output ordered segment list to text file
         
+
         !!!HARD-CODED to tell which nodes are open-water!! If not know -- all 
         boundaries are specified as open water
+        
+        *****Should change this so that its passed in...
+                If bndry_file is specified the output is written to file
         
         '''
         
@@ -180,13 +198,21 @@ class ugrid:
             ow1 = 1; ow2 = 124;
         elif grid.lower() == 'ngofs':
             ow1 = 1; ow2 = 180;
+        elif grid.lower() == 'nwgofs':
+            ow1 = 1; ow2 = 207;
+        elif grid.lower() == 'negofs':
+            ow1 = 1; ow2 = 139;
         elif grid.lower() == 'creofs':
             ow = [68408,68409,68410,68411,68412,68414,68604,68605,68606,68607,68608,68791,68792,68793,68962,68963,68964,68965,69130,69131,69132,69133,69303,69304,69305,69479,69481,69669,69670,69671,69672,69674,69675,69866,69867,69868,69869,69870,70062,70063,70064,70065,70271,70272,70489,70490,70704,70705,70927,70928,71144,71346,71520,71683,71844,72001,72154,72281,72377,72462,72532,72583,72631,72676,72720,72765,72810,72851,72897,72939,72981,73023,73061,73099,73138,73178,73215,73251,73283,73313,73346,73381,73417,73453,73454,73481,73502,73523]
         elif grid.lower() == 'sfbofs':
             ow = [1,2,3,4,5,97,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,144,51,52,53,54,55,150,56,57,58,59,60,61,62,63,64,65,66,162,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91]
-            #ow1 = 1; ow2 = 105;
         elif grid.lower() == 'wfs':
             ow1 = 1; ow2 = 190;
+        elif grid.lower() == 'hecwfs':
+            ow = [1,2,20688,20689]
+        elif grid.lower() == 'slrfvm':
+            ow = range(1,19)
+            ow.extend([19586, 19585, 19604, 19621, 19620, 19630, 19629, 19628])
         else:
             if grid.lower() != 'subset':
                 print 'No grid match -- setting all to open water'
@@ -261,8 +287,10 @@ class ugrid:
                 bnd.remove(nextpt)
         
         #iterate thru boundary polygons, reverse order if necessary, write to file      
-        print 'Checking topology and writing to file' 
-        f = open(bndry_file,'w') 
+        print 'Checking topology' 
+        boundary = []
+        if bndry_file:
+            f = open(bndry_file,'w') 
         for key,val in polydict.iteritems():
             area = 0.0
             plon = lon[np.array(val)-1]
@@ -298,10 +326,15 @@ class ugrid:
                         if seg.count(p1) + seg.count(p2) == 2: #matching seg
                             lw = 0
                             break
-                          
-                line = ' '.join(map(str,[p1,p2,key-1,lw]))
-                f.write(line + '\n')      
-        f.close()    
+                boundary.append([p1,p2,key-1,lw])
+                if bndry_file:
+                    line = ' '.join(map(str,[p1,p2,key-1,lw]))
+                    f.write(line + '\n')  
+        if bndry_file:
+            f.close()
+            
+        self.data['bnd'] = np.array(boundary)
+        self.atts['bnd'] = {'long_name':'Boundary segment information required for GNOME model'} 
     
     def write_unstruc_grid(self,ofn):
         
@@ -353,6 +386,17 @@ class ugrid:
         nc.createDimension('three',3)
         #nc.createDimension('sigma',1) #coming soon?
         
+        try:
+            ufill = self.atts['u']['_FillValue']
+            vfill = self.atts['v']['_FillValue']
+        except KeyError:
+            try:
+                ufill = self.atts['u']['missing_value']
+                vfill = self.atts['v']['missing_value']
+            except KeyError:
+                ufill = 999.
+                vfill = 999.
+        
         # create variables
         nc_time = nc.createVariable('time','f4',('time',))
         nc_lon = nc.createVariable('lon','f4',('node'))
@@ -362,11 +406,11 @@ class ugrid:
         nc_bnd = nc.createVariable('bnd','int32',('nbnd','nbi'))
         
         if self.data['u'].shape[-1] == len(self.data[lon_key]): #velocities on nodes
-            nc_u = nc.createVariable('u','f4',('time','node'))
-            nc_v = nc.createVariable('v','f4',('time','node'))
+            nc_u = nc.createVariable('u','f4',('time','node'),fill_value=ufill)
+            nc_v = nc.createVariable('v','f4',('time','node'),fill_value=vfill)
         else: #velocities on elements
-            nc_u = nc.createVariable('u','f4',('time','nele'))
-            nc_v = nc.createVariable('v','f4',('time','nele'))
+            nc_u = nc.createVariable('u','f4',('time','nele'),fill_value=ufill)
+            nc_v = nc.createVariable('v','f4',('time','nele'),fill_value=vfill)
         
         #adjust time if necessary
         ref_time = self.atts['time']['units'].split(' since ')[1]
@@ -406,10 +450,12 @@ class ugrid:
             setattr(nc_nv,an_att[0],an_att[1])
         
         for an_att in self.atts['u'].iteritems():
-           setattr(nc_u,an_att[0],an_att[1])
+            if an_att[0] != '_FillValue':
+                setattr(nc_u,an_att[0],an_att[1])
         
         for an_att in self.atts['v'].iteritems():
-           setattr(nc_v,an_att[0],an_att[1])
+            if an_att[0] != '_FillValue':
+                setattr(nc_v,an_att[0],an_att[1])
         
         nc.close()
     
@@ -463,7 +509,7 @@ class ugrid:
     def find_nodes_eles_in_ss(self,nl,sl,wl,el):
        
         print 'Total number of eles: ', self.data['nbe'].shape[1]
-        print 'Total number of nodes: ', self.data['nv'].shape[1]
+        print 'Total number of nodes: ', self.data['lon'].shape[0]
         
         #returns lists of eles and nodes, plus truncated and edited topology arrays (nbe, nv)
         subset_lat = np.nonzero(np.logical_and(self.data['lat']>=sl,self.data['lat']<=nl))[0]
@@ -484,6 +530,7 @@ class ugrid:
                 self.eles_in_ss.append(ii+1) #ele numbering starts at 1
             else:
                 pass
+            
         print 'Number of eles in ss: ', len(self.eles_in_ss)
         print 'Number of nodes in ss: ', len(self.nodes_in_ss)
               
@@ -518,27 +565,25 @@ class ugrid:
         #info will be used to mark land segments
         
         print 'Remapping boundary segs to new subset node numbers'
-  
         f = open(bndry_file)
-        ss_bry_land_segs = []
+        self.ss_land_bry_segs = []
         for line in f:
             node1,node2,bnumber,flag = map(int,line.split())
-            node1_id = np.where(self.nodes_in_ss == node1)
-            node2_id = np.where(self.nodes_in_ss == node2)
+            node1_id = np.where(self.nodes_in_ss == node1)[0]
+            node2_id = np.where(self.nodes_in_ss == node2)[0]
             if len(node1_id) > 0 and len(node2_id) > 0 and flag == 0:
-                ss_bry_land_segs.append([node1_id[0]+1,node2_id[0]+1,flag])
-    
+                self.ss_land_bry_segs.append([node1_id[0]+1,node2_id[0]+1,flag])
         f.close()
     
-        return ss_bry_land_segs
     
     def build_face_face_connectivity(self):
         """
         builds the triangular connectivity array (nbe)
         essentially giving the neighbors of each triangle (face)
-        """        
+        """       
+                
         num_vertices = 3
-        num_faces = len(self.data['nv'].transpose())
+        num_faces = max(self.data['nv'].shape)
         face_face = np.zeros( (num_faces, num_vertices), dtype=np.int32  )
         face_face += -1 # fill with -1
 
@@ -558,7 +603,7 @@ class ugrid:
                     face_face[face_num, edge_num] = i
                 else:
                     edges[edge] = (i, j)
-        nbe = (face_face + 1)
-        nbe = nbe[:,[2,0,1]].transpose()
+        nbe = (face_face + 1).transpose()
+        #nbe = nbe[:,[2,0,1]].transpose()
         self.data['nbe'] = nbe
         self.atts['nbe'] = {'long_name': 'elements surrounding element'}

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from libgoods import utools, nctools, data_files_dir
-import datetime as dt
 import os 
 
 '''
@@ -20,8 +19,7 @@ this only has to be done once). See NGOFS_multifile_example.py
 
 '''
 # specify local file or opendap url
-data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NGOFS/MODELS/201405/nos.ngofs.fields.f000.20140501.t09z.nc'
-
+data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NGOFS/MODELS/201409/nos.ngofs.fields.n000.20140915.t21z.nc'
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
 # and ADCIRC which have different variable names
@@ -55,16 +53,19 @@ ngofs.atts['nbe']['order'] = 'cw'
 # if saved or generated
 print 'Loading/generating boundary segments'
 bndry_file = os.path.join(data_files_dir, 'ngofs.bry')
-try:
-    ngofs.read_bndry_file(bndry_file)
-except IOError:
-    ngofs.write_bndry_file('ngofs',bndry_file)
-    ngofs.read_bndry_file(bndry_file)
-
+#try:
+#    ngofs.read_bndry_file(bndry_file)
+#except IOError:
+#    ngofs.write_bndry_file('ngofs',bndry_file)
+#    ngofs.read_bndry_file(bndry_file)
+    
+ngofs.write_bndry_file('ngofs',bndry_file)
+ngofs.read_bndry_file(bndry_file)
 # get the data
 print 'Downloading data'
 #ngofs.get_data(var_map,tindex=[0,1,1]) #First time step only
 ngofs.get_data(var_map) #All time steps in file
  
 print 'Writing to GNOME file'
+ngofs.write_unstruc_grid_only(os.path.join(data_files_dir, 'ngofs_grid.nc'))
 ngofs.write_unstruc_grid(os.path.join(data_files_dir, 'ngofs_example.nc'))
