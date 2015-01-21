@@ -22,7 +22,7 @@ this only has to be done once). See NGOFS_multifile_example.py
 
 
 # specify local file or opendap url -- in this case files are one time step, not aggregated
-data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/CREOFS/MODELS/201408/nos.creofs.fields.f000.20140825.t03z.nc'
+data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/CREOFS/MODELS/201408/nos.creofs.fields.n000.20140825.t03z.nc'
 '''Some CO-OPS model notes:
 nos.OFS.fields.fHHH.YYYYMMDD.tCCz.nc
 OFS  is cbofs, dbofs, tbofs, ngofs, or creofs to stand for the name of operational forecast systems for Chesapeake Bay, Delaware Bay, Tampa Bay, North Gulf of Mexico, and Columbia River Estuary.
@@ -35,10 +35,10 @@ DD is the calendar date of model runtime'''
 
 # generate a file list of all files for this forecast
 fstem = data_url.split('nos.creofs.fields')[0]
-fname = data_url.split('/')[-1].split('f000')
+fname = data_url.split('/')[-1].split('n000')
 flist = []
-for hh in range(49):
-    flist.append(fstem + fname[0] + 'f' + str(hh).zfill(3) + fname[1])
+for hh in range(6):
+    flist.append(fstem + fname[0] + 'n' + str(hh).zfill(3) + fname[1])
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,

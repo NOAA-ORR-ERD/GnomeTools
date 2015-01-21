@@ -21,7 +21,7 @@ this only has to be done once). See NGOFS_multifile_example.py
 '''
 
 # specify local file or opendap url 
-data_file = os.path.join(data_files_dir,'GalvCoarse_2010_0000.nc')
+data_file = os.path.join(data_files_dir,'GalvCoarse_2014_0000.nc')
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -30,10 +30,12 @@ data_file = os.path.join(data_files_dir,'GalvCoarse_2010_0000.nc')
 #!!!!!!!!txsuntans output on server does not include eles_surrounding_ele info
 #I have it saved as a netcdf file included in libgoods data_files directory
 var_map = { 
+            'time':'time',\
             'u_velocity':'uc', \
             'v_velocity':'vc', \
             'nodes_surrounding_ele':'cells',\
             'eles_surrounding_ele':'nbe',\
+            'edge_node_connectivity':'edges',\
           }  
 
 # class instantiation creates a netCDF Dataset object as an attribute
@@ -41,16 +43,9 @@ txsuntans = utools.ugrid(data_file)
 
 # get longitude, latitude, and time variables
 print 'Downloading data dimensions'
-# Normally this would be a call to txself.get_dimensions(var_map) but
-# this file has no time info, and only UTM coordinates -- so we do it
-# manually
+txsuntans.get_dimensions(var_map)
 
-#Enter actual model time here for particular file
-time_len = len(txsuntans.Dataset.dimensions['time'])
-t_units = 'hours since 2014-01-01 00:00:00'
-txsuntans.data['time'] = [t for t in range(time_len)]
-txsuntans.atts['time'] = {'units':t_units}
-
+# UTM coordinates -- calculate lat/lon
 x = txsuntans.Dataset.variables['xp'][:]
 y = txsuntans.Dataset.variables['yp'][:]
 lon = np.ones_like(x); lat = np.ones_like(x)
@@ -65,19 +60,48 @@ txsuntans.atts['lat'] = {'long_name': 'latitude'}
 print 'Downloading grid topo variables'
 txsuntans.get_grid_topo(var_map)
 
+#TODO -- put this in utools
+def order_boundary(b,seg_types):
 
-# GNOME requires boundary info -- this file can be read form data_files directory
-# if saved or generated
-print 'Loading/generating boundary segments'
-bndry_file = os.path.join(data_files_dir, 'txsuntans.bry')
-try:
-    txsuntans.read_bndry_file(bndry_file)
-except IOError:
-    txsuntans.write_bndry_file('txsuntans',bndry_file)
-    txsuntans.read_bndry_file(bndry_file)
-txsuntans.data['nbe'] = txsuntans.data['nbe']
-txsuntans.data['nv'] = txsuntans.data['nv']
-# GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
+    obnd = dict()
+    otype = dict()
+    bnd_number = 0
+    obnd[bnd_number] = [b.pop(0),]
+    otype[bnd_number] = [seg_types.pop(0),]
+    while len(b)>0:
+        idx = [i for i,edge in enumerate(b) if edge[0]==obnd[bnd_number][-1][-1]]
+        if len(idx) == 1:
+            obnd[bnd_number].append(b.pop(idx[0]))
+            otype[bnd_number].append(seg_types.pop(idx[0]))
+        else:
+            bnd_number = bnd_number + 1
+            obnd[bnd_number] = [b.pop(0),]
+            otype[bnd_number] = [seg_types.pop(0),]
+            
+    #format for GNOME ([node1,node2,bnd_num,bnd_type] - bnd_type=1 for open, 2 for closed)
+    boundary = []
+    for i, a_bnd in obnd.iteritems():
+        for j, seg in enumerate(a_bnd):
+            #TODO -- need to make separate method for adding 1 to nv,boundary...
+            boundary.append([seg[0]+1, seg[1]+1, i, otype[i][j]])
+        
+    return np.array(boundary)
+    
+
+edge_types = txsuntans.Dataset.variables['mark'][:].tolist()
+#"0 - computational; 1 - closed; 2 flux BC; 3 - stage BC; 4 - other BC; 5 - interproc; 6 - ghost
+#Based on personal communication we use 1,2, and 3
+bound_id, bound_type = zip(*[(i,x) for i,x in enumerate(edge_types) if x>0 and x<4])
+bound_segs = txsuntans.data['edges'][bound_id,:]
+bound_type_gnome = (np.array(bound_type)==1).choose(1,0)
+#obnd,otype = order_boundary(bound_segs.tolist(),list(bound_type))
+
+txsuntans.data['nv'] = txsuntans.data['nv'] + 1
+txsuntans.data['bnd'] = order_boundary(bound_segs.tolist(),list(bound_type_gnome))
+txsuntans.atts['bnd'] = {'long_name':'Boundary segment information required for GNOME model'} 
+
+
+## GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
 txsuntans.atts['nbe']['order'] = 'ccw'
 
 '''

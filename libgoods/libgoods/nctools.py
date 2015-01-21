@@ -5,6 +5,44 @@ import glob, os
 import math
 import datetime as dt
 
+def get_var_map(filename, var_list=['lon','lat','time','u','v','air_u','air_v']):
+    
+    var_map = dict()
+    ncvars = Dataset(filename).variables
+    long_names = { 'lon':   'longitude',
+                   'lat':   'latitude',
+                   'time':  'time',
+                   'u':     'eastward_sea_water_velocity',
+                   'v':     'northward_sea_water_velocity',
+                   'air_u': 'eastward_wind',
+                   'air_v': 'northward_wind',
+                 }
+                 
+    for var in var_list:
+        matches = []
+        for varname in ncvars:
+            try:
+                if ncvars[varname].standard_name == long_names[var]:
+                    matches.append(varname)
+            except AttributeError:
+                pass
+        if not matches:
+            var_map[var] = None
+        elif len(matches) == 1:
+            var_map[var] = matches[0]
+        else:
+            var_map[var] = matches
+            
+    return var_map
+
+def fix_time_units(units):
+    '''
+    GNOME doesn't support units of this form: 'hours since 2014-12-12T18:00:00Z'
+    Just replace T with space
+    '''
+    new_units = ' '.join(units.split('T'))
+    return new_units
+
 def show_ncfile_tbounds(filename,tvar='time'):
     
     t = Dataset(filename).variables[tvar]
@@ -53,6 +91,8 @@ def make_filelist_for_GNOME(file_dir,file_match='*.*',outfilename='filelist.txt'
 
 def utmToLatLng(zone, easting, northing, northernHemisphere=True):
     # Convert UTM coordinates to lat/lon
+    #TODO: this method probably belongs in a more generic module
+
     if not northernHemisphere:
         northing = 10000000 - northing
 

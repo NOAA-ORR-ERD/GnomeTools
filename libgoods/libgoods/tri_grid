@@ -61,12 +61,15 @@ class ugrid:
         self.atts['nv'] = dict()
         for an_att in nv.ncattrs():
             self.atts['nv'][an_att] = getattr(nv,an_att)
+        nv = nv[:]
+#        if nv.min() == 0:
+#            nv = nv + 1
         if nv.shape[0] > nv.shape[1]: #nv should be nv[num_faces,num_eles]
-            self.data['nv'] = nv[:].transpose()
+            self.data['nv'] = nv.transpose()
         else:
-            self.data['nv'] = nv[:]
-        
-        try:
+            self.data['nv'] = nv
+            
+        try: #should there be a check here for nbe starting at 0?
             nbe = self.Dataset.variables[var_map['eles_surrounding_ele']]
             self.atts['nbe'] = dict()
             for an_att in nbe.ncattrs():
@@ -78,7 +81,22 @@ class ugrid:
         except KeyError:
             print 'Building face-face connectivity'
             self.build_face_face_connectivity()
-
+            
+        try:
+            #this returns ALL the edges (boundary and interior)
+            edges = self.Dataset.variables[var_map['edge_node_connectivity']]
+            self.atts['edges'] = dict()
+            for an_att in edges.ncattrs():
+                self.atts['edges'][an_att] = getattr(edges,an_att)  
+            edges = edges[:]
+#            if edges.min() == 0:
+#                edges = edges + 1
+            self.data['edges'] = edges
+        except KeyError:
+            print 'No edge information'
+            #TODO: call code to determine edges here
+            pass
+        
     def get_data(self,var_map,tindex=None,nindex=None,zindex=0):
     
         ''' 
@@ -245,7 +263,20 @@ class ugrid:
                 if(nbe[2,i]==0):
                     isonb[nv[0,i]]=1;isonb[nv[0,i]]=1
         bnd = list(np.nonzero(isonb)[0])
-    
+        
+#        num_vertices=3
+#        bnd = []
+#        for i, face in enumerate(nbe.transpose()):
+#            for j, neighbor in enumerate(face):
+#                if neighbor == 0:
+#                    if j == num_vertices-1:
+#                        bound = ( nv[-1,i], nv[0,i] )
+#                    else:
+#                        bound = ( nv[j,i], nv[j+1,i] )
+#                    bnd.extend(bound)
+#        bnd = list(set(bnd))
+#        print bnd
+        
         print 'Ordering boundary pts'
         #now find boundary pts in order starting from a pt in outer bndry which for this
         #case happens to be the first pt in the unorderd bndry list
@@ -253,7 +284,7 @@ class ugrid:
         polydict = {}
         obnd = [bnd.pop(1),]
         while len(bnd)>0:
-            '''ALGORITHM: from starting node (point) IN OUTER BNDRY, first determine which elements
+            '''ALGORITHM: from starting node (point) IN OUTER BNDRY, first determine which triangles
             contain this point. Make list of all nodes defining these elements. The next bndry node
             will be the one that only appears once in this list.
             '''
@@ -603,7 +634,7 @@ class ugrid:
                     face_face[face_num, edge_num] = i
                 else:
                     edges[edge] = (i, j)
-        nbe = (face_face + 1).transpose()
-        #nbe = nbe[:,[2,0,1]].transpose()
+        nbe = (face_face + 1)
+        nbe = nbe[:,[2,0,1]].transpose()
         self.data['nbe'] = nbe
         self.atts['nbe'] = {'long_name': 'elements surrounding element'}
