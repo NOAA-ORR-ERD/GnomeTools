@@ -26,6 +26,10 @@ class ugrid:
             self.data = dict()
             self.atts = dict()
             
+    def update(self,FileName):
+        #point to a new nc file or url without reinitializing everything
+        self.Dataset = Dataset(FileName)
+            
     def get_dimensions(self,var_map):
         
         try:
@@ -177,6 +181,63 @@ class ugrid:
         #self.atts['v']['fill_value'] = self.atts['v']['missing_value']         
         #self.atts['u']['fill_value'] = self.atts['u']['missing_value']       
         
+    def find_bndry_segs(self,subset=False):
+    
+        if subset:
+            nv = self.data['nv_ss']
+            nbe = self.data['nbe_ss']
+        else:
+            nv = self.data['nv']
+            nbe = self.data['nbe']
+            
+        bnd = []
+        for i, face in enumerate(nbe.transpose()):
+            for j, neighbor in enumerate(face):
+                if neighbor == 0:
+                    if j == 0:
+                        bound = [nv[1,i], nv[2,i]]
+                    elif j == 1:
+                        bound = [nv[2,i], nv[0,i]]
+                    elif j == 2:
+                        bound = [nv[0,i], nv[1,i]]
+#                    if j == num_vertices-1:
+#                        bound = [nv[-1,i], nv[0,i]]
+#                    else:
+#                        bound = [nv[j,i], nv[j+1,i]]
+                    bnd.append(bound)
+        
+        return bnd
+
+    def order_boundary(self,b,seg_types):
+    
+        obnd = dict()
+        otype = dict()
+        bnd_number = 0
+        obnd[bnd_number] = [b.pop(0),]
+        otype[bnd_number] = [seg_types.pop(0),]
+        while len(b)>0:
+            idx = [i for i,edge in enumerate(b) if edge[0]==obnd[bnd_number][-1][-1]]
+            if len(idx) == 1:
+                obnd[bnd_number].append(b.pop(idx[0]))
+                otype[bnd_number].append(seg_types.pop(idx[0]))
+            else:
+                bnd_number = bnd_number + 1
+                obnd[bnd_number] = [b.pop(0),]
+                otype[bnd_number] = [seg_types.pop(0),]
+                
+        #format for GNOME ([node1,node2,bnd_num,bnd_type] - bnd_type=1 for open, 2 for closed)
+        boundary = []
+        for i, a_bnd in obnd.iteritems():
+            for j, seg in enumerate(a_bnd):
+                #TODO -- need to make separate method for adding 1 to nv,boundary...
+                boundary.append([seg[0], seg[1], i, otype[i][j]])
+            
+        self.data['bnd'] = boundary
+        self.atts['bnd'] = {'long_name':'Boundary segment information required for GNOME model'}  
+    
+    def write_bndry_file(self,bnd_file):
+        pass
+    
     def read_bndry_file(self,bnd_file): 
  
         bnd = []
@@ -186,187 +247,8 @@ class ugrid:
             bnd.append(vals)
         
         self.data['bnd'] = np.array(bnd)
-        self.atts['bnd'] = {'long_name':'Boundary segment information required for GNOME model'} 
-    
-    def write_bndry_file(self,grid,bndry_file=None):
-          
-        '''
-        Determine boundary nodes, generate ordered list of segments
-        from nv (3 nodes of each element) and nbe (3 elements surrounding
-        each element)
+        self.atts['bnd'] = {'long_name':'Boundary segment information required for GNOME model'}    
         
-        grid: 'GOM2','MassB', or, 'NGOFS'
-        Output ordered segment list to text file
-        
-
-        !!!HARD-CODED to tell which nodes are open-water!! If not know -- all 
-        boundaries are specified as open water
-        
-        *****Should change this so that its passed in...
-                If bndry_file is specified the output is written to file
-        
-        '''
-        
-        #open water nodes -- determined by plotting grid
-        if grid.lower() == 'gom2':
-            ow1 = 1; ow2 = 60;
-        elif grid.lower() == 'gom3':
-            ow1 = 1; ow2 = 120;
-        elif grid.lower() == 'massb':
-            ow1 = 1; ow2 = 124;
-        elif grid.lower() == 'ngofs':
-            ow1 = 1; ow2 = 180;
-        elif grid.lower() == 'nwgofs':
-            ow1 = 1; ow2 = 207;
-        elif grid.lower() == 'negofs':
-            ow1 = 1; ow2 = 139;
-        elif grid.lower() == 'creofs':
-            ow = [68408,68409,68410,68411,68412,68414,68604,68605,68606,68607,68608,68791,68792,68793,68962,68963,68964,68965,69130,69131,69132,69133,69303,69304,69305,69479,69481,69669,69670,69671,69672,69674,69675,69866,69867,69868,69869,69870,70062,70063,70064,70065,70271,70272,70489,70490,70704,70705,70927,70928,71144,71346,71520,71683,71844,72001,72154,72281,72377,72462,72532,72583,72631,72676,72720,72765,72810,72851,72897,72939,72981,73023,73061,73099,73138,73178,73215,73251,73283,73313,73346,73381,73417,73453,73454,73481,73502,73523]
-        elif grid.lower() == 'sfbofs':
-            ow = [1,2,3,4,5,97,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,144,51,52,53,54,55,150,56,57,58,59,60,61,62,63,64,65,66,162,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91]
-        elif grid.lower() == 'wfs':
-            ow1 = 1; ow2 = 190;
-        elif grid.lower() == 'hecwfs':
-            ow = [1,2,20688,20689]
-        elif grid.lower() == 'slrfvm':
-            ow = range(1,19)
-            ow.extend([19586, 19585, 19604, 19621, 19620, 19630, 19629, 19628])
-        else:
-            if grid.lower() != 'subset':
-                print 'No grid match -- setting all to open water'
-                #ow1 = 1; ow2 = 1e6 #set all to open water
-                ow1 = 1; ow2 = 1;
-        
-        if grid.lower() == 'subset':
-            lon = self.data['lon_ss']
-            lat = self.data['lat_ss']
-            nv = self.data['nv_ss']
-            nbe = self.data['nbe_ss']
-        else:
-            lon = self.data['lon']
-            lat = self.data['lat']
-            nv = self.data['nv']
-            nbe = self.data['nbe']
-            
-        [three,ngl]=nv.shape
-        mgl=nv.max()
-        
-        print 'Finding boundary pts'
-        #find all boundary pts (unordered)
-        isonb = np.zeros([mgl+1],int)
-        for i in range(0,ngl):
-            if(np.min(nbe[:,i])==0):
-                if(nbe[0,i]==0):
-                    isonb[nv[1,i]]=1;isonb[nv[2,i]]=1
-                if(nbe[1,i]==0):
-                    isonb[nv[0,i]]=1;isonb[nv[2,i]]=1
-                if(nbe[2,i]==0):
-                    isonb[nv[0,i]]=1;isonb[nv[0,i]]=1
-        bnd = list(np.nonzero(isonb)[0])
-        
-#        num_vertices=3
-#        bnd = []
-#        for i, face in enumerate(nbe.transpose()):
-#            for j, neighbor in enumerate(face):
-#                if neighbor == 0:
-#                    if j == num_vertices-1:
-#                        bound = ( nv[-1,i], nv[0,i] )
-#                    else:
-#                        bound = ( nv[j,i], nv[j+1,i] )
-#                    bnd.extend(bound)
-#        bnd = list(set(bnd))
-#        print bnd
-        
-        print 'Ordering boundary pts'
-        #now find boundary pts in order starting from a pt in outer bndry which for this
-        #case happens to be the first pt in the unorderd bndry list
-        pnum=1
-        polydict = {}
-        obnd = [bnd.pop(1),]
-        while len(bnd)>0:
-            '''ALGORITHM: from starting node (point) IN OUTER BNDRY, first determine which triangles
-            contain this point. Make list of all nodes defining these elements. The next bndry node
-            will be the one that only appears once in this list.
-            '''
-            elems = np.nonzero(nv == obnd[-1])[1]
-            points = nv[:,elems].flatten() 
-            upts = np.unique(points)
-            candidates = []
-            points = list(points)
-            nextpt = []
-            for p in upts:
-                if points.count(p) == 1:
-                    candidates.append(p)
-            if len(candidates)>1:
-                if len(obnd) == 1:
-                    nextpt = candidates[-1]
-                else:
-                    for c in candidates:
-                        if c not in obnd:
-                            nextpt = c
-                            break
-            if nextpt == []:
-                polydict[pnum] = obnd
-                pnum = pnum+1
-                obnd = [bnd.pop(1),]
-            elif len(bnd) == 1:
-                polydict[pnum] = obnd
-                pnum = pnum+1
-                bnd.remove(nextpt)
-            else:
-                obnd.append(nextpt)
-                bnd.remove(nextpt)
-        
-        #iterate thru boundary polygons, reverse order if necessary, write to file      
-        print 'Checking topology' 
-        boundary = []
-        if bndry_file:
-            f = open(bndry_file,'w') 
-        for key,val in polydict.iteritems():
-            area = 0.0
-            plon = lon[np.array(val)-1]
-            plat = lat[np.array(val)-1]
-            j = 0
-            for i in range(0,len(plon)-1):
-                j += 1
-                if j == len(plon)-1: j = 0
-                area += (plon[i] + plon[j]) * (plat[i] - plat[j])
-            if area > 0:
-                polydict[key].reverse
-            for i in range(0,len(val)):
-                p1 = val[i]
-                try:
-                    p2 = val[i+1]
-                except IndexError:
-                    p2 = val[0]
-                      
-                if grid != 'subset':
-                    try:
-                        if p1 >= ow1 and p1<=ow2 and p2>=ow1 and p2<=ow2:
-                            lw = 1
-                        else:
-                            lw = 0
-                    except NameError: #list of nodes
-                        if ow.count(p1) + ow.count(p2) == 2:
-                            lw = 1
-                        else:
-                            lw = 0
-                else:
-                    lw = 1
-                    for sid,seg in enumerate(self.ss_land_bry_segs):
-                        if seg.count(p1) + seg.count(p2) == 2: #matching seg
-                            lw = 0
-                            break
-                boundary.append([p1,p2,key-1,lw])
-                if bndry_file:
-                    line = ' '.join(map(str,[p1,p2,key-1,lw]))
-                    f.write(line + '\n')  
-        if bndry_file:
-            f.close()
-            
-        self.data['bnd'] = np.array(boundary)
-        self.atts['bnd'] = {'long_name':'Boundary segment information required for GNOME model'} 
-    
     def write_unstruc_grid(self,ofn):
         
         """

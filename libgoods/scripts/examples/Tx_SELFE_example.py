@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-from libgoods import utools, nctools, data_files_dir
+from libgoods import tri_grid, nctools, data_files_dir
 import datetime as dt
 import os 
 import numpy as np
-from netCDF4 import num2date, date2num
+from netCDF4 import date2num
 
 '''
 Sample script to retrieve data from unstructured grid netcdf "file" (can be
@@ -41,7 +41,7 @@ var_map = { 'longitude':'lon', \
           }  
 
 # class instantiation creates a netCDF Dataset object as an attribute
-txselfe = utools.ugrid(data_file)
+txselfe = tri_grid.ugrid(data_file)
 
 # get longitude, latitude, and time variables
 print 'Downloading data dimensions'
@@ -67,22 +67,22 @@ txselfe.atts['lat'] = {'long_name': 'latitude'}
 
 # get grid topo variables (nbe, nv)
 print 'Downloading grid topo variables'
-try:
-    txselfe.get_grid_topo(var_map)
-except KeyError: #model output on server doesn't have nbe
-    txselfe.build_face_face_connectivity()
+txselfe.get_grid_topo(var_map)
 
-# GNOME requires boundary info -- this file can be read form data_files directory
-# if saved or generated
-print 'Loading/generating boundary segments'
-bndry_file = os.path.join(data_files_dir, 'txselfe.bry')
-try:
-    txselfe.read_bndry_file(bndry_file)
-except IOError:
-    txselfe.write_bndry_file('txselfe',bndry_file)
-    txselfe.read_bndry_file(bndry_file)
-txselfe.data['nbe'] = txselfe.data['nbe']
-txselfe.data['nv'] = txselfe.data['nv']
+
+# find and order the boundary
+print 'Finding boundary segs'
+bnd = txselfe.find_bndry_segs()
+print 'Ordering boundary segs and assigning types'
+ow1 = 1; ow2 = max(max(bnd)); #nodes defining start/end of open water boundary
+seg_types = []
+for b in bnd:
+    if max(b) <= ow2 and min(b) >=ow1: #open water
+        seg_types.append(0)
+    else:
+        seg_types.append(1)
+txselfe.order_boundary(bnd,seg_types)
+
 # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
 txselfe.atts['nbe']['order'] = 'ccw'
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from libgoods import utools, nctools, data_files_dir
+from libgoods import tri_grid, nctools, data_files_dir
+reload(tri_grid)
 import os 
 
 '''
@@ -23,7 +24,7 @@ this only has to be done once). See NGOFS_multifile_example.py
 #data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/archives/necofs_mb'
 data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_FVCOM_OCEAN_MASSBAY_FORECAST.nc'
 #data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_GOM3_FORECAST.nc' 
-# the utools class requires a mapping of specific model variable names (values)
+# the tri_grid class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
 # and ADCIRC which have different variable names
 # (This seemed easier than finding them by CF long_names etc)
@@ -37,7 +38,7 @@ var_map = { 'longitude':'lon', \
           }  
 
 # class instantiation creates a netCDF Dataset object as an attribute
-necofs = utools.ugrid(data_url)
+necofs = tri_grid.ugrid(data_url)
 
 # get longitude, latitude, and time variables
 print 'Downloading data dimensions'
@@ -56,25 +57,28 @@ print 'Determining subset indices'
 print 'Downloading grid topo variables'
 necofs.get_grid_topo(var_map)
 
-# get the data
-print 'Downloading data'
+# find and order the boundary
+print 'Finding boundary segs'
+bnd = necofs.find_bndry_segs()
+print 'Ordering boundary segs and assigning types'
+ow1 = 1; ow2 = 139; #nodes defining start/end of open water boundary
+seg_types = []
+for b in bnd:
+    if max(b) <= ow2 and min(b) >=ow1: #open water
+        seg_types.append(0)
+    else:
+        seg_types.append(1)
+necofs.order_boundary(bnd,seg_types)
+
+## get the data
+#print 'Downloading data'
 #necofs.get_data(var_map,tindex=[0,1,1]) #First time step only
 necofs.get_data(var_map) #All time steps in file
 #necofs.get_data(var_map,tindex=tindex)
+#
 
-# GNOME requires boundary info -- this file can be read form data_files directory
-# if saved or generated
-bndry_file = os.path.join(data_files_dir, 'MassBay.bry')
-# try:
-#     necofs.read_bndry_file(bndry_file)
-# except IOError:
-#     necofs.write_bndry_file('GOM3',bndry_file)
-#     necofs.read_bndry_file(bndry_file)
-
-necofs.write_bndry_file('massb',bndry_file)
-necofs.read_bndry_file(bndry_file)
-# GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
+## GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
 necofs.atts['nbe']['order'] = 'cw'
-
-print 'Writing to GNOME file'
+#
+#print 'Writing to GNOME file'
 necofs.write_unstruc_grid(os.path.join(data_files_dir, 'NECOFS_massb_example.nc'))

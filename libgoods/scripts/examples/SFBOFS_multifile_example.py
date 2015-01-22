@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-from libgoods import utools, nctools, data_files_dir
+from libgoods import tri_grid, noaa_coops, data_files_dir, nctools
+reload(tri_grid)
 import datetime as dt
 import os 
+from netCDF4 import num2date, Dataset
 
 '''
 Sample script to retrieve data from unstructured grid netcdf "file" (can be
@@ -19,16 +21,14 @@ Compare with sfbofs_multifile_example2 in this case, we use
 a file list loop after the grid topo vars are loaded (as
 this only has to be done once). 
 '''
+start = dt.date(2015,1,14)
+end = dt.date(2015,1,21)
+hour0 = 3
+flist = noaa_coops.make_server_filelist('sfbofs',hour0,start,end=end,test_exist=False)
 
-# specify local file or opendap url
-file_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/SFBOFS/MODELS/201402/nos.sfbofs.fields.f000.20140220.t09z.nc'
-
-fstem = file_url.split('/nos.')[0]
-fname = file_url.split('/')[-1].split('f000')
-flist = []
-for hh in range(49):
-    flist.append(fstem + '/' + fname[0] + 'f' + str(hh).zfill(3) + fname[1])
-
+#generate text file with list of generated files
+list_of_ofns = file(os.path.join(data_files_dir,'sfbofs_filelist.txt'), 'w')
+list_of_ofns.write('NetCDF Files\n')
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -43,40 +43,50 @@ var_map = { 'longitude':'lon', \
             'eles_surrounding_ele':'nbe',\
           }  
 
-# class instantiation creates a netCDF Dataset object as an attribute -- 
-# use the first file in the list only
-print flist
-print type(flist)
-sfbofs = utools.ugrid(flist)
+firsttime = 1
 
-# get longitude, latitude, and time variables
-print 'Downloading data dimensions'
-sfbofs.get_dimensions(var_map)
-
-#display available time range for model output
-nctools.show_tbounds(sfbofs.Dataset.variables['time'])
-
-# get grid topo variables (nbe, nv)
-print 'Downloading grid topo variables'
-sfbofs.get_grid_topo(var_map)
-# GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
-sfbofs.atts['nbe']['order'] = 'cw'
-
-
-# get the data
-print 'Downloading data'
-#sfbofs.get_data(var_map,tindex=[0,1,1]) #First time step only
-sfbofs.get_data(var_map) #All time steps in file
- 
- # GNOME requires boundary info -- this file can be read form data_files directory
-# if saved or generated
-print 'Loading/generating boundary segments'
-bndry_file = os.path.join(data_files_dir, 'sfbofs.bry')
-try:
-    sfbofs.read_bndry_file(bndry_file)
-except IOError:
-    sfbofs.write_bndry_file('sfbofs',bndry_file)
-    sfbofs.read_bndry_file(bndry_file)
+for f in flist[0:5]:
     
-print 'Writing to GNOME file'
-sfbofs.write_unstruc_grid(os.path.join(data_files_dir, 'sfbofs_multifile_example.nc'))
+    if firsttime:
+        
+        firsttime = 0
+        # class instantiation creates a netCDF Dataset object as an attribute -- 
+        # use the first file in the list only
+        sfbofs = tri_grid.ugrid(f)
+        
+#        # get longitude, latitude, and time variables
+#        print 'Downloading data dimensions'
+#        sfbofs.get_dimensions(var_map)
+        
+        # get grid topo variables (nbe, nv)
+        print 'Downloading grid topo variables'
+        sfbofs.get_grid_topo(var_map)
+        # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
+        sfbofs.atts['nbe']['order'] = 'cw'
+         
+        # find and order the boundary
+        print 'Finding boundary'
+        bnd = sfbofs.find_bndry_segs()
+        print 'Ordering boundary'
+        seg_types = [0] * len(bnd)
+        sfbofs.order_boundary(bnd,seg_types)
+        
+    else:
+        
+        sfbofs.update(f) 
+
+    print 'Downloading data dimensions'
+    sfbofs.get_dimensions(var_map)
+    
+    #get the data
+    print 'Downloading data'
+    #sfbofs.get_data(var_map,tindex=[0,1,1]) #First time step only
+    sfbofs.get_data(var_map) #All time steps in file
+    
+    of_dt = nctools.round_time(num2date(sfbofs.data['time'][0],sfbofs.atts['time']['units']),roundto=3600)
+    ofn = of_dt.strftime('%Y%m%d_%H') + '.nc'
+    list_of_ofns.write('[FILE]  ' + ofn + '\n')
+    print 'Writing to GNOME file'
+    sfbofs.write_unstruc_grid(os.path.join(data_files_dir,ofn))
+    
+list_of_ofns.close()

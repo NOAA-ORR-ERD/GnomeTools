@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from libgoods import utools, nctools, data_files_dir
+from libgoods import tri_grid, nctools, data_files_dir
+reload(tri_grid)
 import os 
 
 
@@ -22,7 +23,7 @@ this only has to be done once). See NGOFS_multifile_example.py
 
 
 # specify local file or opendap url -- in this case files are one time step, not aggregated
-data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/CREOFS/MODELS/201408/nos.creofs.fields.n000.20140825.t03z.nc'
+data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/CREOFS/MODELS/201412/nos.creofs.fields.n000.20141225.t03z.nc'
 '''Some CO-OPS model notes:
 nos.OFS.fields.fHHH.YYYYMMDD.tCCz.nc
 OFS  is cbofs, dbofs, tbofs, ngofs, or creofs to stand for the name of operational forecast systems for Chesapeake Bay, Delaware Bay, Tampa Bay, North Gulf of Mexico, and Columbia River Estuary.
@@ -57,7 +58,7 @@ var_map = { 'longitude':'lon', \
 
 # class instantiation creates a netCDF Dataset object as an attribute
 # creofs = utools.ugrid(flist) #multiple files
-creofs = utools.ugrid(data_url) #single file output
+creofs = tri_grid.ugrid(data_url) #single file output
 
 # get longitude, latitude, and time variables
 print 'Downloading data dimensions'
@@ -68,22 +69,25 @@ nctools.show_tbounds(creofs.Dataset.variables['time'])
 
 # get grid topo variables (nbe, nv)
 print 'Downloading grid topo variables'
-try:
-    creofs.get_grid_topo(var_map)
-except KeyError: #model output on server doesn't have nbe
-    creofs.build_face_face_connectivity()
-# GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
+creofs.get_grid_topo(var_map)
 creofs.atts['nbe']['order'] = 'ccw'
 
-# GNOME requires boundary info -- this file can be read form data_files directory
-# if saved or generated
-print 'Loading/generating boundary segments'
-bndry_file = os.path.join(data_files_dir, 'creofs.bry')
-try:
-    creofs.read_bndry_file(bndry_file)
-except IOError:
-    creofs.write_bndry_file('creofs',bndry_file)
-    creofs.read_bndry_file(bndry_file)
+## GNOME requires boundary info -- this file can be read form data_files directory
+## if saved or generated
+#print 'Loading/generating boundary segments'
+#bndry_file = os.path.join(data_files_dir, 'creofs.bry')
+#try:
+#    creofs.read_bndry_file(bndry_file)
+#except IOError:
+#    creofs.write_bndry_file('creofs',bndry_file)
+#    creofs.read_bndry_file(bndry_file)
+
+# find and order the boundary
+print 'Finding boundary'
+bnd = creofs.find_bndry_segs()
+print 'Ordering boundary'
+seg_types = [0] * len(bnd)
+creofs.order_boundary(bnd,seg_types)
 
 # get the data
 print 'Downloading data'

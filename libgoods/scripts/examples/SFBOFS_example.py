@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-from libgoods import utools, nctools, data_files_dir
+from libgoods import tri_grid, nctools, noaa_coops, data_files_dir
 import os 
+reload(noaa_coops)
 
 '''
 Sample script to retrieve data from unstructured grid netcdf "file" (can be
@@ -19,7 +20,7 @@ this only has to be done once). See sfbofs_multifile_example.py
 
 '''
 # specify local file or opendap url
-data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/SFBOFS/MODELS/201409/nos.sfbofs.fields.f000.20140915.t09z.nc'
+data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/SFBOFS/MODELS/201501/nos.sfbofs.fields.n000.20150115.t09z.nc'
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -35,7 +36,7 @@ var_map = { 'longitude':'lon', \
           }  
 
 # class instantiation creates a netCDF Dataset object as an attribute
-sfbofs = utools.ugrid(data_url)
+sfbofs = tri_grid.ugrid(data_url)
 
 # get longitude, latitude, and time variables
 print 'Downloading data dimensions'
@@ -50,15 +51,12 @@ sfbofs.get_grid_topo(var_map)
 # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
 sfbofs.atts['nbe']['order'] = 'cw'
 
-# GNOME requires boundary info -- this file can be read form data_files directory
-# if saved or generated
-print 'Loading/generating boundary segments'
-bndry_file = os.path.join(data_files_dir, 'sfbofs.bry')
-try:
-    sfbofs.read_bndry_file(bndry_file)
-except IOError:
-    sfbofs.write_bndry_file('sfbofs',bndry_file)
-    sfbofs.read_bndry_file(bndry_file)
+# find and order the boundary
+print 'Finding boundary'
+bnd = sfbofs.find_bndry_segs()
+print 'Ordering boundary'
+seg_types = noaa_coops.specify_bnd_types('sfbofs',bnd)
+sfbofs.order_boundary(bnd,seg_types)
 
 # get the data
 print 'Downloading data'

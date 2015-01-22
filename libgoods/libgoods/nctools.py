@@ -80,6 +80,17 @@ def adjust_time(t,t_units):
     
     return new_time,new_units
 
+def round_time(datetime_in=None, roundto=60):
+   """Round a datetime object to any time laps in seconds
+   dt : datetime.datetime object
+   roundTo : Closest number of seconds to round to, default 1 minute.
+   Author: Thierry Husson 2012 - Use it as you want but don't blame me.
+   """
+   seconds = (datetime_in - datetime_in.min).seconds
+   # // is a floor division, not a comment on following line:
+   rounding = (seconds+roundto/2) // roundto * roundto
+   return datetime_in + dt.timedelta(0,rounding-seconds,-datetime_in.microsecond)
+   
 def make_filelist_for_GNOME(file_dir,file_match='*.*',outfilename='filelist.txt'):
     #used to load multiple files as one mover in GNOME
     flist = glob.glob(os.path.join(file_dir,file_match))

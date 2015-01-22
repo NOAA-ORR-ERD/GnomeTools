@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from libgoods import utools, nctools, data_files_dir
+from libgoods import tri_grid, nctools, data_files_dir
 import os 
 import numpy as np
 
@@ -39,7 +39,7 @@ var_map = {
           }  
 
 # class instantiation creates a netCDF Dataset object as an attribute
-txsuntans = utools.ugrid(data_file)
+txsuntans = tri_grid.ugrid(data_file)
 
 # get longitude, latitude, and time variables
 print 'Downloading data dimensions'
@@ -60,45 +60,18 @@ txsuntans.atts['lat'] = {'long_name': 'latitude'}
 print 'Downloading grid topo variables'
 txsuntans.get_grid_topo(var_map)
 
-#TODO -- put this in utools
-def order_boundary(b,seg_types):
-
-    obnd = dict()
-    otype = dict()
-    bnd_number = 0
-    obnd[bnd_number] = [b.pop(0),]
-    otype[bnd_number] = [seg_types.pop(0),]
-    while len(b)>0:
-        idx = [i for i,edge in enumerate(b) if edge[0]==obnd[bnd_number][-1][-1]]
-        if len(idx) == 1:
-            obnd[bnd_number].append(b.pop(idx[0]))
-            otype[bnd_number].append(seg_types.pop(idx[0]))
-        else:
-            bnd_number = bnd_number + 1
-            obnd[bnd_number] = [b.pop(0),]
-            otype[bnd_number] = [seg_types.pop(0),]
-            
-    #format for GNOME ([node1,node2,bnd_num,bnd_type] - bnd_type=1 for open, 2 for closed)
-    boundary = []
-    for i, a_bnd in obnd.iteritems():
-        for j, seg in enumerate(a_bnd):
-            #TODO -- need to make separate method for adding 1 to nv,boundary...
-            boundary.append([seg[0]+1, seg[1]+1, i, otype[i][j]])
-        
-    return np.array(boundary)
-    
-
 edge_types = txsuntans.Dataset.variables['mark'][:].tolist()
 #"0 - computational; 1 - closed; 2 flux BC; 3 - stage BC; 4 - other BC; 5 - interproc; 6 - ghost
 #Based on personal communication we use 1,2, and 3
 bound_id, bound_type = zip(*[(i,x) for i,x in enumerate(edge_types) if x>0 and x<4])
-bound_segs = txsuntans.data['edges'][bound_id,:]
-bound_type_gnome = (np.array(bound_type)==1).choose(1,0)
-#obnd,otype = order_boundary(bound_segs.tolist(),list(bound_type))
+bound_segs = txsuntans.data['edges'][bound_id,:] + 1 #Node numbering starts at 0, GNOME expects it to start at 1 -- adjust nv and bnd
+bound_type_gnome = (np.array(bound_type)<=2).choose(1,0)
 
-txsuntans.data['nv'] = txsuntans.data['nv'] + 1
-txsuntans.data['bnd'] = order_boundary(bound_segs.tolist(),list(bound_type_gnome))
+txsuntans.order_boundary(bound_segs.tolist(),list(bound_type_gnome))
 txsuntans.atts['bnd'] = {'long_name':'Boundary segment information required for GNOME model'} 
+
+#Node numbering starts at 0, GNOME expects it to start at 1 -- adjust nv and bnd
+txsuntans.data['nv'] = txsuntans.data['nv'] + 1
 
 
 ## GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
@@ -112,7 +85,7 @@ Also need to change txsuntans.data['time'] appropriately
 '''
 # get the data
 print 'Loading u/v'
-txsuntans.get_data(var_map,zindex=0) #First time step only
+txsuntans.get_data(var_map,zindex=0) 
 
   
 print 'Writing to GNOME file'

@@ -40,7 +40,31 @@ Confusing? Yes. Run the code and look at the output, the hard work is already do
 still have old file structure with more than one time step per file
 
 '''
-
+def specify_bnd_types(grid,segs):
+    '''
+    The node values were determined by plotting grid, they
+    are not included in the model output
+    '''
+    if grid.lower() == 'ngofs':
+        ow = range(1,180)
+    elif grid.lower() == 'nwgofs':
+        ow = range(1,207)
+    elif grid.lower() == 'negofs':
+        ow = range(1,139)
+    elif grid.lower() == 'creofs':
+        ow = [68408,68409,68410,68411,68412,68414,68604,68605,68606,68607,68608,68791,68792,68793,68962,68963,68964,68965,69130,69131,69132,69133,69303,69304,69305,69479,69481,69669,69670,69671,69672,69674,69675,69866,69867,69868,69869,69870,70062,70063,70064,70065,70271,70272,70489,70490,70704,70705,70927,70928,71144,71346,71520,71683,71844,72001,72154,72281,72377,72462,72532,72583,72631,72676,72720,72765,72810,72851,72897,72939,72981,73023,73061,73099,73138,73178,73215,73251,73283,73313,73346,73381,73417,73453,73454,73481,73502,73523]
+    elif grid.lower() == 'sfbofs':
+        ow = [1,2,3,4,5,97,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,144,51,52,53,54,55,150,56,57,58,59,60,61,62,63,64,65,66,162,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91]
+    
+    seg_types = []
+    for seg in segs:
+        if seg[0] in ow and seg[1] in ow:
+            seg_types.append(1)
+        else:
+            seg_types.append(0)
+            
+    return seg_types
+    
 def make_server_filelist(model,hour0,start,end=None,test_exist=False):
     '''
     Create a list of model file urls for an aggregated time series based on 
@@ -182,21 +206,21 @@ def download_and_save(url,output_dir):
     nc_in.close()
     nc_out.close()
     
-if __name__ == "__main__":
-    ofs = 'ngofs'
-    hour0 = 3
-    #sdate = datetime.date.today()-datetime.timedelta(days=14)
-    sdate = datetime.date(2014,10,28)
-    flist = make_server_filelist(ofs,3,sdate)
-    output_dir = 'C:\\Users\\amy.macfadyen\\Documents\\Projects\\goods\\trunk\\static\\ocean_models\\COOPS\\NGOFS'
-    for f in flist:
-        nc = Dataset(f)
-        t = nc.variables['time']
-        ts = num2date(t[:],t.units)
-        print ts, '...writing'
-        download_and_save(f,output_dir)
-        
     
 
-#http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NWGOFS/MODELS/201403/nos.nwgofs.fields.nowcast.20140322.t03z.nc.html
-#http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NWGOFS/MODELS/201403/nos.nwgofs.fields.n000.20140322.t03z.nc.html
+    
+#if __name__ == "__main__":
+#    ofs = 'ngofs'
+#    hour0 = 3
+#    #sdate = datetime.date.today()-datetime.timedelta(days=14)
+#    sdate = datetime.date(2014,10,28)
+#    flist = make_server_filelist(ofs,3,sdate)
+#    output_dir = 'C:\\Users\\amy.macfadyen\\Documents\\Projects\\goods\\trunk\\static\\ocean_models\\COOPS\\NGOFS'
+#    for f in flist:
+#        nc = Dataset(f)
+#        t = nc.variables['time']
+#        ts = num2date(t[:],t.units)
+#        print ts, '...writing'
+#        download_and_save(f,output_dir)
+        
+    
