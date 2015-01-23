@@ -23,6 +23,7 @@ this only has to be done once). See NGOFS_multifile_example.py
 # specify local file or opendap url
 #data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/archives/necofs_mb'
 data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_FVCOM_OCEAN_MASSBAY_FORECAST.nc'
+grid = 'massb' #gom2, gom3, or massb
 #data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_GOM3_FORECAST.nc' 
 # the tri_grid class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -61,13 +62,18 @@ necofs.get_grid_topo(var_map)
 print 'Finding boundary segs'
 bnd = necofs.find_bndry_segs()
 print 'Ordering boundary segs and assigning types'
-ow1 = 1; ow2 = 139; #nodes defining start/end of open water boundary
+if grid.lower() == 'gom2':
+    ow1 = 1; ow2 = 60;
+elif grid.lower() == 'gom3':
+    ow1 = 1; ow2 = 120;
+elif grid.lower() == 'massb':
+    ow1 = 1; ow2 = 124;
 seg_types = []
 for b in bnd:
     if max(b) <= ow2 and min(b) >=ow1: #open water
-        seg_types.append(0)
-    else:
         seg_types.append(1)
+    else:
+        seg_types.append(0)
 necofs.order_boundary(bnd,seg_types)
 
 ## get the data

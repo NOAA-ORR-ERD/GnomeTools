@@ -1,43 +1,43 @@
 #!/usr/bin/env python
-from libgoods import romstools, nctools, data_files_dir
+from libgoods import curv_grid, nctools, noaa_coops, data_files_dir
 import datetime as dt
 import os 
-import numpy as np
 
 # specify local file or opendap url
 #data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NGOFS/MODELS/201309/nos.ngofs.fields.f000.20130901.t03z.nc'
-sdate = dt.datetime(2014,5,16,0,0)
-edate = dt.datetime(2014,5,18,18,0)
+sdate = dt.date(2014,5,16)
+edate = dt.date(2014,5,18)
 
-flist = []
-url_stem = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/TBOFS/MODELS/'
-while sdate < edate:
-    n = 1
-    yr = str(sdate.year)
-    mon = str(sdate.month).zfill(2)
-    day = str(sdate.day).zfill(2)
-    hr = str(sdate.hour).zfill(2)
-    url_sub_dir = yr + mon
-    while n < 7:
-        fname = 'nos.tbofs.fields.n00' + str(n) + '.' + yr + mon + day + '.t' + hr + 'z.nc'
-        n = n + 1
-        flist.append(url_stem + url_sub_dir + '/' + fname)
-    delta_t = dt.timedelta(0.25,0)
-    sdate = sdate + delta_t
-
+flist = noaa_coops.make_server_filelist('tbofs',0,sdate,end=edate,test_exist=False)
 print "Number of files to aggregate: ", len(flist)
-tbofs = romstools.romsgrid(flist)
-tbofs.get_dimensions()
+
+#We pick which variable we want to map to as this is sometimes not clear in virtual aggregations
+var_map = { 'time':'ocean_time',
+           }  
+           
+tbofs = curv_grid.roms(flist[0:2]) #just do the first couple for testing
+tbofs.get_dimensions(var_map)
 nctools.show_tbounds(tbofs.Dataset.variables['ocean_time'])
 
+#get grid info
+tbofs.get_grid_info()
+
 # subset
-nl = 28.2; sl = 27.67
-wl = -82.9; el = -82.2
-tbofs.subset(nl,sl,wl,el)
+#nl = 28.2; sl = 27.67
+#wl = -82.9; el = -82.2
+#tbofs.subset(nl,sl,wl,el)
 
-print 'getting data'
-tbofs.get_data(xindex=tbofs.x,yindex=tbofs.y)
-#tbofs.get_data()
+print 'Getting data'
+#get_data interps to rho grid unless tinterp=False
+#tbofs.get_data(xindex=tbofs.x,yindex=tbofs.y)
+tbofs.get_data(var_map) 
 
+# GNOME needs lat/lon mesh reduced by last row/column -- lat/lon on psi grid, u/v on rho grid
+tbofs.reduce_latlon_mesh_for_GNOME()
+ofn = os.path.join(data_files_dir,'tbofs_rho_reduced.nc')
+tbofs.data['lon'] = tbofs.data['lon_psi']
+tbofs.data['lat'] = tbofs.data['lat_psi']
+
+    
 print 'writing data'
-tbofs.write_it(os.path.join(data_files_dir, 'tbofs_example.nc'))
+tbofs.write_nc(os.path.join(data_files_dir,'tbofs_example.nc'),is3d=False)

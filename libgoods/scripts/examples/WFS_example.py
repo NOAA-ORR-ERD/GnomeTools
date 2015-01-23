@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-from libgoods import utools, nctools, data_files_dir
+from libgoods import tri_grid, nctools, data_files_dir
 import os 
+import datetime
 
 '''
 Sample script to retrieve data from unstructured grid netcdf "file" (can be
@@ -20,7 +21,10 @@ this only has to be done once). See NGOFS_multifile_example.py
 '''
 
 # specify local file or opendap url
-data_url = 'http://crow.marine.usf.edu:8080/thredds/dodsC/WFS_FVCOM_NF_model/USF_WFCOM_NF_20140530.nc'
+server_stem_url = 'http://crow.marine.usf.edu:8080/thredds/dodsC/WFS_FVCOM_NF_model/'
+file_stem = 'USF_WFCOM_NF_' #20140530.nc'
+d = datetime.date.today()
+data_url = server_stem_url + file_stem + str(d.year) + str(d.month).zfill(2) + str(d.day).zfill(2) + '.nc'
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -35,7 +39,7 @@ var_map = { 'longitude':'lon', \
           }  
 
 # class instantiation creates a netCDF Dataset object as an attribute
-wfs = utools.ugrid(data_url)
+wfs = tri_grid.ugrid(data_url)
 
 # get longitude, latitude, and time variables
 print 'Downloading data dimensions'
@@ -47,21 +51,28 @@ nctools.show_tbounds(wfs.Dataset.variables['time'])
 # get grid topo variables (nbe, nv)
 print 'Downloading grid topo variables'
 wfs.get_grid_topo(var_map)
-wfs.build_face_face_connectivity()
+
+# find and order the boundary
+print 'Finding boundary segs'
+bnd = wfs.find_bndry_segs()
+print 'Ordering boundary segs and assigning types'
+ow1 = 1; ow2 = 190; #nodes defining start/end of open water boundary
+seg_types = []
+for b in bnd:
+    if max(b) <= ow2 and min(b) >=ow1: #open water
+        seg_types.append(1)
+    else:
+        seg_types.append(0)
+wfs.order_boundary(bnd,seg_types)
+
 # get the data
 print 'Downloading data'
 #wfs.get_data(var_map,tindex=[0,1,1]) #First time step only
 #wfs.get_data(var_map) #All time steps in file
 wfs.get_data(var_map)
 
-# GNOME requires boundary info -- this file can be read form data_files directory
-# if saved or generated
-bndry_file = os.path.join(data_files_dir, 'WFS.bry')
-
-wfs.write_bndry_file('wfs',bndry_file)
-wfs.read_bndry_file(bndry_file)
-
 # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
+# why ccw?
 wfs.atts['nbe']['order'] = 'ccw'
 
 print 'Writing to GNOME file'

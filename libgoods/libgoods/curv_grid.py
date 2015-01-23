@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-from netCDF4 import Dataset
+from netCDF4 import Dataset, MFDataset
 from matplotlib import path
 from libgoods import nctools
 reload(nctools)
@@ -11,24 +11,32 @@ class cgrid():
         
         if FileName is not None:
             self.FileName = FileName
-            self.Dataset = Dataset(FileName)
+            if isinstance(FileName,list):
+                self.Dataset = MFDataset(FileName)
+            else:
+                self.Dataset = Dataset(FileName)
             self.data = dict()
             self.atts = dict()
             self.grid = dict()
             
     def get_dimensions(self,var_map):
         
-        self.time = self.Dataset.variables[var_map['time']]
-   
-        self.atts['time'] = self.time.__dict__ 
+        self.time = self.Dataset.variables[var_map['time']]  
+        self.atts['time'] = {}
+        for an_att in self.time.ncattrs():
+            self.atts['time'][an_att] = getattr(self.time,an_att) 
         self.data['time'] = self.time[:]
     
         lon = self.Dataset.variables[var_map['lon']]
-        self.atts['lon'] = lon.__dict__
+        self.atts['lon'] = {}
+        for an_att in lon.ncattrs():
+            self.atts['lon'][an_att] = getattr(lon,an_att)
         self.data['lon'] = lon[:]
         
         lat = self.Dataset.variables[var_map['lat']]
-        self.atts['lat'] = lat.__dict__
+        self.atts['lat'] = {}
+        for an_att in lat.ncattrs():
+            self.atts['lat'][an_att] = getattr(lat,an_att)
         self.data['lat'] = lat[:]        
     
     def subset_pt_in_poly(self,bbox,stride=1,lat='lat',lon='lon'):
@@ -126,9 +134,14 @@ class cgrid():
             self.data['lat_ss'] = self.data['lat'][y1:y2:step,x1:x2:step]
         
         u = self.Dataset.variables[var_map['u']]
-        self.atts['u'] = u.__dict__
+        self.atts['u'] = {}
+        for an_att in u.ncattrs():
+            self.atts['u'][an_att] = getattr(u,an_att) 
+
         v = self.Dataset.variables[var_map['v']]
-        self.atts['v'] = v.__dict__
+        self.atts['v'] = {}
+        for an_att in v.ncattrs():
+            self.atts['v'][an_att] = getattr(v,an_att) 
         
         self.data['u'] = u[t1:t2:ts,zindex,y1:y2:step,x1:x2:step]
         self.data['v'] = v[t1:t2:ts,zindex,y1:y2:step,x1:x2:step]
@@ -142,7 +155,6 @@ class cgrid():
           treat these two cases differently
         
         """
-        print 'using base writer'
         
         nc = Dataset(ofn,'w',format='NETCDF3_CLASSIC')
         
@@ -239,22 +251,20 @@ class cgrid():
             
         if self.grid.has_key('mask'):
             nc_mask = nc.createVariable('mask','f4',('yc','xc'))
-            print nc_mask.shape
-            print self.grid['mask'].shape
             nc_mask[:] = self.grid['mask']
 
         # add variable attributes from 'atts' (nested dict object)
-        for an_att in self.atts['time'].iteritems():
-            setattr(nc_time,an_att[0],an_att[1])
-        #setattr(nc_time,'units',nctools.fix_time_units(self.atts['time']['units']))
-
-        for an_att in self.atts['u'].iteritems():
-            if an_att[0] != '_FillValue':
-                setattr(nc_u,an_att[0],an_att[1])
+        for key,val in self.atts['time'].iteritems():
+            if not key.startswith('_'):
+                setattr(nc_time,key,val)
+            
+        for key,val in self.atts['u'].iteritems():
+            if not key.startswith('_'):
+                setattr(nc_u,key,val)
     
         for an_att in self.atts['v'].iteritems():
-            if an_att[0] != '_FillValue':
-                setattr(nc_v,an_att[0],an_att[1])
+            if not key.startswith('_'):
+                setattr(nc_v,key,val)
     
         nc.close()
     
@@ -264,28 +274,35 @@ class roms(cgrid):
     Requires passing in a var_map dict so the 
     variable names can be customized for different models or datasets
             
-    """
-           
+   """
+         
     def get_dimensions(self,var_map):
         
         self.time = self.Dataset.variables[var_map['time']]
-   
-        self.atts['time'] = self.time.__dict__ 
+        self.atts['time'] = {}
+        for an_att in self.time.ncattrs():
+            self.atts['time'][an_att] = getattr(self.time,an_att) 
         self.data['time'] = self.time[:]
         
         #load lat/lon for rho, u, and v grids
         for var in ['lat_rho','lat_u','lat_v','lon_rho','lon_u','lon_v']:
             ds_var = self.Dataset.variables[var]
-            self.atts[var] = ds_var.__dict__
+            self.atts[var] = {}
+            for an_att in ds_var.ncattrs():
+                self.atts[var][an_att] = getattr(ds_var,an_att)
             self.data[var] = ds_var[:]
         
         #Now load or create P grid lat/lon (sometimes not included in ROMS output)
         try:
             lon_psi = self.Dataset.variables['lon_psi']
-            self.atts['lon_psi'] = lon_psi.__dict__
+            self.atts['lon_psi'] = {}            
+            for an_att in lon_psi.ncattrs():
+                self.atts['lon_psi'][an_att] = getattr(lon_psi,an_att) 
             self.data['lon_psi'] = lon_psi[:]
             lat_psi = self.Dataset.variables['lat_psi']
-            self.atts['lat_psi'] = lat_psi.__dict__
+            self.atts['lat_psi'] = {}
+            for an_att in lat_psi.ncattrs():
+                self.atts['lat_psi'][an_att] = getattr(lat_psi,an_att) 
             self.data['lat_psi'] = lat_psi[:]
         except KeyError:
             self.data['lon_psi'] = (self.data['lon_rho'][0:-1,0:-1]+self.data['lon_rho'][1:,1:])*0.5
@@ -338,9 +355,13 @@ class roms(cgrid):
             self.data['lat_psi_ss'] = self.data['lat_psi'][y1:y2+1:step,x1:x2+1:step]
         
         u = self.Dataset.variables['u']
-        self.atts['u'] = u.__dict__
+        self.atts['u'] = {}
+        for an_att in u.ncattrs():
+            self.atts['u'][an_att] = getattr(u,an_att) 
         v = self.Dataset.variables['v']
-        self.atts['v'] = v.__dict__
+        self.atts['v'] = {}
+        for an_att in v.ncattrs():
+            self.atts['v'][an_att] = getattr(v,an_att) 
 
         if is3d: 
             u_on_upts = u[t1:t2+1:ts,:,y1:y2+1,x1:x2]
@@ -495,16 +516,17 @@ class roms(cgrid):
             nc_mask[:] = self.grid['mask']
 
         # add variable attributes from 'atts' (nested dict object)
-        for an_att in self.atts['time'].iteritems():
-            setattr(nc_time,an_att[0],an_att[1])
+        for key,val in self.atts['time'].iteritems():
+            if not key.startswith('_'):
+                setattr(nc_time,key,val)
             
-        for an_att in self.atts['u'].iteritems():
-            if an_att[0] != '_FillValue':
-                setattr(nc_u,an_att[0],an_att[1])
+        for key,val in self.atts['u'].iteritems():
+            if not key.startswith('_'):
+                setattr(nc_u,key,val)
     
         for an_att in self.atts['v'].iteritems():
-            if an_att[0] != '_FillValue':
-                setattr(nc_v,an_att[0],an_att[1])
+            if not key.startswith('_'):
+                setattr(nc_v,key,val)
     
     
         nc.close()

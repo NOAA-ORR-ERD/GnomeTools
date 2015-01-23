@@ -74,13 +74,10 @@ txselfe.get_grid_topo(var_map)
 print 'Finding boundary segs'
 bnd = txselfe.find_bndry_segs()
 print 'Ordering boundary segs and assigning types'
-ow1 = 1; ow2 = max(max(bnd)); #nodes defining start/end of open water boundary
-seg_types = []
-for b in bnd:
-    if max(b) <= ow2 and min(b) >=ow1: #open water
-        seg_types.append(0)
-    else:
-        seg_types.append(1)
+
+#in this case we don't know which segs are open water -- set all to land
+seg_types = [0] * len(bnd)
+
 txselfe.order_boundary(bnd,seg_types)
 
 # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
@@ -104,3 +101,5 @@ txselfe.atts['v'] = {'long_name':'northward_velocity','units':'m/s'}
   
 print 'Writing to GNOME file'
 txselfe.write_unstruc_grid(os.path.join(data_files_dir, 'txselfe_example.nc'))
+
+txselfe.Dataset.close()

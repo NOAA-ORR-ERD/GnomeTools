@@ -1,26 +1,23 @@
 #!/usr/bin/env python
 from libgoods import tri_grid, nctools, data_files_dir
-reload(tri_grid)
 import os 
 
 '''
-Sample script to retrieve data from unstructured grid netcdf "file" (can be
+Sample script to retrieve data from GLERL FVCOM netcdf "file" (can be
 OPeNDAP url), generate necessary grid topology (boundary info), and write 
 GNOME compatible output.
-
-The boundary file is saved to the data files directory so it only needs 
-to be generated once (unless you are subsetting the grid).
 
 To process multiple files (urls) either
 a) pass the filenames/urls in as a list -- this creates a netcdf4 MFDataset and is
 a good option for not too many files (all output is written to one nc file for GNOME 
 in this case)
 b) add a file list loop -- in this case put it after the grid topo vars are loaded (as
-this only has to be done once). See NGOFS_multifile_example.py
+this only has to be done once). See COOPS_FVCOM_multifile_example.py
 
 '''
 # specify local file or opendap url
 data_url = 'http://tds.glos.us/thredds/dodsC/FVCOM/SLRFVM-Latest-Forecast.nc'
+grid = 'slrfvm'
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
 # and ADCIRC which have different variable names
@@ -54,7 +51,17 @@ slrfvm.atts['nbe']['order'] = 'cw'
 print 'Finding boundary'
 bnd = slrfvm.find_bndry_segs()
 print 'Ordering boundary'
-seg_types = [0] * len(bnd)
+if grid.lower() == 'hecwfs':
+    ow = [1,2,20688,20689]
+elif grid.lower() == 'slrfvm':
+    ow = range(1,19)
+    ow.extend([19586, 19585, 19604, 19621, 19620, 19630, 19629, 19628])
+seg_types = []
+for seg in bnd:
+    if seg[0] in ow and seg[1] in ow:
+        seg_types.append(1)
+    else:
+        seg_types.append(0)
 slrfvm.order_boundary(bnd,seg_types)
 
 # get the data

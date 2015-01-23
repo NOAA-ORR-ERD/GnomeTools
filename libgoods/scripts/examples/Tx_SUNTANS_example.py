@@ -90,3 +90,5 @@ txsuntans.get_data(var_map,zindex=0)
   
 print 'Writing to GNOME file'
 txsuntans.write_unstruc_grid(os.path.join(data_files_dir, 'txsuntans_example.nc'))
+
+txsuntans.Dataset.close()

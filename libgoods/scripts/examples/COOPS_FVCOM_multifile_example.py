@@ -1,33 +1,31 @@
 #!/usr/bin/env python
 from libgoods import tri_grid, noaa_coops, data_files_dir, nctools
-reload(tri_grid)
 import datetime as dt
 import os 
 from netCDF4 import num2date, Dataset
 
 '''
-Sample script to retrieve data from unstructured grid netcdf "file" (can be
+Sample script to retrieve data from NOAA CO-OPS FVCOM netcdf "file" (can be
 OPeNDAP url), generate necessary grid topology (boundary info), and write 
 GNOME compatible output.
 
-The boundary file is saved to the data files directory so it only needs 
-to be generated once (unless you are subsetting the grid).
+To script illustrates how to access data from multiple files (urls) by looping
+through a filelist.
 
-To process multiple files (urls) this script passes the filenames/urls in as a list 
--- this creates a netcdf4 MFDataset and is
-a good option for not too many files (all output is written to one nc file for GNOME 
-in this case)
-Compare with sfbofs_multifile_example2 in this case, we use
-a file list loop after the grid topo vars are loaded (as
-this only has to be done once). 
+Alternatively, the list of filenames/urls can be passed directly when instantiating
+the ugrid object-- this creates a netcdf4 MFDataset and isa good option for not too 
+many files (all output is written to one nc file for GNOME in this case)
+
+Since multiple files are created, also create a text file that can be loaded
+into GNOME pointing to the individual files
 '''
 start = dt.date(2015,1,14)
 end = dt.date(2015,1,21)
 hour0 = 3
-flist = noaa_coops.make_server_filelist('sfbofs',hour0,start,end=end,test_exist=False)
+flist = noaa_coops.make_server_filelist('ngofs',hour0,start,end=end,test_exist=False)
 
 #generate text file with list of generated files
-list_of_ofns = file(os.path.join(data_files_dir,'sfbofs_filelist.txt'), 'w')
+list_of_ofns = file(os.path.join(data_files_dir,'ngofs_filelist.txt'), 'w')
 list_of_ofns.write('NetCDF Files\n')
 
 # the utools class requires a mapping of specific model variable names (values)
@@ -45,48 +43,48 @@ var_map = { 'longitude':'lon', \
 
 firsttime = 1
 
-for f in flist[0:5]:
+for f in flist:
     
     if firsttime:
         
         firsttime = 0
         # class instantiation creates a netCDF Dataset object as an attribute -- 
         # use the first file in the list only
-        sfbofs = tri_grid.ugrid(f)
+        ngofs = tri_grid.ugrid(f)
         
 #        # get longitude, latitude, and time variables
 #        print 'Downloading data dimensions'
-#        sfbofs.get_dimensions(var_map)
+#        ngofs.get_dimensions(var_map)
         
         # get grid topo variables (nbe, nv)
         print 'Downloading grid topo variables'
-        sfbofs.get_grid_topo(var_map)
+        ngofs.get_grid_topo(var_map)
         # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
-        sfbofs.atts['nbe']['order'] = 'cw'
+        ngofs.atts['nbe']['order'] = 'cw'
          
         # find and order the boundary
         print 'Finding boundary'
-        bnd = sfbofs.find_bndry_segs()
+        bnd = ngofs.find_bndry_segs()
         print 'Ordering boundary'
-        seg_types = [0] * len(bnd)
-        sfbofs.order_boundary(bnd,seg_types)
+        seg_types = noaa_coops.specify_bnd_types('ngofs',bnd)
+        ngofs.order_boundary(bnd,seg_types)
         
     else:
         
-        sfbofs.update(f) 
+        ngofs.update(f) 
 
     print 'Downloading data dimensions'
-    sfbofs.get_dimensions(var_map)
+    ngofs.get_dimensions(var_map)
     
     #get the data
     print 'Downloading data'
-    #sfbofs.get_data(var_map,tindex=[0,1,1]) #First time step only
-    sfbofs.get_data(var_map) #All time steps in file
+    #ngofs.get_data(var_map,tindex=[0,1,1]) #First time step only
+    ngofs.get_data(var_map) #All time steps in file
     
-    of_dt = nctools.round_time(num2date(sfbofs.data['time'][0],sfbofs.atts['time']['units']),roundto=3600)
+    of_dt = nctools.round_time(num2date(ngofs.data['time'][0],ngofs.atts['time']['units']),roundto=3600)
     ofn = of_dt.strftime('%Y%m%d_%H') + '.nc'
     list_of_ofns.write('[FILE]  ' + ofn + '\n')
     print 'Writing to GNOME file'
-    sfbofs.write_unstruc_grid(os.path.join(data_files_dir,ofn))
+    ngofs.write_unstruc_grid(os.path.join(data_files_dir,ofn))
     
 list_of_ofns.close()
