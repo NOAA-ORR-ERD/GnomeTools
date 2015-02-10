@@ -55,7 +55,11 @@ class ugrid:
             for an_att in time.ncattrs():
                 self.atts['time'][an_att] = getattr(time,an_att)
             self.data['time'] = time[:]
-            self.data['dtime'] = num2date(self.data['time'],time.units)
+            try:
+                self.data['dtime'] = num2date(self.data['time'],time.units)
+            except:
+                print 'Error converting to datetime object, invalid units'
+                pass
         except KeyError:
             pass
         

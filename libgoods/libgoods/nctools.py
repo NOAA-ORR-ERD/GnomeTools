@@ -102,7 +102,6 @@ def make_filelist_for_GNOME(file_dir,file_match='*.*',outfilename='filelist.txt'
 
 def utmToLatLng(zone, easting, northing, northernHemisphere=True):
     # Convert UTM coordinates to lat/lon
-    #TODO: this method probably belongs in a more generic module
 
     if not northernHemisphere:
         northing = 10000000 - northing
