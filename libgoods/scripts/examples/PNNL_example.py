@@ -12,8 +12,10 @@ GNOME compatible output.
 '''
 # specify local file or opendap url
 data_dir = 'C:\\Users\\amy.macfadyen\\Documents\\Projects\\goods\\trunk\\static\\ocean_models\\PNNL'
-file1 = 'psm_0090.nc'
-filename = os.path.join(data_dir,file1)
+#file1 = 'psm_0090.nc'
+#filename = os.path.join(data_dir,file1)
+files = ['psm_0090.nc','psm_0091.nc','psm_0092.nc','psm_0093.nc']
+filenames = [os.path.join(data_dir,f) for f in files]
 
 # the utools clasalish_sea requires a mapping of specific model variable names (values)
 # to common names (keys) so that the clasalish_sea methods can work with FVCOM, SELFE,
@@ -29,7 +31,7 @@ var_map = { 'longitude':'lon', \
           }  
 
 # clasalish_sea instantiation creates a netCDF Dataset object as an attribute
-salish_sea = tri_grid.ugrid(filename)
+salish_sea = tri_grid.ugrid(filenames)
 
 # get longitude, latitude, and time variables
 print 'Downloading data dimensions'

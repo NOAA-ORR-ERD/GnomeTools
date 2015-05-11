@@ -19,6 +19,10 @@ class cgrid():
             self.atts = dict()
             self.grid = dict()
             
+    def update(self,FileName):
+        #point to a new nc file or url without reinitializing everything
+        self.Dataset = Dataset(FileName)
+        
     def get_dimensions(self,var_map):
         
         self.time = self.Dataset.variables[var_map['time']]  
@@ -323,7 +327,7 @@ class roms(cgrid):
             x1 = xindex[0]; x2 = xindex[1]
         
 
-        self.grid['mask'] = self.Dataset.variables['mask_rho'][y1:y2+1,x1:x2+1] 
+        self.grid['mask_rho'] = self.Dataset.variables['mask_rho'][y1:y2+1,x1:x2+1] 
         self.grid['angle'] = self.Dataset.variables['angle'][y1:y2+1,x1:x2+1] 
         
         if is3d:
@@ -387,10 +391,10 @@ class roms(cgrid):
         '''Calculate u/v on rho points -- we lose exterior most u/v values
         Then rotate to north/east
         '''
-        self.grid['angle'] = self.grid['angle'][1:-1,1:-1]
-        self.grid['mask'] = self.grid['mask'][1:-1,1:-1]
-        cosa = (np.cos(self.grid['angle']) * self.grid['mask'])
-        sina = (np.sin(self.grid['angle']) * self.grid['mask'])
+        #self.grid['angle'] = self.grid['angle'][1:-1,1:-1]
+        #self.grid['mask'] = self.grid['mask'][1:-1,1:-1]
+        cosa = (np.cos(self.grid['angle'][1:-1,1:-1]) * self.grid['mask_rho'][1:-1,1:-1])
+        sina = (np.sin(self.grid['angle'][1:-1,1:-1]) * self.grid['mask_rho'][1:-1,1:-1])
         if is3d:
             u_rot = np.zeros([u.shape[0],u.shape[1],v.shape[2]-1,v.shape[2]-1])
             v_rot = np.zeros_like(u_rot)
@@ -408,13 +412,16 @@ class roms(cgrid):
         return u_rot, v_rot
         
     def reduce_latlon_mesh_for_GNOME(self):
-              
-        if self.data.has_key('lon_psi_ss'): #subset
-            self.data['lon_psi_ss'] = self.data['lon_psi_ss'][:-1,:-1]
-            self.data['lat_psi_ss'] = self.data['lat_psi_ss'][:-1,:-1]   
+           
+           
+        if self.data.has_key('lon_ss'): #subset
+            self.data['lon_ss'] = self.data['lon_ss'][:-1,:-1]
+            self.data['lat_ss'] = self.data['lat_ss'][:-1,:-1]   
         else:
-            self.data['lon_psi'] = self.data['lon_psi'][:-1,:-1]
-            self.data['lat_psi'] = self.data['lat_psi'][:-1,:-1]
+            self.data['lon'] = self.data['lon'][:-1,:-1]
+            self.data['lat'] = self.data['lat'][:-1,:-1]
+            
+        self.grid['mask'] = self.grid['mask_rho'][1:-1,1:-1]
 
     def write_nc_native(self,ofn,is3d=False):
         """
@@ -448,10 +455,7 @@ class roms(cgrid):
             if self.data['u'].shape[0] != len(self.data['time']):
                 raise Exception('Dimensions of u/v do not match time variable')
         
-        
-        
-        
-        
+
         # add Dimensions
         nc.createDimension('x',x)
         nc.createDimension('y',y)
@@ -511,9 +515,9 @@ class roms(cgrid):
             nc_u[:] = self.data['u']
             nc_v[:] = self.data['v']
             
-        if self.grid.has_key('mask'):
+        if self.grid.has_key('mask_rho'):
             nc_mask = nc.createVariable('mask_rho','f4',('yc','xc'))
-            nc_mask[:] = self.grid['mask']
+            nc_mask[:] = self.grid['mask_rho']
 
         # add variable attributes from 'atts' (nested dict object)
         for key,val in self.atts['time'].iteritems():

@@ -105,6 +105,11 @@ class ugrid:
             #TODO: call code to determine edges here
             pass
         
+        if var_map.has_key('depth'):
+            self.data['depth'] = self.Dataset.variables[var_map['depth']][:]
+        if var_map.has_key('sigma'):
+            self.data['sigma'] = self.Dataset.variables[var_map['sigma']][:]
+            
     def get_data(self,var_map,tindex=None,nindex=None,zindex=0):
     
         ''' 
@@ -118,7 +123,7 @@ class ugrid:
             self.data['time_ss'] = self.data['time'][tindex[0]:tindex[1]:tindex[2]]
         else:
             tindex = [0,len(self.data['time']),1]
-                        
+                    
         u = self.Dataset.variables[var_map['u_velocity']]
         self.atts['u'] = dict()
         for an_att in u.ncattrs():
@@ -130,8 +135,12 @@ class ugrid:
         
         if nindex is None:
             if len(u.shape)==3:
-                self.data['u'] = u[tindex[0]:tindex[1]:tindex[2],zindex,:]
-                self.data['v'] = v[tindex[0]:tindex[1]:tindex[2],zindex,:]    
+                if zindex > 0:
+                    self.data['u'] = u[tindex[0]:tindex[1]:tindex[2],0:zindex,:]
+                    self.data['v'] = v[tindex[0]:tindex[1]:tindex[2],0:zindex,:]
+                else:
+                    self.data['u'] = u[tindex[0]:tindex[1]:tindex[2],zindex,:]
+                    self.data['v'] = v[tindex[0]:tindex[1]:tindex[2],zindex,:]    
             elif len(u.shape)==2:
                 self.data['u'] = u[tindex[0]:tindex[1]:tindex[2],:]
                 self.data['v'] = v[tindex[0]:tindex[1]:tindex[2],:]
@@ -301,7 +310,8 @@ class ugrid:
         nc.createDimension('nbnd',len(self.data['bnd']))
         nc.createDimension('nbi',4)
         nc.createDimension('three',3)
-        #nc.createDimension('sigma',1) #coming soon?
+        if self.data.has_key('sigma'):
+            nc.createDimension('sigma',len(self.data['sigma'])) 
         
         try:
             ufill = self.atts['u']['_FillValue']
@@ -321,13 +331,25 @@ class ugrid:
         nc_nbe = nc.createVariable('nbe','int32',('three','nele'))
         nc_nv = nc.createVariable('nv','int32',('three','nele'))
         nc_bnd = nc.createVariable('bnd','int32',('nbnd','nbi'))
-        
+        if self.data.has_key('sigma'):
+            nc_sigma = nc.createVariable('sigma','f4',('sigma','node'))
+            #nc_sigma = nc.createVariable('sigma','f4',('sigma'))
+            nc_depth = nc.createVariable('depth','f4',('node'))
+            
         if self.data['u'].shape[-1] == len(self.data[lon_key]): #velocities on nodes
-            nc_u = nc.createVariable('u','f4',('time','node'),fill_value=ufill)
-            nc_v = nc.createVariable('v','f4',('time','node'),fill_value=vfill)
+            if len(self.data['u'].shape) == 3:
+                nc_u = nc.createVariable('u','f4',('time','sigma','node'),fill_value=ufill)
+                nc_v = nc.createVariable('v','f4',('time','sigma','node'),fill_value=vfill)  
+            else:
+                nc_u = nc.createVariable('u','f4',('time','node'),fill_value=ufill)
+                nc_v = nc.createVariable('v','f4',('time','node'),fill_value=vfill)
         else: #velocities on elements
-            nc_u = nc.createVariable('u','f4',('time','nele'),fill_value=ufill)
-            nc_v = nc.createVariable('v','f4',('time','nele'),fill_value=vfill)
+            if len(self.data['u'].shape) == 3:
+                nc_u = nc.createVariable('u','f4',('time','sigma','nele'),fill_value=ufill)
+                nc_v = nc.createVariable('v','f4',('time','sigma','nele'),fill_value=vfill)
+            else:   
+                nc_u = nc.createVariable('u','f4',('time','nele'),fill_value=ufill)
+                nc_v = nc.createVariable('v','f4',('time','nele'),fill_value=vfill)
         
         #adjust time if necessary
         ref_time = self.atts['time']['units'].split(' since ')[1]
@@ -341,12 +363,19 @@ class ugrid:
         nc_time[:] = self.data[t_key]
         nc_lon[:] = self.data[lon_key]
         nc_lat[:] = self.data[lat_key]
+        print nc_u.shape
+        print self.data['u'].shape
         nc_u[:] = self.data['u']
         nc_v[:] = self.data['v']
         nc_bnd[:] = self.data['bnd']
         nc_nbe[:] = self.data[nbe_key]
         nc_nv[:] = self.data[nv_key]
-        
+        if self.data.has_key('sigma'):
+            print nc_sigma.shape
+            print self.data['sigma'].shape
+            nc_sigma[:] = self.data['sigma'][:]
+            nc_depth[:] = self.data['depth']
+            
         #add variable attributes to netcdf file
         for an_att in self.atts['time'].iteritems():
            setattr(nc_time,an_att[0],an_att[1])

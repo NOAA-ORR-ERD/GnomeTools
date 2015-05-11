@@ -5,17 +5,17 @@ import os
 
 # specify local file or opendap url
 #data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NGOFS/MODELS/201309/nos.ngofs.fields.f000.20130901.t03z.nc'
-sdate = dt.date(2014,5,16)
-edate = dt.date(2014,5,18)
+sdate = dt.date(2015,3,8)
+#edate = dt.date(2014,5,18)
 
-flist = noaa_coops.make_server_filelist('tbofs',0,sdate,end=edate,test_exist=False)
+flist = noaa_coops.make_server_filelist('tbofs',0,sdate,test_exist=False)
 print "Number of files to aggregate: ", len(flist)
 
 #We pick which variable we want to map to as this is sometimes not clear in virtual aggregations
 var_map = { 'time':'ocean_time',
            }  
            
-tbofs = curv_grid.roms(flist[0:2]) #just do the first couple for testing
+tbofs = curv_grid.roms(flist) #just do the first couple for testing
 tbofs.get_dimensions(var_map)
 nctools.show_tbounds(tbofs.Dataset.variables['ocean_time'])
 
