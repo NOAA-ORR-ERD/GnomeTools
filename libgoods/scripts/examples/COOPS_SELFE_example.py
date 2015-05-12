@@ -20,8 +20,8 @@ this only has to be done once). See COOPS_FVCOM_multifile_example.py
 '''
 
 
-# specify local file or opendap url -- in this case files are one time step, not aggregated
-data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/CREOFS/MODELS/201412/nos.creofs.fields.n000.20141225.t03z.nc'
+# specify local file or opendap url -- in this case file are one time step, not aggregated
+data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/CREOFS/MODELS/201505/nos.creofs.fields.n000.20150506.t03z.nc'
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,

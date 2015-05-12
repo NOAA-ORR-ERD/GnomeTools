@@ -15,7 +15,7 @@ setup(
     description = "utilities for pre-processing input data for GNOME",
     long_description=open("README.md").read(),
     packages = ["libgoods",],
-    scripts = ["scripts/NECOFS_example.py",
+    scripts = [
                "scripts/hycom2bna.py",
                "scripts/nc_time_shift.py",
               ],
