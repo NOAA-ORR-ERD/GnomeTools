@@ -112,7 +112,7 @@ class cgrid():
                 pass
 
     
-    def get_data(self,var_map,tindex=None,yindex=None,xindex=None,zindex=0,is3d=False):
+    def get_data(self,var_map,tindex=None,yindex=None,xindex=None,zindex=0,is3d=False,extra_2dvars=[]):
     
         ''' 
         var_map is a dict mapping model variable names to common names
@@ -138,19 +138,33 @@ class cgrid():
             self.data['lat_ss'] = self.data['lat'][y1:y2:step,x1:x2:step]
         
         u = self.Dataset.variables[var_map['u']]
+        u.set_auto_maskandscale(False)
         self.atts['u'] = {}
         for an_att in u.ncattrs():
             self.atts['u'][an_att] = getattr(u,an_att) 
 
         v = self.Dataset.variables[var_map['v']]
+        v.set_auto_maskandscale(False)
         self.atts['v'] = {}
         for an_att in v.ncattrs():
             self.atts['v'][an_att] = getattr(v,an_att) 
         
-        self.data['u'] = u[t1:t2:ts,zindex,y1:y2:step,x1:x2:step]
-        self.data['v'] = v[t1:t2:ts,zindex,y1:y2:step,x1:x2:step]
+        try:
+            self.data['u'] = u[t1:t2:ts,zindex,y1:y2:step,x1:x2:step]
+            self.data['v'] = v[t1:t2:ts,zindex,y1:y2:step,x1:x2:step]
+        except ValueError: #data does not have vertical dimension
+            self.data['u'] = u[t1:t2:ts,y1:y2:step,x1:x2:step]
+            self.data['v'] = v[t1:t2:ts,y1:y2:step,x1:x2:step]
         
-    def write_nc(self,ofn,is3d=False):
+        for var in extra_2dvars:
+            nc_var = self.Dataset.variables[var]
+            nc_var.set_auto_maskandscale(False)
+            self.atts[var] = {}
+            for an_att in nc_var.ncattrs():
+                self.atts[var][an_att] = getattr(nc_var,an_att)
+            self.data[var] = nc_var[t1:t2:ts,y1:y2:step,x1:x2:step]
+        
+    def write_nc(self,ofn,is3d=False,extra_2dvars=[]):
         """
         Write GNOME compatible netCDF file (netCDF3)
         * velocities are on center points and rotated to north/east
@@ -269,6 +283,17 @@ class cgrid():
         for an_att in self.atts['v'].iteritems():
             if not key.startswith('_'):
                 setattr(nc_v,key,val)
+                
+        for var in extra_2dvars:
+            print var
+            nc_var = nc.createVariable(var,'f4',('yc','xc'))
+            nc_var[:] = self.data[var]
+            for an_att in self.atts[var].iteritems():
+                print an_att
+                if not key.startswith('_'):
+                    print 'setting'
+                    setattr(nc_var,key,val)
+            
     
         nc.close()
     
