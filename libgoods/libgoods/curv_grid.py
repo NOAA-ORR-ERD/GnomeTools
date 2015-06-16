@@ -280,18 +280,15 @@ class cgrid():
             if not key.startswith('_'):
                 setattr(nc_u,key,val)
     
-        for an_att in self.atts['v'].iteritems():
+        for key,val in self.atts['v'].iteritems():
             if not key.startswith('_'):
                 setattr(nc_v,key,val)
                 
         for var in extra_2dvars:
-            print var
-            nc_var = nc.createVariable(var,'f4',('yc','xc'))
+            nc_var = nc.createVariable(var,'f4',('time','yc','xc'))
             nc_var[:] = self.data[var]
-            for an_att in self.atts[var].iteritems():
-                print an_att
+            for key,val in self.atts[var].iteritems():
                 if not key.startswith('_'):
-                    print 'setting'
                     setattr(nc_var,key,val)
             
     

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import datetime
 import urllib2, requests
-from netCDF4 import Dataset, num2date
+from netCDF4 import Dataset
 import os, glob
 '''
 Methods for generating ordered filelist for a time series of CO-OPS data

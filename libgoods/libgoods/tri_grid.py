@@ -105,10 +105,19 @@ class ugrid:
             #TODO: call code to determine edges here
             pass
         
-        if var_map.has_key('depth'):
-            self.data['depth'] = self.Dataset.variables[var_map['depth']][:]
-        if var_map.has_key('sigma'):
-            self.data['sigma'] = self.Dataset.variables[var_map['sigma']][:]
+        for opt_var in ['depth','sigma','lonc','latc']:
+            if var_map.has_key(opt_var):
+                theVar = self.Dataset.variables[var_map[opt_var]]
+                self.data[opt_var] = theVar[:]
+                self.atts[opt_var] = dict()
+                for an_att in theVar.ncattrs():
+                    self.atts[opt_var][an_att] = getattr(theVar,an_att)  
+            
+#        if var_map.has_key('depth'):
+#            self.data['depth'] = self.Dataset.variables[var_map['depth']][:]
+#        if var_map.has_key('sigma'):
+#            self.data['sigma'] = self.Dataset.variables[var_map['sigma']][:]
+
             
     def get_data(self,var_map,tindex=None,nindex=None,zindex=0):
     
@@ -125,10 +134,12 @@ class ugrid:
             tindex = [0,len(self.data['time']),1]
                     
         u = self.Dataset.variables[var_map['u_velocity']]
+        u.set_auto_maskandscale(False)
         self.atts['u'] = dict()
         for an_att in u.ncattrs():
             self.atts['u'][an_att] = getattr(u,an_att)
         v = self.Dataset.variables[var_map['v_velocity']]
+        v.set_auto_maskandscale(False)
         self.atts['v'] = dict()
         for an_att in v.ncattrs():
             self.atts['v'][an_att] = getattr(v,an_att)
@@ -291,12 +302,14 @@ class ugrid:
                 
         lon_key = 'lon'; lat_key = 'lat'
         nv_key = 'nv'; nbe_key = 'nbe'
+        lonc_key = 'lonc'; latc_key = 'latc'
         # determine if its a subset of the grid
         try:
             if self.data['u'].shape[-1] == len(self.data['lon_ss']) or \
                 self.data['u'].shape[-1] == self.data['nbe_ss'].shape[-1]:
                 lon_key = 'lon_ss'; lat_key = 'lat_ss'
                 nv_key = 'nv_ss'; nbe_key = 'nbe_ss'
+                lonc_key = 'lonc_ss'; latc_key = 'latc_ss'
         except KeyError:
             if self.data['u'].shape[-1] != len(self.data['lon']) and \
                 self.data['u'].shape[-1] != self.data['nbe'].shape[-1]:
@@ -335,6 +348,9 @@ class ugrid:
             nc_sigma = nc.createVariable('sigma','f4',('sigma','node'))
             #nc_sigma = nc.createVariable('sigma','f4',('sigma'))
             nc_depth = nc.createVariable('depth','f4',('node'))
+        if self.data.has_key('lonc'):
+            nc_lonc = nc.createVariable('lonc','f4',('nele'))
+            nc_latc = nc.createVariable('latc','f4',('nele'))
             
         if self.data['u'].shape[-1] == len(self.data[lon_key]): #velocities on nodes
             if len(self.data['u'].shape) == 3:
@@ -350,7 +366,7 @@ class ugrid:
             else:   
                 nc_u = nc.createVariable('u','f4',('time','nele'),fill_value=ufill)
                 nc_v = nc.createVariable('v','f4',('time','nele'),fill_value=vfill)
-        
+                
         #adjust time if necessary
         ref_time = self.atts['time']['units'].split(' since ')[1]
         ref_year = int(ref_time[0:4])
@@ -363,18 +379,18 @@ class ugrid:
         nc_time[:] = self.data[t_key]
         nc_lon[:] = self.data[lon_key]
         nc_lat[:] = self.data[lat_key]
-        print nc_u.shape
-        print self.data['u'].shape
         nc_u[:] = self.data['u']
         nc_v[:] = self.data['v']
         nc_bnd[:] = self.data['bnd']
         nc_nbe[:] = self.data[nbe_key]
         nc_nv[:] = self.data[nv_key]
         if self.data.has_key('sigma'):
-            print nc_sigma.shape
-            print self.data['sigma'].shape
             nc_sigma[:] = self.data['sigma'][:]
             nc_depth[:] = self.data['depth']
+        if self.data.has_key('lonc'):
+            lonc = self.data[lonc_key]
+            nc_lonc[:] = (lonc > 180).choose(lonc,lonc-360)
+            nc_latc[:] = self.data[latc_key]
             
         #add variable attributes to netcdf file
         for an_att in self.atts['time'].iteritems():
@@ -503,6 +519,9 @@ class ugrid:
         self.data['nv_ss'] = nv_ssr
         self.data['lon_ss'] = self.data['lon'][self.nodes_in_ss-1]
         self.data['lat_ss'] = self.data['lat'][self.nodes_in_ss-1]
+        if self.data.has_key('lonc'):
+            self.data['lonc_ss'] = self.data['lonc'][self.eles_in_ss-1]
+            self.data['latc_ss'] = self.data['latc'][self.eles_in_ss-1]
         
     def remap_bry_nodes(self,bndry_file):
       

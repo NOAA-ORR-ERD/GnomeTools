@@ -3,7 +3,11 @@ reload(curv_grid)
 import numpy as np
 import os
 
-f = os.path.join(data_files_dir,'t000.nc')
+acnfs_dir = os.path.join(data_files_dir,'acnfs')
+flist = []
+for t in range(0,168+24,24):
+    flist.append(os.path.join(acnfs_dir,'t' + str(t).zfill(3) + '.nc'))
+
 bbox = [65,-175,75,-145] #Geographic domain [South Lat, West Lon, North Lat, East Lon]
 out_dir = data_files_dir #Where to write files (default is libgoods/data_files )
 
@@ -16,7 +20,7 @@ var_map = { 'time':'time',
             'v': 'vocn',
             } 
             
-acnfs = curv_grid.cgrid(f)
+acnfs = curv_grid.cgrid(flist)
 acnfs.get_dimensions(var_map)
 
 #meshgrid lon/lat for curvilinear grid
@@ -27,7 +31,7 @@ acnfs.subset(bbox) #south lat, west lon, north lat, east lon
 acnfs.get_data(var_map,yindex=acnfs.y,xindex=acnfs.x,zindex=0,is3d=False,extra_2dvars=['hi','aice','uvel','vvel'])     
 
 #make mask
-mask = (acnfs.data['u'] == acnfs.atts['u']['missing_value']).choose(1,0)
+mask = (acnfs.data['u'][0,:,:] == acnfs.atts['u']['missing_value']).choose(1,0)
 acnfs.grid['mask'] = mask
 
 #rename ice vars
