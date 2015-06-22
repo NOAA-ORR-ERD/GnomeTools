@@ -14,9 +14,11 @@ var_map = { 'time':'time',
            }  
 hiroms = curv_grid.roms(url)
 hiroms.get_dimensions(var_map)
+hiroms.data['lon'] = hiroms.data['lon_psi']
+hiroms.data['lat'] = hiroms.data['lat_psi']
 
 # try subset
-subset = 0
+subset = 1
 
 #Only download last five timesteps
 ti=[len(hiroms.data['time'])-5,len(hiroms.data['time']),1]
@@ -29,14 +31,15 @@ if subset:
     hiroms.get_data(var_map,tindex=ti,xindex=hiroms.x,yindex=hiroms.y)
     hiroms.reduce_latlon_mesh_for_GNOME()
     ofn = os.path.join(data_files_dir,'hiroms_ss_rho_reduced.nc')
-    hiroms.data['lon_ss'] = hiroms.data['lon_psi_ss']
-    hiroms.data['lat_ss'] = hiroms.data['lat_psi_ss']
+#    hiroms.data['lon_ss'] = hiroms.data['lon_psi_ss']
+#    hiroms.data['lat_ss'] = hiroms.data['lat_psi_ss']
     hiroms.write_nc(ofn,is3d=False)
 else:
     #u/v interpolated to rho grid, u/v and lat/lon the same size (works in current GNOME)
     print 'interp and reduce'
     hiroms.get_grid_info()
     hiroms.get_data(var_map,tindex=ti)
+    hiroms.get_grid_info()
     hiroms.reduce_latlon_mesh_for_GNOME()
     ofn = os.path.join(data_files_dir,'hiroms_rho_reduced.nc')
     hiroms.data['lon'] = hiroms.data['lon_psi']

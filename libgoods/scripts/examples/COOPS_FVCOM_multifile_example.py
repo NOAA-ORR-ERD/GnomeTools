@@ -2,8 +2,7 @@
 from libgoods import tri_grid, noaa_coops, data_files_dir, nctools
 import datetime as dt
 import os 
-from netCDF4 import num2date, Dataset
-
+from netCDF4 import num2date
 '''
 Sample script to retrieve data from NOAA CO-OPS FVCOM netcdf "file" (can be
 OPeNDAP url), generate necessary grid topology (boundary info), and write 

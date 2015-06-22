@@ -40,10 +40,12 @@ Confusing? Yes. Run the code and look at the output, the hard work is already do
 still have old file structure with more than one time step per file
 
 '''
-def specify_bnd_types(grid,segs):
+def specify_bnd_types(grid,segs,ss_land_nodes=[]):
     '''
     The node values were determined by plotting grid, they
     are not included in the model output
+    Land_bnd_segs are needed to get the boundary right for subset grids only
+    They are obtained by tri_grid remap_bry_nodes method
     '''
     if grid.lower() == 'ngofs':
         ow = range(1,180)
@@ -56,12 +58,20 @@ def specify_bnd_types(grid,segs):
     elif grid.lower() == 'sfbofs':
         ow = [1,2,3,4,5,97,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,144,51,52,53,54,55,150,56,57,58,59,60,61,62,63,64,65,66,162,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91]
     
-    seg_types = []
-    for seg in segs:
-        if seg[0] in ow and seg[1] in ow:
-            seg_types.append(1)
-        else:
-            seg_types.append(0)
+    seg_types= []
+    
+    if len(ss_land_nodes) > 0: #subset
+        for seg in segs:
+            if seg[0] in ss_land_nodes and seg[1] in ss_land_nodes:
+                seg_types.append(0)
+            else:
+                seg_types.append(1)
+    else:
+        for seg in segs:
+            if seg[0] in ow and seg[1] in ow:
+                seg_types.append(1)
+            else:
+                seg_types.append(0)
             
     return seg_types
     

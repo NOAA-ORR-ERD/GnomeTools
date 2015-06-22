@@ -42,4 +42,4 @@ for num,ti in enumerate(tid):
     print num2date(hycom.data['time_ss'],hycom.atts['time']['units'])
     hycom.write_nc(os.path.join(out_dir,'HYCOM_example_ ' + str(num).zfill(3) + '.nc'),is3d=False)
  
-nctools.make_filelist_for_GNOME(out_dir,'HYCOM_example_*.nc')   
+nctools.make_filelist_for_GNOME(out_dir,'HYCOM_example_*.nc',outfilename='HYCOM_filelist.txt')   

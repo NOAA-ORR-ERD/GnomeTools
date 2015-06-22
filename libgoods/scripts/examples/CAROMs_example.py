@@ -1,8 +1,9 @@
-from libgoods import reg_grid
+from libgoods import reg_grid,data_files_dir
 import os
 
-out_dir = 'C:\\Users\\amy.macfadyen\\Desktop\\CAROMS'
-
+out_dir = os.path.join(data_files_dir,'CAROMS')
+if not os.path.exists(out_dir):
+    os.mkdir(out_dir)
 
 var_map = { 'longitude':'lon', \
             'latitude':'lat', \

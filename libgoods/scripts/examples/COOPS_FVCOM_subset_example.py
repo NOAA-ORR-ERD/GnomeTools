@@ -49,8 +49,12 @@ ngofs.find_nodes_eles_in_ss(nl,sl,wl,el)
 # find and order the boundary
 print 'Finding boundary'
 bnd = ngofs.find_bndry_segs(subset=True)
+#In order to correctly specify land/ow segments requires comparison with full domain boundary
+#Create this by downloading entire domain grid info then saving it (write_bndry_file)
+bry_file = 'C:\\Users\\amy.macfadyen\\Documents\\Projects\\goods\\trunk\\static\\ocean_models\\COOPS\\ngofs.bry'
+land_nodes = ngofs.find_subset_land_nodes(bry_file)
+seg_types = noaa_coops.specify_bnd_types('ngofs',bnd,ss_land_nodes=land_nodes)
 print 'Ordering boundary'
-seg_types = noaa_coops.specify_bnd_types('ngofs',bnd)
 ngofs.order_boundary(bnd,seg_types)
 
 # get the data

@@ -16,8 +16,7 @@ this only has to be done once). See COOPS_FVCOM_multifile_example.py
 
 '''
 # specify local file or opendap url
-#data_url = 'http://tds.glos.us/thredds/dodsC/FVCOM/stclair-Latest-Forecast.nc'
-data_url = os.path.join(data_files_dir,'stclair.nc')
+data_url = 'http://tds.glos.us/thredds/dodsC/FVCOM/HECWFS-Latest-Forecast.nc'
 grid = 'hecwfs'
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,

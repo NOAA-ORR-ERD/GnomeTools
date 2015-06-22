@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 from libgoods import tri_grid, nctools
-reload(tri_grid)
 import os 
 import numpy as np
 
 '''
-Sample script to retrieve data from NOAA CO-OPS FVCOM netcdf "file" (can be
-OPeNDAP url), generate necessary grid topology (boundary info), and write 
-GNOME compatible output.
+Script to load PNNL Puget Sound FVCOM files (these are not publicly available yet)
+Worked with sample files provided by Tarang
 
 '''
 # specify local file or opendap url

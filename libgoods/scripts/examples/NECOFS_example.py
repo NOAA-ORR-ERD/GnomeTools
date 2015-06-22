@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from libgoods import tri_grid, nctools, data_files_dir
-reload(tri_grid)
 import os 
 
 '''
@@ -78,9 +77,8 @@ necofs.order_boundary(bnd,seg_types)
 
 ## get the data
 #print 'Downloading data'
-#necofs.get_data(var_map,tindex=[0,1,1]) #First time step only
-necofs.get_data(var_map) #All time steps in file
-#necofs.get_data(var_map,tindex=tindex)
+necofs.get_data(var_map,tindex=[0,1,1]) #First time step only
+#necofs.get_data(var_map) #All time steps in file
 #
 
 ## GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)

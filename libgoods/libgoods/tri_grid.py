@@ -158,7 +158,7 @@ class ugrid:
             else:
                 print "Error:velocity is not 2 or 3 dimensional"
                 raise
-        else: #Spatial subset -- under development but *mostly* working
+        else: #Spatial subset -- under development but *mostly* working (TODO: add 3D)
             if u.shape[-1] == max(self.data['nbe'].shape):
                 # velocities on elements
                 id = np.where(np.diff(self.eles_in_ss) > 1)[0]
@@ -270,8 +270,7 @@ class ugrid:
             vals = [int(val) for val in line.split()]
             bnd.append(vals)
         
-        self.data['bnd'] = np.array(bnd)
-        self.atts['bnd'] = {'long_name':'Boundary segment information required for GNOME model'}    
+        return np.array(bnd),{'long_name':'Boundary segment information required for GNOME model'}
         
     def write_unstruc_grid(self,ofn):
         
@@ -523,22 +522,23 @@ class ugrid:
             self.data['lonc_ss'] = self.data['lonc'][self.eles_in_ss-1]
             self.data['latc_ss'] = self.data['latc'][self.eles_in_ss-1]
         
-    def remap_bry_nodes(self,bndry_file):
+    def find_subset_land_nodes(self,bndry_file):
       
         #find all the land segments and re-number to match new subset node numbers
-        #The outer boundary will be determined in write_bndry file then this segment
-        #info will be used to mark land segments
         
         print 'Remapping boundary segs to new subset node numbers'
         f = open(bndry_file)
-        self.ss_land_bry_segs = []
+        nodes = []
         for line in f:
             node1,node2,bnumber,flag = map(int,line.split())
             node1_id = np.where(self.nodes_in_ss == node1)[0]
             node2_id = np.where(self.nodes_in_ss == node2)[0]
             if len(node1_id) > 0 and len(node2_id) > 0 and flag == 0:
-                self.ss_land_bry_segs.append([node1_id[0]+1,node2_id[0]+1,flag])
+                nodes.extend([node1_id[0]+1,node2_id[0]+1])
+             
         f.close()
+        
+        return np.unique(nodes)
     
     
     def build_face_face_connectivity(self):

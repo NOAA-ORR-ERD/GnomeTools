@@ -377,8 +377,8 @@ class roms(cgrid):
         else:
             y1 = yindex[0]; y2 = yindex[1]; step = yindex[2]
             x1 = xindex[0]; x2 = xindex[1]
-            self.data['lon_psi_ss'] = self.data['lon_psi'][y1:y2+1:step,x1:x2+1:step]
-            self.data['lat_psi_ss'] = self.data['lat_psi'][y1:y2+1:step,x1:x2+1:step]
+            self.data['lon_ss'] = self.data['lon_psi'][y1:y2+1:step,x1:x2+1:step]
+            self.data['lat_ss'] = self.data['lat_psi'][y1:y2+1:step,x1:x2+1:step]
         
         u = self.Dataset.variables['u']
         self.atts['u'] = {}

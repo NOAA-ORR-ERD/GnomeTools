@@ -1,17 +1,16 @@
 from libgoods import curv_grid, data_files_dir
-reload(curv_grid)
 import numpy as np
 import os
 
+#This uses local files downloaded from ACNFS FTP site
 acnfs_dir = os.path.join(data_files_dir,'acnfs')
 flist = []
 for t in range(0,168+24,24):
     flist.append(os.path.join(acnfs_dir,'t' + str(t).zfill(3) + '.nc'))
 
-bbox = [65,-175,75,-145] #Geographic domain [South Lat, West Lon, North Lat, East Lon]
+
+bbox = [69,-172,72.5,-155] #Geographic domain [South Lat, West Lon, North Lat, East Lon]
 out_dir = data_files_dir #Where to write files (default is libgoods/data_files )
-
-
 
 var_map = { 'time':'time',
             'lon': 'lon',

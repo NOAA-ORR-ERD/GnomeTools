@@ -133,17 +133,7 @@ class rgrid:
       
         Write GNOME compatible netCDF file (netCDF3) from regular grid data
         
-        Call signature::
-            subset(time,lon,lat,u,v,atts,dfn)
-       
-        Arguments: 
-           *time*: 1-D time vector
-           *lon* : 1-D in decimal degrees -180:180
-           *lat* : 1-D in decimal degrees -90:90
-           *u*   : 2-D eastward velocity component
-           *v*   : 2-D northward velocity component
-           *atts*: nested dict object of variable attributes with keys u, v, and t
-           *ofn* : netCDF output file name -- string
+        
     
         """
         
