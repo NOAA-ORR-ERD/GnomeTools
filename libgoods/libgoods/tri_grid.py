@@ -105,7 +105,7 @@ class ugrid:
             #TODO: call code to determine edges here
             pass
         
-        for opt_var in ['depth','sigma','lonc','latc']:
+        for opt_var in ['depth','sigma','lonc','latc','a1u','a2u']:
             if var_map.has_key(opt_var):
                 theVar = self.Dataset.variables[var_map[opt_var]]
                 self.data[opt_var] = theVar[:]
@@ -302,6 +302,7 @@ class ugrid:
         lon_key = 'lon'; lat_key = 'lat'
         nv_key = 'nv'; nbe_key = 'nbe'
         lonc_key = 'lonc'; latc_key = 'latc'
+        a1u_key = 'a1u'; a2u_key = 'a2u'
         # determine if its a subset of the grid
         try:
             if self.data['u'].shape[-1] == len(self.data['lon_ss']) or \
@@ -309,6 +310,7 @@ class ugrid:
                 lon_key = 'lon_ss'; lat_key = 'lat_ss'
                 nv_key = 'nv_ss'; nbe_key = 'nbe_ss'
                 lonc_key = 'lonc_ss'; latc_key = 'latc_ss'
+                a1u_key = 'a1u_ss'; a2u_key = 'a2u_ss'
         except KeyError:
             if self.data['u'].shape[-1] != len(self.data['lon']) and \
                 self.data['u'].shape[-1] != self.data['nbe'].shape[-1]:
@@ -322,6 +324,7 @@ class ugrid:
         nc.createDimension('nbnd',len(self.data['bnd']))
         nc.createDimension('nbi',4)
         nc.createDimension('three',3)
+        nc.createDimension('four',4)
         if self.data.has_key('sigma'):
             nc.createDimension('sigma',len(self.data['sigma'])) 
         
@@ -350,6 +353,9 @@ class ugrid:
         if self.data.has_key('lonc'):
             nc_lonc = nc.createVariable('lonc','f4',('nele'))
             nc_latc = nc.createVariable('latc','f4',('nele'))
+        if self.data.has_key('a1u'):
+            nc_a1u = nc.createVariable('a1u','f4',('four','nele'))
+            nc_a2u = nc.createVariable('a2u','f4',('four','nele'))
             
         if self.data['u'].shape[-1] == len(self.data[lon_key]): #velocities on nodes
             if len(self.data['u'].shape) == 3:
@@ -390,6 +396,11 @@ class ugrid:
             lonc = self.data[lonc_key]
             nc_lonc[:] = (lonc > 180).choose(lonc,lonc-360)
             nc_latc[:] = self.data[latc_key]
+        if self.data.has_key('a1u'):
+            print nc_a1u.shape
+            print self.data[a1u_key].shape
+            nc_a1u[:] = self.data[a1u_key]
+            nc_a2u[:] = self.data[a2u_key]
             
         #add variable attributes to netcdf file
         for an_att in self.atts['time'].iteritems():
@@ -521,6 +532,9 @@ class ugrid:
         if self.data.has_key('lonc'):
             self.data['lonc_ss'] = self.data['lonc'][self.eles_in_ss-1]
             self.data['latc_ss'] = self.data['latc'][self.eles_in_ss-1]
+        if self.data.has_key('a1u'):
+            self.data['a1u_ss'] = self.data['a1u'][:,self.eles_in_ss-1]
+            self.data['a2u_ss'] = self.data['a2u'][:,self.eles_in_ss-1]
         
     def find_subset_land_nodes(self,bndry_file):
       

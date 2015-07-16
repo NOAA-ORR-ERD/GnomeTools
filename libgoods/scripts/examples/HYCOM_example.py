@@ -8,8 +8,8 @@ from netCDF4 import num2date
 #These are things you might want to change
 url = 'http://tds.hycom.org/thredds/dodsC/GLBa0.08/expt_91.1'
 sdate = datetime.datetime(2015,1,1,0,0) #First day to download
-edate = datetime.datetime(2015,1,5,0,0) #Last day to download
-bbox = [40,-135,50,-125] #Geographic domain [South Lat, West Lon, North Lat, East Lon]
+edate = datetime.datetime(2015,1,2,0,0) #Last day to download
+bbox = [40,-135,50,-120] #Geographic domain [South Lat, West Lon, North Lat, East Lon]
 out_dir = data_files_dir #Where to write files (default is libgoods/data_files )
 #!!!!!!!!
 
@@ -38,6 +38,7 @@ hycom.subset(bbox) #south lat, west lon, north lat, east lon
 
 for num,ti in enumerate(tid):
     hycom.get_data(var_map,tindex=[ti,ti+1,1],yindex=hycom.y,xindex=hycom.x,zindex=0,is3d=False)     
+    hycom.make_vel_mask()
     hycom.data['time_ss'],hycom.atts['time']['units'] = nctools.adjust_time(hycom.data['time_ss'],native_tunits)    
     print num2date(hycom.data['time_ss'],hycom.atts['time']['units'])
     hycom.write_nc(os.path.join(out_dir,'HYCOM_example_ ' + str(num).zfill(3) + '.nc'),is3d=False)

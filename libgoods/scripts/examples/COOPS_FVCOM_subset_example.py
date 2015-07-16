@@ -19,6 +19,8 @@ var_map = { 'longitude':'lon', \
             'latitude':'lat', \
             'lonc': 'lonc',\
             'latc': 'latc',\
+            'a1u': 'a1u',\
+            'a2u': 'a2u',\
             'time':'time', \
             'u_velocity':'u', \
             'v_velocity':'v', \

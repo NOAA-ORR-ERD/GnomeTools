@@ -3,7 +3,6 @@ import numpy as np
 from netCDF4 import Dataset, MFDataset
 from matplotlib import path
 from libgoods import nctools
-reload(nctools)
 
 class cgrid():
     
@@ -156,6 +155,18 @@ class cgrid():
             self.data['u'] = u[t1:t2:ts,y1:y2:step,x1:x2:step]
             self.data['v'] = v[t1:t2:ts,y1:y2:step,x1:x2:step]
         
+        if var_map.has_key('lonc'):
+            lonc = self.Dataset.variables[var_map['lonc']]
+            latc = self.Dataset.variables[var_map['latc']]
+            self.atts['lonc'] = {}
+            for an_att in lonc.ncattrs():
+                self.atts['lonc'][an_att] = getattr(lonc,an_att)
+            self.data['lonc'] = lonc[y1:y2:step,x1:x2:step]
+            self.atts['latc'] = {}
+            for an_att in latc.ncattrs():
+                self.atts['latc'][an_att] = getattr(latc,an_att)
+            self.data['latc'] = lonc[y1:y2:step,x1:x2:step]
+            
         for var in extra_2dvars:
             nc_var = self.Dataset.variables[var]
             nc_var.set_auto_maskandscale(False)
@@ -163,6 +174,13 @@ class cgrid():
             for an_att in nc_var.ncattrs():
                 self.atts[var][an_att] = getattr(nc_var,an_att)
             self.data[var] = nc_var[t1:t2:ts,y1:y2:step,x1:x2:step]
+        
+    
+    def make_vel_mask(self):
+        fill_val = self.atts['u']['_FillValue']
+        u0 = self.data['u'][0,:,:]
+        self.grid['mask'] = (u0==fill_val).choose(1,0)
+        
         
     def write_nc(self,ofn,is3d=False,extra_2dvars=[]):
         """
@@ -209,17 +227,21 @@ class cgrid():
                         
         x = self.data[lon_key].shape[1]
         y = self.data[lat_key].shape[0]
-        
+         
         if self.data[lon_key].shape == self.data['u'].shape[-2:]:
+            #lat/lon are centerpoints
+            center_only = True
             xc = x
             yc = y
-        else:  
+        else:
+            center_only = False
             xc = x-1
             yc = y-1
 
         # add Dimensions
-        nc.createDimension('x',x)
-        nc.createDimension('y',y)
+        if not center_only:
+            nc.createDimension('x',x)
+            nc.createDimension('y',y)
         nc.createDimension('xc',xc)
         nc.createDimension('yc',yc)
         nc.createDimension('time',None)
@@ -237,9 +259,12 @@ class cgrid():
     
         # create variables
         nc_time = nc.createVariable('time','f4',('time',))
-        nc_lon = nc.createVariable('lon','f4',('y','x'))
-        nc_lat = nc.createVariable('lat','f4',('y','x'))
-        
+        nc_lonc = nc.createVariable('lonc','f4',('yc','xc'))
+        nc_latc = nc.createVariable('latc','f4',('yc','xc'))
+        if not center_only:
+            nc_lon = nc.createVariable('lon','f4',('y','x'))
+            nc_lat = nc.createVariable('lat','f4',('y','x'))
+            
         if self.atts.has_key('wind'):
             nc_u = nc.createVariable('air_u','f4',('time','yc','xc'), \
                 fill_value=ufill)
@@ -254,8 +279,14 @@ class cgrid():
                 fill_value=vfill)
         
          # add data
-        nc_lon[:] = self.data[lon_key]
-        nc_lat[:] = self.data[lat_key]
+        if center_only:
+            nc_lonc[:] = self.data[lon_key]
+            nc_latc[:] = self.data[lat_key]
+        else:
+            nc_lon[:] = self.data[lon_key]
+            nc_lat[:] = self.data[lat_key]
+            nc_lonc[:] = self.data['lonc']
+            nc_latc[:] = self.data['latc']
         
         #!!!!!!!!!!!!Add 3d
         if len(self.data['u'].shape) == 2:
@@ -276,10 +307,12 @@ class cgrid():
             if not key.startswith('_'):
                 setattr(nc_time,key,val)
             
+        self.atts['u']['coordinates'] = u'lonc latc time'
         for key,val in self.atts['u'].iteritems():
             if not key.startswith('_'):
                 setattr(nc_u,key,val)
-    
+                
+        self.atts['v']['coordinates'] = u'lonc latc time'
         for key,val in self.atts['v'].iteritems():
             if not key.startswith('_'):
                 setattr(nc_v,key,val)
@@ -310,15 +343,7 @@ class roms(cgrid):
             self.atts['time'][an_att] = getattr(self.time,an_att) 
         self.data['time'] = self.time[:]
         
-        #load lat/lon for rho, u, and v grids
-        for var in ['lat_rho','lat_u','lat_v','lon_rho','lon_u','lon_v']:
-            ds_var = self.Dataset.variables[var]
-            self.atts[var] = {}
-            for an_att in ds_var.ncattrs():
-                self.atts[var][an_att] = getattr(ds_var,an_att)
-            self.data[var] = ds_var[:]
-        
-        #Now load or create P grid lat/lon (sometimes not included in ROMS output)
+        #Load or create P grid lat/lon (sometimes not included in ROMS output)
         try:
             lon_psi = self.Dataset.variables['lon_psi']
             self.atts['lon_psi'] = {}            
@@ -331,14 +356,14 @@ class roms(cgrid):
                 self.atts['lat_psi'][an_att] = getattr(lat_psi,an_att) 
             self.data['lat_psi'] = lat_psi[:]
         except KeyError:
-            self.data['lon_psi'] = (self.data['lon_rho'][0:-1,0:-1]+self.data['lon_rho'][1:,1:])*0.5
-            self.atts['lon_psi'] = self.atts['lon_rho']
-            self.atts['lon_psi']['long_name'] = 'longitude of PSI-points'
-            self.data['lat_psi'] = (self.data['lat_rho'][0:-1,0:-1]+self.data['lat_rho'][1:,1:])*0.5
-            self.atts['lat_psi'] = self.atts['lat_rho']
-            self.atts['lat_psi']['long_name'] = 'latitude of PSI-points'
+            print 'Using rho grid to create P grid'
+            lon_rho = self.Dataset.variables['lon_rho'][:]
+            lat_rho = self.Dataset.variables['lat_rho'][:]
+            self.data['lon_psi'] = (lon_rho[0:-1,0:-1]+lon_rho[1:,1:])*0.5
+            self.atts['lon_psi'] = {'long_name':'longitude of PSI-points'}
+            self.data['lat_psi'] = (lat_rho[0:-1,0:-1]+lat_rho[1:,1:])*0.5
+            self.atts['lat_psi'] = {'long_name':'latitude of PSI-points'}
                 
-
     def get_grid_info(self,yindex=None,xindex=None,is3d=False):
         
         if xindex is None and yindex is None:
@@ -357,6 +382,16 @@ class roms(cgrid):
             self.grid['hc'] = self.Dataset.variables['hc'][:]
             self.grid['Cs_r'] = self.Dataset.variables['Cs_r'][:]
             self.grid['sc_r'] = self.Dataset.variables['s_rho'][:]
+            
+        #load lat/lon for rho, u, and v grids
+        #TODO: I don't think is right indexing for u/v grids (not used yet)
+        #for var in ['lat_rho','lat_u','lat_v','lon_rho','lon_u','lon_v']:
+        for var in ['lat_rho','lon_rho']:
+            ds_var = self.Dataset.variables[var]
+            self.atts[var] = {}
+            for an_att in ds_var.ncattrs():
+                self.atts[var][an_att] = getattr(ds_var,an_att)
+            self.data[var] = ds_var[:][y1:y2+1,x1:x2+1] 
     
     def get_data(self,var_map,tindex=None,yindex=None,xindex=None,is3d=False,interp=True):
         
@@ -404,6 +439,8 @@ class roms(cgrid):
                
         if interp:
             self.data['u'],self.data['v'] = self.interp_and_rotate(u_on_upts,v_on_vpts)
+            self.data['lon_rho'] = self.data['lon_rho'][1:-1,1:-1]
+            self.data['lat_rho'] = self.data['lat_rho'][1:-1,1:-1]
         else:
             self.data['u'] = u_on_upts
             self.data['v'] = v_on_vpts

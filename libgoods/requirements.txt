@@ -1,6 +1,7 @@
 # libgoods
 setuptools
 numpy>=1.7.0   
+matplotlib
 #pytest>=2.3.4
 #sphinx
 
