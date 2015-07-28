@@ -1,0 +1,12 @@
+.DS_Store
+
+*.py[cod]
+*.egg
+*.egg-info
+*.so
+dist
+build
+eggs
+sdist
+develop-eggs
+pip-log.txt
