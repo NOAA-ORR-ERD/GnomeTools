@@ -1,5 +1,9 @@
 # batch_gnome:
 
+**NOTE:** This is the "old" way  of doign it -- drifing GUI-GNOME (1.3.*). For the neweer way to do it, with py_gnome, see the lib_tap directory.
+
+
+
 A set of scripts and utilities for running GNOME in batch mode
 
 This is a set of python scripts an utilities that can be used to run the NOAA GNOME model in a batch mode, particularly to generate data for TAP. For more details about that, see the Office of Response and Restoration web site:
