@@ -33,6 +33,7 @@ ofn = os.path.join(data_files_dir,'hiroms_example.nc')
 
 hiroms.data['lonc'] = hiroms.data['lon_rho']
 hiroms.data['latc'] = hiroms.data['lat_rho']
+hiroms.grid['mask'] = hiroms.grid['mask_rho']
 
 hiroms.write_nc(ofn,is3d=False)
 
