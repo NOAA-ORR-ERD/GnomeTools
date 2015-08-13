@@ -30,38 +30,40 @@ class ugrid:
         #point to a new nc file or url without reinitializing everything
         self.Dataset = Dataset(FileName)
             
-    def get_dimensions(self,var_map):
+    def get_dimensions(self,var_map,get_time=True,get_xy=True):
         
-        try:
-            lat = self.Dataset.variables[var_map['latitude']]
-            self.atts['lat'] = dict()
-            for an_att in lat.ncattrs():
-                self.atts['lat'][an_att] = getattr(lat,an_att)
-            self.data['lat'] = lat[:]
-            
-            lon = self.Dataset.variables[var_map['longitude']]
-            self.atts['lon'] = dict()
-            for an_att in lon.ncattrs():
-                self.atts['lon'][an_att] = getattr(lon,an_att)
-            lon = lon[:]
-            self.data['lon'] = (lon > 180).choose(lon,lon-360)
-        except KeyError:
-            print 'Lat/lon variables missing or named differently'
-            pass
-        
-        try:
-            time = self.Dataset.variables[var_map['time']]
-            self.atts['time'] = dict()
-            for an_att in time.ncattrs():
-                self.atts['time'][an_att] = getattr(time,an_att)
-            self.data['time'] = time[:]
+        if get_xy:
             try:
-                self.data['dtime'] = num2date(self.data['time'],time.units)
-            except:
-                print 'Error converting to datetime object, invalid units'
+                lat = self.Dataset.variables[var_map['latitude']]
+                self.atts['lat'] = dict()
+                for an_att in lat.ncattrs():
+                    self.atts['lat'][an_att] = getattr(lat,an_att)
+                self.data['lat'] = lat[:]
+                
+                lon = self.Dataset.variables[var_map['longitude']]
+                self.atts['lon'] = dict()
+                for an_att in lon.ncattrs():
+                    self.atts['lon'][an_att] = getattr(lon,an_att)
+                lon = lon[:]
+                self.data['lon'] = (lon > 180).choose(lon,lon-360)
+            except KeyError:
+                print 'Lat/lon variables missing or named differently'
                 pass
-        except KeyError:
-            pass
+        
+        if get_time:        
+            try:
+                time = self.Dataset.variables[var_map['time']]
+                self.atts['time'] = dict()
+                for an_att in time.ncattrs():
+                    self.atts['time'][an_att] = getattr(time,an_att)
+                self.data['time'] = time[:]
+                try:
+                    self.data['dtime'] = num2date(self.data['time'],time.units)
+                except:
+                    print 'Error converting to datetime object, invalid units'
+                    pass
+            except KeyError:
+                pass
         
     def get_grid_topo(self,var_map):
         
@@ -162,9 +164,11 @@ class ugrid:
             if u.shape[-1] == max(self.data['nbe'].shape):
                 # velocities on elements
                 id = np.where(np.diff(self.eles_in_ss) > 1)[0]
+                indexer= self.eles_in_ss
             else:
                 # velocities on nodes
                 id = np.where(np.diff(self.nodes_in_ss) > 1)[0]
+                indexer = self.nodes_in_ss
             id2 = [-1]; id2.extend(id)
 
             #print 'Number of contiguous segments: ', len(id2)+1 
@@ -178,11 +182,11 @@ class ugrid:
                 except IndexError:
                     fid = -1
                 if  len(u.shape) == 3:
-                    this_u = u[tindex[0]:tindex[1]:tindex[2],zindex,self.eles_in_ss[sid]-1:self.eles_in_ss[fid]]
-                    this_v = v[tindex[0]:tindex[1]:tindex[2],zindex,self.eles_in_ss[sid]-1:self.eles_in_ss[fid]]
+                    this_u = u[tindex[0]:tindex[1]:tindex[2],zindex,indexer[sid]-1:indexer[fid]]
+                    this_v = v[tindex[0]:tindex[1]:tindex[2],zindex,indexer[sid]-1:indexer[fid]]
                 elif len(u.shape)==2:
-                    this_u = u[tindex[0]:tindex[1]:tindex[2],self.eles_in_ss[sid]-1:self.eles_in_ss[fid]]
-                    this_v = v[tindex[0]:tindex[1]:tindex[2],self.eles_in_ss[sid]-1:self.eles_in_ss[fid]]
+                    this_u = u[tindex[0]:tindex[1]:tindex[2],indexer[sid]-1:indexer[fid]]
+                    this_v = v[tindex[0]:tindex[1]:tindex[2],indexer[sid]-1:indexer[fid]]
                 else:
                     print "Error:velocity is not 2 or 3 dimensional"
                     raise

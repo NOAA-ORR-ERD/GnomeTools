@@ -1,6 +1,5 @@
 from libgoods import curv_grid, data_files_dir
 import os
-reload(curv_grid)
 
 '''
 Sample script to retrieve data from Arakawa c-grid type model
@@ -12,13 +11,11 @@ url = 'http://oos.soest.hawaii.edu/thredds/dodsC/hioos/roms_native/hiog/ROMS_Oah
 #HI ROMS output does not include psi grid -- create from rho grid
 var_map = { 'time':'time',
            }  
+           
 hiroms = curv_grid.roms(url)
 hiroms.get_dimensions(var_map)
 hiroms.data['lon'] = hiroms.data['lon_psi']
 hiroms.data['lat'] = hiroms.data['lat_psi']
-
-# try subset
-subset = 1
 
 #Only download last five timesteps
 ti=[len(hiroms.data['time'])-5,len(hiroms.data['time']),1]

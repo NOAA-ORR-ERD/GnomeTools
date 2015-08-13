@@ -22,25 +22,30 @@ class cgrid():
         #point to a new nc file or url without reinitializing everything
         self.Dataset = Dataset(FileName)
         
-    def get_dimensions(self,var_map):
-        
-        self.time = self.Dataset.variables[var_map['time']]  
-        self.atts['time'] = {}
-        for an_att in self.time.ncattrs():
-            self.atts['time'][an_att] = getattr(self.time,an_att) 
-        self.data['time'] = self.time[:]
+    def get_dimensions(self,var_map,get_time=True,get_xy=True):
+        '''
+        Get the model dimensions (time,x,y)
+        Can get just time dimension, just xy, or everything
+        '''
+        if get_time:
+            self.time = self.Dataset.variables[var_map['time']]  
+            self.atts['time'] = {}
+            for an_att in self.time.ncattrs():
+                self.atts['time'][an_att] = getattr(self.time,an_att) 
+            self.data['time'] = self.time[:]
     
-        lon = self.Dataset.variables[var_map['lon']]
-        self.atts['lon'] = {}
-        for an_att in lon.ncattrs():
-            self.atts['lon'][an_att] = getattr(lon,an_att)
-        self.data['lon'] = lon[:]
-        
-        lat = self.Dataset.variables[var_map['lat']]
-        self.atts['lat'] = {}
-        for an_att in lat.ncattrs():
-            self.atts['lat'][an_att] = getattr(lat,an_att)
-        self.data['lat'] = lat[:]        
+        if get_xy:
+            lon = self.Dataset.variables[var_map['lon']]
+            self.atts['lon'] = {}
+            for an_att in lon.ncattrs():
+                self.atts['lon'][an_att] = getattr(lon,an_att)
+            self.data['lon'] = lon[:]
+            
+            lat = self.Dataset.variables[var_map['lat']]
+            self.atts['lat'] = {}
+            for an_att in lat.ncattrs():
+                self.atts['lat'][an_att] = getattr(lat,an_att)
+            self.data['lat'] = lat[:]        
     
     def subset_pt_in_poly(self,bbox,stride=1,lat='lat',lon='lon'):
         '''
@@ -75,13 +80,13 @@ class cgrid():
         
         if (abs(np.nanmax(glat)-nl) < 1e-3) and (abs(np.nanmin(glon)-wl) < 1e-3): #original values
             self.y = [0,np.size(glat,0),1]
-            self.x = [[0,np.size(glat,1),1]]
+            self.x = [0,np.size(glat,1),1]
         else: #do subset
             
             if dl == 0:
                 [yvec,xvec] = np.where(np.logical_and(np.logical_and(glat>=sl,glat<=nl),np.logical_and(glon>=wl,glon<=el)))
             else:
-                [yvec,xvec] = np.where(np.logical_and(np.logical_and(glat>=sl,glat<=nl),np.logical_or(glon>=wl,glon<=el)))
+                [yvec,xvec] = np.where(np.logical_and(np.logical_and(glat>=sl,glat<=nl),np.logical_and(glon>=wl,glon<=el)))
             
             if len(yvec) > 2 and len(xvec) > 2:
                 y1 = min(yvec)
@@ -92,7 +97,7 @@ class cgrid():
                 self.x = [x1,x2,stride]           
             else:
                 self.y = [0,np.size(glat,0),1]
-                self.x = [[0,np.size(glat,1),1]]
+                self.x = [0,np.size(glat,1),1]
                
     def get_grid_info(self,grid_vars=['mask'],yindex=None,xindex=None):
     
@@ -182,7 +187,7 @@ class cgrid():
         self.grid['mask'] = (u0==fill_val).choose(1,0)
         
         
-    def write_nc(self,ofn,is3d=False,extra_2dvars=[]):
+    def write_nc(self,ofn,is3d=False,gui_gnome=False,extra_2dvars=[]):
         """
         Write GNOME compatible netCDF file (netCDF3)
         * velocities are on center points and rotated to north/east
@@ -224,7 +229,7 @@ class cgrid():
             if self.data['u'].shape[-2:] != lon_shape and \
                 self.data['u'].shape[-2:] != lon_shape_red:
                 raise Exception('Dimensions of u/v do not match grid variables')
-                        
+    
         x = self.data[lon_key].shape[1]
         y = self.data[lat_key].shape[0]
          
@@ -237,7 +242,7 @@ class cgrid():
             center_only = False
             xc = x-1
             yc = y-1
-
+        
         # add Dimensions
         if not center_only:
             nc.createDimension('x',x)
@@ -259,8 +264,13 @@ class cgrid():
     
         # create variables
         nc_time = nc.createVariable('time','f4',('time',))
-        nc_lonc = nc.createVariable('lonc','f4',('yc','xc'))
-        nc_latc = nc.createVariable('latc','f4',('yc','xc'))
+
+        if gui_gnome:
+            nc_lonc = nc.createVariable('lon','f4',('yc','xc'))
+            nc_latc = nc.createVariable('lat','f4',('yc','xc'))
+        else:
+            nc_lonc = nc.createVariable('lonc','f4',('yc','xc'))
+            nc_latc = nc.createVariable('latc','f4',('yc','xc'))
         if not center_only:
             nc_lon = nc.createVariable('lon','f4',('y','x'))
             nc_lat = nc.createVariable('lat','f4',('y','x'))
@@ -335,50 +345,52 @@ class roms(cgrid):
             
    """
          
-    def get_dimensions(self,var_map):
+    def get_dimensions(self,var_map,get_time=True,get_xy=True):
         
-        self.time = self.Dataset.variables[var_map['time']]
-        self.atts['time'] = {}
-        for an_att in self.time.ncattrs():
-            self.atts['time'][an_att] = getattr(self.time,an_att) 
-        self.data['time'] = self.time[:]
+        if get_time:
+            self.time = self.Dataset.variables[var_map['time']]
+            self.atts['time'] = {}
+            for an_att in self.time.ncattrs():
+                self.atts['time'][an_att] = getattr(self.time,an_att) 
+            self.data['time'] = self.time[:]
         
-        #Load or create P grid lat/lon (sometimes not included in ROMS output)
-        try:
-            lon_psi = self.Dataset.variables['lon_psi']
-            self.atts['lon_psi'] = {}            
-            for an_att in lon_psi.ncattrs():
-                self.atts['lon_psi'][an_att] = getattr(lon_psi,an_att) 
-            self.data['lon_psi'] = lon_psi[:]
-            lat_psi = self.Dataset.variables['lat_psi']
-            self.atts['lat_psi'] = {}
-            for an_att in lat_psi.ncattrs():
-                self.atts['lat_psi'][an_att] = getattr(lat_psi,an_att) 
-            self.data['lat_psi'] = lat_psi[:]
-        except KeyError:
-            print 'Using rho grid to create P grid'
-            lon_rho = self.Dataset.variables['lon_rho'][:]
-            lat_rho = self.Dataset.variables['lat_rho'][:]
-            self.data['lon_psi'] = (lon_rho[0:-1,0:-1]+lon_rho[1:,1:])*0.5
-            self.atts['lon_psi'] = {'long_name':'longitude of PSI-points'}
-            self.data['lat_psi'] = (lat_rho[0:-1,0:-1]+lat_rho[1:,1:])*0.5
-            self.atts['lat_psi'] = {'long_name':'latitude of PSI-points'}
+        if get_xy:
+            #Load or create P grid lat/lon (sometimes not included in ROMS output)
+            try:
+                lon_psi = self.Dataset.variables['lon_psi']
+                self.atts['lon_psi'] = {}            
+                for an_att in lon_psi.ncattrs():
+                    self.atts['lon_psi'][an_att] = getattr(lon_psi,an_att) 
+                self.data['lon_psi'] = lon_psi[:]
+                lat_psi = self.Dataset.variables['lat_psi']
+                self.atts['lat_psi'] = {}
+                for an_att in lat_psi.ncattrs():
+                    self.atts['lat_psi'][an_att] = getattr(lat_psi,an_att) 
+                self.data['lat_psi'] = lat_psi[:]
+            except KeyError:
+                print 'Using rho grid to create P grid'
+                lon_rho = self.Dataset.variables['lon_rho'][:]
+                lat_rho = self.Dataset.variables['lat_rho'][:]
+                self.data['lon_psi'] = (lon_rho[0:-1,0:-1]+lon_rho[1:,1:])*0.5
+                self.atts['lon_psi'] = {'long_name':'longitude of PSI-points'}
+                self.data['lat_psi'] = (lat_rho[0:-1,0:-1]+lat_rho[1:,1:])*0.5
+                self.atts['lat_psi'] = {'long_name':'latitude of PSI-points'}
                 
     def get_grid_info(self,yindex=None,xindex=None,is3d=False):
         
         if xindex is None and yindex is None:
-            x1 = 0; x2 = self.data['lon_psi'].shape[1]
+            x1 = 0; x2 = self.data['lon_psi'].shape[1]; step = 1
             y1 = 0; y2 = self.data['lon_psi'].shape[0]
         else:
-            y1 = yindex[0]; y2 = yindex[1]
+            y1 = yindex[0]; y2 = yindex[1]; step = yindex[2]
             x1 = xindex[0]; x2 = xindex[1]
         
 
-        self.grid['mask_rho'] = self.Dataset.variables['mask_rho'][y1:y2+1,x1:x2+1] 
-        self.grid['angle'] = self.Dataset.variables['angle'][y1:y2+1,x1:x2+1] 
+        self.grid['mask_rho'] = self.Dataset.variables['mask_rho'][y1:y2+1:step,x1:x2+1:step] 
+        self.grid['angle'] = self.Dataset.variables['angle'][y1:y2+1:step,x1:x2+1:step] 
         
         if is3d:
-            self.grid['h'] = self.Dataset.variables['h'][y1:y2+1,x1:x2+1] 
+            self.grid['h'] = self.Dataset.variables['h'][y1:y2+1:step,x1:x2+1:step] 
             self.grid['hc'] = self.Dataset.variables['hc'][:]
             self.grid['Cs_r'] = self.Dataset.variables['Cs_r'][:]
             self.grid['sc_r'] = self.Dataset.variables['s_rho'][:]
@@ -391,7 +403,8 @@ class roms(cgrid):
             self.atts[var] = {}
             for an_att in ds_var.ncattrs():
                 self.atts[var][an_att] = getattr(ds_var,an_att)
-            self.data[var] = ds_var[:][y1:y2+1,x1:x2+1] 
+            self.data[var] = ds_var[y1:y2+1:step,x1:x2+1:step] 
+
     
     def get_data(self,var_map,tindex=None,yindex=None,xindex=None,is3d=False,interp=True):
         
@@ -399,6 +412,7 @@ class roms(cgrid):
         In this case, lon/lat on psi (P) grid, u on u-grid, v on v-grid
         
         '''
+        
         if tindex is None:
             self.data['time_ss'] = self.data['time']
             t1 = 0; t2 = len(self.data['time']); ts = 1
@@ -412,8 +426,8 @@ class roms(cgrid):
         else:
             y1 = yindex[0]; y2 = yindex[1]; step = yindex[2]
             x1 = xindex[0]; x2 = xindex[1]
-            self.data['lon_ss'] = self.data['lon_psi'][y1:y2+1:step,x1:x2+1:step]
-            self.data['lat_ss'] = self.data['lat_psi'][y1:y2+1:step,x1:x2+1:step]
+            self.data['lon_ss'] = self.data['lon_psi'][y1:y2:step,x1:x2:step]
+            self.data['lat_ss'] = self.data['lat_psi'][y1:y2:step,x1:x2:step]
         
         u = self.Dataset.variables['u']
         self.atts['u'] = {}
@@ -424,13 +438,16 @@ class roms(cgrid):
         for an_att in v.ncattrs():
             self.atts['v'][an_att] = getattr(v,an_att) 
 
-        if is3d: 
+        if len(u.shape) == 3: #no z dimension
+            u_on_upts = u[t1:t2+1:ts,y1:y2+1,x1:x2]
+            v_on_vpts = v[t1:t2+1:ts,y1:y2,x1:x2+1]          
+        elif is3d: 
             u_on_upts = u[t1:t2+1:ts,:,y1:y2+1,x1:x2]
             v_on_vpts = v[t1:t2+1:ts,:,y1:y2,x1:x2+1]
         else:
             u_on_upts = u[t1:t2+1:ts,-1,y1:y2+1,x1:x2]
             v_on_vpts = v[t1:t2+1:ts,-1,y1:y2,x1:x2+1]
-
+        
         #replace nans or fill values with 0 for interpolating to rho grid
         u_on_upts = (np.isnan(u_on_upts)).choose(u_on_upts,0)
         v_on_vpts = (np.isnan(v_on_vpts)).choose(v_on_vpts,0)
@@ -441,6 +458,7 @@ class roms(cgrid):
             self.data['u'],self.data['v'] = self.interp_and_rotate(u_on_upts,v_on_vpts)
             self.data['lon_rho'] = self.data['lon_rho'][1:-1,1:-1]
             self.data['lat_rho'] = self.data['lat_rho'][1:-1,1:-1]
+            self.grid['mask_rho'] = self.grid['mask_rho'][1:-1,1:-1]
         else:
             self.data['u'] = u_on_upts
             self.data['v'] = v_on_vpts
@@ -471,7 +489,6 @@ class roms(cgrid):
         return u_rot, v_rot
         
     def reduce_latlon_mesh_for_GNOME(self):
-           
            
         if self.data.has_key('lon_ss'): #subset
             self.data['lon_ss'] = self.data['lon_ss'][:-1,:-1]

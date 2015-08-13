@@ -22,6 +22,8 @@ this only has to be done once). See COOPS_FVCOM_multifile_example.py
 
 # specify local file or opendap url -- in this case file are one time step, not aggregated
 data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/CREOFS/MODELS/201505/nos.creofs.fields.n000.20150506.t03z.nc'
+nl = 46.4; sl = 46.1
+wl = -124.2; el = -123.193
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -54,17 +56,23 @@ print 'Downloading grid topo variables'
 creofs.get_grid_topo(var_map)
 creofs.atts['nbe']['order'] = 'ccw'
 
+creofs.find_nodes_eles_in_ss(nl,sl,wl,el)
+
 # find and order the boundary
 print 'Finding boundary'
-bnd = creofs.find_bndry_segs()
+bnd = creofs.find_bndry_segs(subset=True)
+#In order to correctly specify land/ow segments requires comparison with full domain boundary
+#Create this by downloading entire domain grid info then saving it (write_bndry_file)
+bry_file = 'C:\\Users\\amy.macfadyen\\Documents\\Projects\\goods\\trunk\\static\\ocean_models\\COOPS\\creofs.bry'
+land_nodes = creofs.find_subset_land_nodes(bry_file)
+seg_types = noaa_coops.specify_bnd_types('creofs',bnd,ss_land_nodes=land_nodes)
 print 'Ordering boundary'
-seg_types = noaa_coops.specify_bnd_types('creofs',bnd)
 creofs.order_boundary(bnd,seg_types)
 
 # get the data
 print 'Downloading data'
 #creofs.get_data(var_map,tindex=[0,1,1]) #First time step only
-creofs.get_data(var_map,zindex=-1) #All time steps in file
+creofs.get_data(var_map,zindex=-1,nindex=creofs.nodes_in_ss) #All time steps in file
  
 print 'Writing to GNOME file'
 creofs.write_unstruc_grid(os.path.join(data_files_dir, 'creofs_example.nc'))
