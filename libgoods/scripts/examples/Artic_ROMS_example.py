@@ -1,4 +1,4 @@
-from libgoods import curv_grid, data_files_dir
+from libgoods import curv_grid, data_files_dir, nctools
 import os
 
 '''
@@ -7,8 +7,8 @@ Sample script to retrieve data from Arakawa c-grid type model
 '''
 grid_file = 'grid_Arctic_1.nc'
 data_file = 'arctic_avg2_0004.nc'
-bbox = [65,170,75,240]
-subset = False
+bbox = [65,170,87,240]
+subset = True
 
 var_map = { 'time':'ocean_time',
            }  
@@ -55,6 +55,9 @@ arcroms.data['lonc'] = arcroms.data['lon_rho']
 arcroms.data['latc'] = arcroms.data['lat_rho']
 arcroms.grid['mask'] = arcroms.grid['mask_rho']
 
+t,t_units = nctools.adjust_time(arcroms.data['time_ss'],arcroms.atts['time']['units'])
+arcroms.data['time_ss'] = t
+arcroms.atts['time']['units'] = t_units
 arcroms.write_nc(ofn,gui_gnome=True,is3d=False)
 
 
