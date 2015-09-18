@@ -267,6 +267,7 @@ class cgrid():
 
         if gui_gnome:
             nc_lonc = nc.createVariable('lon','f4',('yc','xc'))
+            
             nc_latc = nc.createVariable('lat','f4',('yc','xc'))
         else:
             nc_lonc = nc.createVariable('lonc','f4',('yc','xc'))
@@ -274,6 +275,14 @@ class cgrid():
         if not center_only:
             nc_lon = nc.createVariable('lon','f4',('y','x'))
             nc_lat = nc.createVariable('lat','f4',('y','x'))
+            setattr(nc_lon,'standard_name','longitude')
+            setattr(nc_lat,'standard_name','latitude')
+            setattr(nc_lon,'units','degrees_east')
+            setattr(nc_lat,'units','degrees_north')
+        setattr(nc_lonc,'standard_name','longitude of center points')
+        setattr(nc_latc,'standard_name','latitude of center points')
+        setattr(nc_lonc,'units','degrees_east')
+        setattr(nc_latc,'units','degrees_north')
             
         if self.atts.has_key('wind'):
             nc_u = nc.createVariable('air_u','f4',('time','yc','xc'), \
@@ -311,25 +320,30 @@ class cgrid():
         if self.grid.has_key('mask'):
             nc_mask = nc.createVariable('mask','f4',('yc','xc'))
             nc_mask[:] = self.grid['mask']
+            setattr(nc_mask,'standard_name','mask on center points')
+            setattr(nc_mask,'coordinates',u'latc lonc')
 
         # add variable attributes from 'atts' (nested dict object)
         for key,val in self.atts['time'].iteritems():
             if not key.startswith('_'):
                 setattr(nc_time,key,val)
             
-        self.atts['u']['coordinates'] = u'lonc latc time'
+        self.atts['u']['coordinates'] = u'latc lonc'
         for key,val in self.atts['u'].iteritems():
             if not key.startswith('_'):
                 setattr(nc_u,key,val)
+        setattr(nc_u,'time','time')
                 
-        self.atts['v']['coordinates'] = u'lonc latc time'
+        self.atts['v']['coordinates'] = u'latc lonc'
         for key,val in self.atts['v'].iteritems():
             if not key.startswith('_'):
                 setattr(nc_v,key,val)
+        setattr(nc_v,'time','time')
                 
         for var in extra_2dvars:
-            nc_var = nc.createVariable(var,'f4',('time','yc','xc'))
+            nc_var = nc.createVariable(var,'f4',('yc','xc'))
             nc_var[:] = self.data[var]
+            setattr(nc_var,'coordinates',u'time latc lonc')
             for key,val in self.atts[var].iteritems():
                 if not key.startswith('_'):
                     setattr(nc_var,key,val)

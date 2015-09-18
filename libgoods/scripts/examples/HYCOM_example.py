@@ -7,10 +7,11 @@ from netCDF4 import num2date
 #!!!!!!!!!
 #These are things you might want to change
 url = 'http://tds.hycom.org/thredds/dodsC/GLBa0.08/expt_91.1'
-sdate = datetime.datetime(2014,3,8,0,0) #First day to download
-edate = datetime.datetime(2015,7,30,0,0) #Last day to download
+sdate = datetime.datetime(2015,3,8,0,0) #First day to download
+edate = datetime.datetime(2015,3,10,0,0) #Last day to download
 bbox = [-41,30,26,126] #Geographic domain [South Lat, West Lon, North Lat, East Lon]
-out_dir = os.path.join(data_files_dir,'Indian_Ocean') #Where to write files (default is libgoods/data_files )
+out_dir = data_files_dir
+#out_dir = os.path.join(data_files_dir,'Indian_Ocean') #Where to write files (default is libgoods/data_files )
 #!!!!!!!!
 
 
