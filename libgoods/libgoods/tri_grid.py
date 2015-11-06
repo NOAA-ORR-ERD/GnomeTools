@@ -16,7 +16,6 @@ class ugrid:
     """
     
     def __init__(self,FileName=None):
-            
         if FileName is not None:
             self.FileName = FileName
             if isinstance(FileName,list):

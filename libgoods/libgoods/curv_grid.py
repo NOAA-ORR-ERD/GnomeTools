@@ -20,7 +20,10 @@ class cgrid():
             
     def update(self,FileName):
         #point to a new nc file or url without reinitializing everything
-        self.Dataset = Dataset(FileName)
+            if isinstance(FileName,list):
+                self.Dataset = MFDataset(FileName)
+            else:
+                self.Dataset = Dataset(FileName)
         
     def get_dimensions(self,var_map,get_time=True,get_xy=True):
         '''
@@ -444,10 +447,12 @@ class roms(cgrid):
             self.data['lat_ss'] = self.data['lat_psi'][y1:y2:step,x1:x2:step]
         
         u = self.Dataset.variables['u']
+        u.set_auto_maskandscale(False)
         self.atts['u'] = {}
         for an_att in u.ncattrs():
             self.atts['u'][an_att] = getattr(u,an_att) 
         v = self.Dataset.variables['v']
+        v.set_auto_maskandscale(False)
         self.atts['v'] = {}
         for an_att in v.ncattrs():
             self.atts['v'][an_att] = getattr(v,an_att) 

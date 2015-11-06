@@ -88,7 +88,8 @@ def make_server_filelist(model,hour0,start,end=None,test_exist=False):
         start (datetime.date): Look for model output beginning 
             on this date
         end (datetime.date): Look for model output ending before
-            this date (if None or > datetime.utcnow() append latest forecast)
+            this date (if None or > datetime.utcnow() append latest forecast,
+            it will not be truncated so it may go beyond end date)
         test_exists(bool): Set to True when accessing files from COOPS server
             and want to check existence before operating on them       
 
@@ -99,8 +100,8 @@ def make_server_filelist(model,hour0,start,end=None,test_exist=False):
     flist = []
     stem = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/' + model.upper() + '/MODELS/'
     sdate = datetime.datetime.combine(start,datetime.time(hour0,0))
-    if end is None or end > datetime.datetime.utcnow().date():
-        edate = datetime.datetime.utcnow()
+    if end is None or end > datetime.datetime.utcnow().date() - datetime.timedelta(hours=6):
+        edate = datetime.datetime.utcnow() - datetime.timedelta(hours=6)
         append_fc = 1
     else:
         edate = datetime.datetime.combine(end,datetime.time(hour0,0))

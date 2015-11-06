@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-from netCDF4 import Dataset
+from netCDF4 import Dataset, MFDataset
 
 class rgrid:
     """
@@ -14,29 +14,36 @@ class rgrid:
             
         if FileName is not None:
             self.FileName = FileName
-            self.Dataset = Dataset(FileName)
+            if isinstance(FileName,list):
+                self.Dataset = MFDataset(FileName,aggdim='time')
+            else:
+                self.Dataset = Dataset(FileName)
             self.data = dict()
             self.atts = dict()
             
     def update(self,FileName):
         #point to a new nc file or url without reinitializing everything
-        self.Dataset = Dataset(FileName)
+            if isinstance(FileName,list):
+                self.Dataset = MFDataset(FileName,aggdim='time')
+            else:
+                self.Dataset = Dataset(FileName)
             
-    def get_dimensions(self,var_map):
+    def get_dimensions(self,var_map,get_time=True,get_xy=True):
         
-        self.time = self.Dataset.variables[var_map['time']]
-   
-        self.atts['time'] = self.time.__dict__ 
-        self.data['time'] = self.time[:]
+        if get_time:
+            self.time = self.Dataset.variables[var_map['time']]
+            self.atts['time'] = self.time.__dict__ 
+            self.data['time'] = self.time[:]
         
-        lat = self.Dataset.variables[var_map['latitude']]
-        self.atts['lat'] = lat.__dict__
-        self.data['lat'] = lat[:]
-        
-        lon = self.Dataset.variables[var_map['longitude']]
-        self.atts['lon'] = lon.__dict__
-        lon = lon[:]
-        self.data['lon'] = (lon > 180).choose(lon,lon-360)
+        if get_xy:
+            lat = self.Dataset.variables[var_map['latitude']]
+            self.atts['lat'] = lat.__dict__
+            self.data['lat'] = lat[:]
+            
+            lon = self.Dataset.variables[var_map['longitude']]
+            self.atts['lon'] = lon.__dict__
+            lon = lon[:]
+            self.data['lon'] = (lon > 180).choose(lon,lon-360)
         
     def subset(self,bbox,stride=1,dl=0,lat='lat',lon='lon'):
         '''
