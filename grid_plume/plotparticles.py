@@ -23,7 +23,7 @@ import netCDF4 as nc
         
 
 #bring in relevant data for plotting
-data = nc.Dataset('uh.nc', 'r')
+data = nc.Dataset('scripts/script_plume.nc', 'r')
 
 #instantiate particle from data
 particle = ncp.nc_particle_file(data)

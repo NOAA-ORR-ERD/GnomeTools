@@ -406,7 +406,7 @@ class roms(cgrid):
             self.data[var] = ds_var[y1:y2+1:step,x1:x2+1:step] 
 
     
-    def get_data(self,var_map,tindex=None,yindex=None,xindex=None,is3d=False,interp=True):
+    def get_data(self,var_map,tindex=None,yindex=None,xindex=None,is3d=False,interp=True,extra_2dvars=[]):
         
         '''
         In this case, lon/lat on psi (P) grid, u on u-grid, v on v-grid
@@ -463,7 +463,16 @@ class roms(cgrid):
             self.data['u'] = u_on_upts
             self.data['v'] = v_on_vpts
             
-    
+        for var in extra_2dvars:
+            nc_var = self.Dataset.variables[var]
+            nc_var.set_auto_maskandscale(False)
+            self.atts[var] = {}
+            for an_att in nc_var.ncattrs():
+                self.atts[var][an_att] = getattr(nc_var,an_att)
+            self.data[var] = nc_var[t1:t2:ts,y1:y2:step,x1:x2:step]
+
+
+
     def interp_and_rotate(self,u,v,is3d=False):
         '''Calculate u/v on rho points -- we lose exterior most u/v values
         Then rotate to north/east

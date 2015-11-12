@@ -153,7 +153,7 @@ def main():
         #sys.exit( 1 )
 
     x, y, z, age, times, time_units, mass, mass_units = gridplume.load_particles(nc.Dataset( particle_filename, "r" )) #Added age and units of mass to output variables (Zelenke).
-    
+
 #==============================================================================
 #     # check for all particles having the same mass
 #     if np.allclose( mass[mass==mass], np.unique(mass[mass==mass])[0] ):
@@ -162,13 +162,13 @@ def main():
 #     else:
 #         raise ValueError( "The masses of the particles in file \"%s\" differ.\ngird_plume currently only supports particles of all the same mass.\nAborting." % particle_filename )
 #==============================================================================
-    
-        
+
+
     #Added "if" statement below to ensure units of mass are kilograms (Zelenke).
     mass_units=mass_units.lower()
     if mass_units=='grams' or mass_units=='g' or mass_units=='gm':
         mass=mass/1000.0 #Convert g to kg.
-    
+
     # Look for flagged bogus particles, and mark them as inf.
     # x[ np.equal( x, BOGUS_PARTICLE_FLAG ) ] = np.inf
     # y[ np.equal( y, BOGUS_PARTICLE_FLAG ) ] = np.inf
@@ -189,10 +189,10 @@ def main():
     x = x.astype(np.float64)
     y = y.astype(np.float64)
     z = z.astype(np.float64)
-    mass = mass.astype(np.float64) #(Zelenke)
-    age = age.astype(np.float64) #(Zelenke)
-    
-    
+    mass = mass.astype(np.float64)  #(Zelenke)
+    age = age.astype(np.float64)   #(Zelenke)
+
+
     # Now that pyproj is through with the data, convert infs to NaNs.
     x[ np.isinf( x ) ] = np.nan
     y[ np.isinf( y ) ] = np.nan
@@ -275,7 +275,7 @@ def main():
     #dataset = nc.Dataset( output_file, "w", format = "NETCDF3_CLASSIC" )
     dataset = nc.Dataset( output_file, "w", format = "NETCDF4" ) #Commented-out line above in favor of using version 4 NetCDF, allowing for larger file sizes and improved write performance.
     #dataset.set_fill_off() #Doesn't seem to make a difference in speed, so just leave netCDF4 defaults. (Zelenke)
-    
+
     start = time.time()
     file_grid = gridplume.init_save_grid( dataset,
                                           grid.shape,
@@ -306,8 +306,8 @@ def main():
     start_time = time.time()
 
     print "Generating and saving concentration grid...."
-    
-    
+
+
     for i in range( len(seconds) ):
     #for i, timestep in enumerate(seconds):
         print "Processing time-step %g of %g (%g%%)..." %(i,np.max(seconds.shape),100.*(i/np.max(seconds.shape)))
@@ -315,12 +315,12 @@ def main():
 #         #Replaced print statements block commented-out below in favor of less
 #         #verbose and more readily understandable (if less diagnostic) print
 #         #statement above (Zelenke).
-#         
+#
 #         print "timestep:", i, timestep
 #         print x.shape, x[i].shape
 #         print "grid_shape:", grid.shape
 #==============================================================================
-        
+
 #        filter.calculate_concentration_timestep( grid,
 #                                        x[i], y[i], z[i],
 #                                        timestep,
@@ -339,7 +339,7 @@ def main():
 #                                        alpha,
 #                                        conversion_factor,
 #                                        )
-        
+
         #Replaced function call above with variable mass version below. (Zelenke)
         filter.calculate_concentration_timestep_agemassvars( grid,
                                         x[i], y[i], z[i],
@@ -362,7 +362,7 @@ def main():
         file_grid[ i ] = grid
 
     print "done with saving concentration grid"
-    
+
     end_time = time.time()
 
     print "Time elapsed for grid generation and saving: %g minutes" % \

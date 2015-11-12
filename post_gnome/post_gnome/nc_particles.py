@@ -244,7 +244,12 @@ class Reader(object):
                 ind2 = self.data_index[i+1]
                 data[var].append( self.nc.variables[var][ind1:ind2] )      
          return data
-    
+   
+    def get_timestep_single_var(self, timestep, variable):
+        ind1 = self.data_index[timestep]
+        ind2 = self.data_index[timestep+1]
+        return self.nc.variables[variable][ind1:ind2]
+   
     def get_units(self, variable):
         """
         return the units of the given variable
@@ -281,7 +286,9 @@ class Reader(object):
         for var in variables:
             data[var] = self.nc.variables[var][indexes]      
         return data
-
+    
+    def close(self):
+        self.nc.close()
         
         
     
