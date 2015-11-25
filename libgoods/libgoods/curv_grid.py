@@ -25,7 +25,7 @@ class cgrid():
             else:
                 self.Dataset = Dataset(FileName)
         
-    def get_dimensions(self,var_map,get_time=True,get_xy=True):
+    def get_dimensions(self,var_map,get_time=True,get_xy=True,get_z=False):
         '''
         Get the model dimensions (time,x,y)
         Can get just time dimension, just xy, or everything
@@ -48,7 +48,15 @@ class cgrid():
             self.atts['lat'] = {}
             for an_att in lat.ncattrs():
                 self.atts['lat'][an_att] = getattr(lat,an_att)
-            self.data['lat'] = lat[:]        
+            self.data['lat'] = lat[:]      
+            
+        if get_z:
+            sigma = self.Dataset.variables[var_map['sigma']]
+            self.atts['sigma'] = {}
+            for an_att in sigma.ncattrs():
+                self.atts['sigma'][an_att] = getattr(sigma,an_att)
+            self.data['sigma'] = sigma[:]    
+            
     
     def subset_pt_in_poly(self,bbox,stride=1,lat='lat',lon='lon'):
         '''
@@ -102,7 +110,7 @@ class cgrid():
                 self.y = [0,np.size(glat,0),1]
                 self.x = [0,np.size(glat,1),1]
                
-    def get_grid_info(self,grid_vars=['mask'],yindex=None,xindex=None):
+    def get_grid_info(self,var_map,grid_vars=['mask','depth'],yindex=None,xindex=None):
     
         if xindex is None and yindex is None:
             x1 = 0; x2 = self.data['lon'].shape[1]; step = 1
@@ -114,8 +122,9 @@ class cgrid():
         for var in grid_vars: 
         #these are 2D spatial vars (need to add vertical info) for 3d
             try:
-                self.grid[var] = self.Dataset.variables[var][y1:y2:step,x1:x2:step]
+                self.grid[var] = self.Dataset.variables[var_map[var]][y1:y2:step,x1:x2:step]
             except KeyError:
+                print 'KeyError', var
                 pass
 
     
@@ -144,6 +153,7 @@ class cgrid():
             self.data['lon_ss'] = self.data['lon'][y1:y2:step,x1:x2:step]
             self.data['lat_ss'] = self.data['lat'][y1:y2:step,x1:x2:step]
         
+
         u = self.Dataset.variables[var_map['u']]
         u.set_auto_maskandscale(False)
         self.atts['u'] = {}
@@ -156,6 +166,9 @@ class cgrid():
         for an_att in v.ncattrs():
             self.atts['v'][an_att] = getattr(v,an_att) 
         
+        if is3d: 
+            zindex=range(v.shape[1])
+            
         try:
             self.data['u'] = u[t1:t2:ts,zindex,y1:y2:step,x1:x2:step]
             self.data['v'] = v[t1:t2:ts,zindex,y1:y2:step,x1:x2:step]
@@ -185,8 +198,14 @@ class cgrid():
         
     
     def make_vel_mask(self):
-        fill_val = self.atts['u']['_FillValue']
-        u0 = self.data['u'][0,:,:]
+        try:
+            fill_val = self.atts['u']['_FillValue']
+        except KeyError:
+            fill_val = self.atts['u']['missing_value']
+        if len(self.data['u'].shape) == 4:
+            u0 = self.data['u'][0,0,:,:]
+        else:
+            u0 = self.data['u'][0,:,:]
         self.grid['mask'] = (u0==fill_val).choose(1,0)
         
         
@@ -252,6 +271,8 @@ class cgrid():
             nc.createDimension('y',y)
         nc.createDimension('xc',xc)
         nc.createDimension('yc',yc)
+        if is3d:
+            nc.createDimension('sigma',len(self.data['sigma']))
         nc.createDimension('time',None)
     
         try:
@@ -270,7 +291,6 @@ class cgrid():
 
         if gui_gnome:
             nc_lonc = nc.createVariable('lon','f4',('yc','xc'))
-            
             nc_latc = nc.createVariable('lat','f4',('yc','xc'))
         else:
             nc_lonc = nc.createVariable('lonc','f4',('yc','xc'))
@@ -286,14 +306,17 @@ class cgrid():
         setattr(nc_latc,'standard_name','latitude of center points')
         setattr(nc_lonc,'units','degrees_east')
         setattr(nc_latc,'units','degrees_north')
-            
+        
         if self.atts.has_key('wind'):
             nc_u = nc.createVariable('air_u','f4',('time','yc','xc'), \
                 fill_value=ufill)
             nc_v = nc.createVariable('air_v','f4',('time','yc','xc'), \
                 fill_value=vfill)
         elif is3d:
-            pass
+            nc_u = nc.createVariable('water_u','f4',('time','sigma','yc','xc'), \
+                fill_value=ufill)
+            nc_v = nc.createVariable('water_v','f4',('time','sigma','yc','xc'), \
+                fill_value=vfill)
         else:
             nc_u = nc.createVariable('water_u','f4',('time','yc','xc'), \
                 fill_value=ufill)
@@ -319,6 +342,12 @@ class cgrid():
             nc_time[:] = self.data[t_key]
             nc_u[:] = self.data['u']
             nc_v[:] = self.data['v']
+    
+        if is3d:
+            nc_sigma = nc.createVariable('sigma','f4',('sigma'))
+            nc_sigma[:] = self.data['sigma']
+            nc_depth = nc.createVariable('depth','f4',('yc','xc'))
+            nc_depth[:] = self.grid['depth']
             
         if self.grid.has_key('mask'):
             nc_mask = nc.createVariable('mask','f4',('yc','xc'))
