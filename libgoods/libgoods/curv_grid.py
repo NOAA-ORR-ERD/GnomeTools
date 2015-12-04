@@ -38,13 +38,13 @@ class cgrid():
             self.data['time'] = self.time[:]
     
         if get_xy:
-            lon = self.Dataset.variables[var_map['lon']]
+            lon = self.Dataset.variables[var_map['longitude']]
             self.atts['lon'] = {}
             for an_att in lon.ncattrs():
                 self.atts['lon'][an_att] = getattr(lon,an_att)
             self.data['lon'] = lon[:]
             
-            lat = self.Dataset.variables[var_map['lat']]
+            lat = self.Dataset.variables[var_map['latitude']]
             self.atts['lat'] = {}
             for an_att in lat.ncattrs():
                 self.atts['lat'][an_att] = getattr(lat,an_att)
@@ -422,6 +422,9 @@ class roms(cgrid):
                 self.data['lat_psi'] = (lat_rho[0:-1,0:-1]+lat_rho[1:,1:])*0.5
                 self.atts['lat_psi'] = {'long_name':'latitude of PSI-points'}
                 
+            self.data['lon'] = self.data['lon_psi']
+            self.data['lat'] = self.data['lat_psi']
+            
     def get_grid_info(self,yindex=None,xindex=None,is3d=False):
         
         if xindex is None and yindex is None:
