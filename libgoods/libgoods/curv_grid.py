@@ -548,7 +548,7 @@ class roms(cgrid):
             self.data['lon'] = self.data['lon'][:-1,:-1]
             self.data['lat'] = self.data['lat'][:-1,:-1]
             
-        self.grid['mask'] = self.grid['mask_rho'][1:-1,1:-1]
+        #self.grid['mask'] = self.grid['mask_rho'][1:-1,1:-1]
 
     def write_nc_native(self,ofn,is3d=False):
         """
