@@ -100,8 +100,8 @@ def make_server_filelist(model,hour0,start,end=None,test_exist=False):
     flist = []
     stem = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/' + model.upper() + '/MODELS/'
     sdate = datetime.datetime.combine(start,datetime.time(hour0,0))
-    if end is None or end > datetime.datetime.utcnow().date() - datetime.timedelta(hours=6):
-        edate = datetime.datetime.utcnow() - datetime.timedelta(hours=6)
+    if end is None or end > datetime.datetime.utcnow().date() - datetime.timedelta(hours=8):
+        edate = datetime.datetime.utcnow() - datetime.timedelta(hours=8)
         append_fc = 1
     else:
         edate = datetime.datetime.combine(end,datetime.time(hour0,0))

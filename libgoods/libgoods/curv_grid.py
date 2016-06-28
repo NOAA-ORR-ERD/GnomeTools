@@ -154,13 +154,13 @@ class cgrid():
             self.data['lat_ss'] = self.data['lat'][y1:y2:step,x1:x2:step]
         
 
-        u = self.Dataset.variables[var_map['u']]
+        u = self.Dataset.variables[var_map['u_velocity']]
         u.set_auto_maskandscale(False)
         self.atts['u'] = {}
         for an_att in u.ncattrs():
             self.atts['u'][an_att] = getattr(u,an_att) 
 
-        v = self.Dataset.variables[var_map['v']]
+        v = self.Dataset.variables[var_map['v_velocity']]
         v.set_auto_maskandscale(False)
         self.atts['v'] = {}
         for an_att in v.ncattrs():
@@ -330,6 +330,8 @@ class cgrid():
         else:
             nc_lon[:] = self.data[lon_key]
             nc_lat[:] = self.data[lat_key]
+            print nc_lonc.shape
+            print self.data['lonc'].shape
             nc_lonc[:] = self.data['lonc']
             nc_latc[:] = self.data['latc']
         
@@ -453,6 +455,8 @@ class roms(cgrid):
             for an_att in ds_var.ncattrs():
                 self.atts[var][an_att] = getattr(ds_var,an_att)
             self.data[var] = ds_var[y1:y2+1:step,x1:x2+1:step] 
+        self.data['lonc'] = self.data['lon_rho'][1:-1,1:-1]
+        self.data['latc'] = self.data['lat_rho'][1:-1,1:-1]
 
     
     def get_data(self,var_map,tindex=None,yindex=None,xindex=None,is3d=False,interp=True):

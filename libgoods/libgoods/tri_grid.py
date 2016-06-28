@@ -263,7 +263,8 @@ class ugrid:
         self.atts['bnd'] = {'long_name':'Boundary segment information required for GNOME model'}  
     
     def write_bndry_file(self,bnd_file):
-        pass
+        
+        np.savetxt(bnd_file,self.data['bnd'],fmt='%i')
     
     def read_bndry_file(self,bnd_file): 
  
@@ -272,7 +273,7 @@ class ugrid:
         for line in f:
             vals = [int(val) for val in line.split()]
             bnd.append(vals)
-        
+        f.close()
         return np.array(bnd),{'long_name':'Boundary segment information required for GNOME model'}
         
     def write_unstruc_grid(self,ofn):
@@ -327,7 +328,8 @@ class ugrid:
         nc.createDimension('nbnd',len(self.data['bnd']))
         nc.createDimension('nbi',4)
         nc.createDimension('three',3)
-        nc.createDimension('four',4)
+        if self.data.has_key('a1u'):
+            nc.createDimension('four',4)
         if self.data.has_key('sigma'):
             nc.createDimension('sigma',len(self.data['sigma'])) 
         

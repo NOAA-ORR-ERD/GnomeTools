@@ -18,8 +18,8 @@ class rgrid:
                 self.Dataset = MFDataset(FileName,aggdim='time')
             else:
                 self.Dataset = Dataset(FileName)
-            self.data = dict()
-            self.atts = dict()
+        self.data = dict()
+        self.atts = dict()
             
     def update(self,FileName):
         #point to a new nc file or url without reinitializing everything
@@ -161,12 +161,14 @@ class rgrid:
         lon_key = 'lon'; lat_key = 'lat'
         # determine if its a subset of the grid
         try:
-            lon_ss_len = len(self.data['lon_ss'])
-            if self.data['u'].shape[-1] == lon_ss_len:
+            lon_ss_len = self.data['lon_ss'].shape
+            if self.data['u'].shape[-1:] == lon_ss_len:
                 lon_key = 'lon_ss'; lat_key = 'lat_ss'
         except KeyError:
-            lon_len = len(self.data['lon'])
-            if self.data['u'].shape[-2:] != lon_len:
+            lon_len = self.data['lon'].shape
+            print lon_len
+            print self.data['u'].shape[-1:]
+            if self.data['u'].shape[-1:] != lon_len:
                 print 'Dimensions dont match'
                 raise Exception('Dimensions of u/v do not match grid variables')
                 
