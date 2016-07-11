@@ -356,7 +356,7 @@ class Reader(object):
         """
         try:
             self.nc.close()
-            print ("netcdf file closed")
+            # print ("netcdf file closed")
         except RuntimeError:
             # just in case it isn't still open
             pass

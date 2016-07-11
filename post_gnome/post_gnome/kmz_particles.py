@@ -8,23 +8,32 @@ Only handles reading for now
 # for py2/3 compatibility
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import nc_particles
+import os
+import zipfile
+import base64
+from datetime import datetime
 
-from nc_particles import file_attributes, var_attributes
+import numpy as np
 
-## variables used to support the stucture of the file, rather than data
-## used to remove them from the list of available data variables
-SPECIAL_VARIABLES = ['time','particle_count']
+from post_gnome import nc_particles
+
+file_attributes = nc_particles.file_attributes
+var_attributes = nc_particles.var_attributes
 
 
 class Writer(object):
-    def __init__ (self,
-                  filename,
-                  num_timesteps=None,
-                  ref_time=None,
-                  file_attributes=file_attributes,
-                  var_attributes=var_attributes
-                  ):
+    """
+    class to write kmz files sutable for Google Earth
+    """
+    time_formatter = '%m/%d/%Y %H:%M'
+
+    def __init__(self,
+                 filename,
+                 num_timesteps=None,
+                 ref_time=None,
+                 file_attributes=file_attributes,
+                 var_attributes=var_attributes
+                 ):
 
         """
         create a kmz_particle file Writer
@@ -57,98 +66,105 @@ class Writer(object):
         :type nc_version: integer
         """
 
+        # strip off the .kml or .kmz
+        filename = filename.rstrip(".kml").rstrip(".kmz")
+
+        self.filename = filename + ".kmz"
+        self.kml_name = os.path.split(filename)[-1] + ".kml"
+
         self.num_timesteps = num_timesteps
         self.ref_time = ref_time
 
         self.file_attributes = file_attributes
         self.var_attributes = var_attributes
 
-        nc = netCDF4.Dataset(filename, 'w', format=format)
-        self.nc = nc
+        # create a list to hold what will be the contents of the kml
+        self.kml = [header_template.format(caveat=caveat,
+                                           kml_name=self.kml_name,
+                                           # fixme: this is only doing now!
+                                           valid_timestring=datetime.now().strftime(self.time_formatter),
+                                           issued_timestring=datetime.now().strftime(self.time_formatter),
+                                           )]
+        # # fixme: put real data in here from nc_file?
+        # self.kml = [header_template.format(caveat=caveat,
+        #                                    kml_name=self.kml_name,
+        #                                    valid_timestring=model_start_time.strftime(self.time_formatter),
+        #                                    issued_timestring=datetime.now().strftime(self.time_formatter),
+        #                                    )]
 
-        # Global attributes
-        for (name, value) in self.file_attributes.items():
-            setattr(nc, name, value)
+        # # Global attributes
+        # # put some of this in the kml file?
+        # for (name, value) in self.file_attributes.items():
+        #     setattr(nc, name, value)
+        self.closed = False
 
-        # Dimensions
-        nc.createDimension('time', self.num_timesteps)
-        nc.createDimension('data', None)
 
-        # required variables
-        time = nc.createVariable('time', np.int32, ('time',))
-        for name, value in self.var_attributes['time'].items():
-            time.setncattr(name, value)
-        # make sure there are some units there
-        # this will get overwritten when the proper reference time is known
-        if self.ref_time is None:
-            # make sure there are some units there
-            # this will get overwritten when the proper reference time is known
-            time.units = "seconds since 2016-01-01T00:00:00"
-        else:
-            time.units = 'seconds since {0}'.format(self.ref_time.isoformat())
 
-        pc = nc.createVariable('particle_count', np.int32, ('time',))
-        for name, value in self.var_attributes['particle_count'].items():
-            pc.setncattr(name, value)
-        self.time_var = time
 
-        self.num_data = 0
-        self.current_timestep = 0
 
-    def write_timestep(self, timestamp, data):
+    def write_timestep(self, timestamp, timestep, data, uncertain=False):
         """
         write the data for a timestep
 
         :param timestamp: the time stamp of the timestep
         :type timestamp: datetime object
 
+        :param timestep: the timestep between this and the next data point
+        :type timestep: datetime object
+
         :param data: dict of data arrays -- all parameters for a single time step
         :type data: dict
 
-        Note: it is assumed that the timesteps will be written sequentially,
-              and that the variables will not change after the first timestep
-              is written.
+        :param uncertain=False: Is this an uncertaintly run?
+        :type uncertain: bool
         """
 
-        nc = self.nc
-        if self.current_timestep == 0:
-            # create the variables and add attributes
-            # set the time units:
-            if self.ref_time is None:
-                self.ref_time = timestamp
-            nc.variables['time'].units = 'seconds since {0}'.format(self.ref_time.isoformat())
-            for key, val in data.iteritems():
-                val = np.asarray(val)
-                var = nc.createVariable(key, datatype=val.dtype, dimensions=('data'))
-                # if it's a standard variable, add the attributes
-                if key in self.var_attributes:
-                    for name, value in self.var_attributes[key].items():
-                        var.setncattr(name, value)
+        start_time = timestamp.isoformat()
+        end_time = (timestamp + timestep).isoformat()
 
-        particle_count = len(data.itervalues().next())  # length of an arbitrary array
-        nc.variables['particle_count'][self.current_timestep] = particle_count
-        nc.variables['time'][self.current_timestep] = (timestamp - self.ref_time).total_seconds()
-        self.current_timestep += 1
-        for key, val in data.iteritems():
-            var = nc.variables[key]
-            if len(val) != particle_count:
-                raise ValueError("All data arrays must be the same length")
-            var[self.num_data:] = val
-        self.num_data += particle_count
+
+        positions = np.c_[data['longitude'], data['latitude']]
+
+        try:
+            in_water = 2
+            on_land = 3
+
+            water_positions = positions[data['status_codes'] == in_water]
+            beached_positions = positions[data['status_codes'] == on_land]
+        except KeyError:
+            water_positions = positions
+            beached_positions = np.zeros((0, 2), dtype=np.float64)
+
+        self.kml.append(build_one_timestep(water_positions,
+                                           beached_positions,
+                                           start_time,
+                                           end_time,
+                                           uncertain
+                                           ))
 
     def close(self):
         """
-        close the netcdf file
+        close the kmz file
+
+        This forces the write of the file
         """
-        try:
-            self.nc.close()
-        except RuntimeError:
-            # just in case it isn't still open
-            pass
+        if not self.closed:
+            self.kml.append(footer)
+            with zipfile.ZipFile(self.filename, 'w', compression=zipfile.ZIP_DEFLATED) as kmzfile:
+                kmzfile.writestr('dot.png', base64.b64decode(DOT))
+                kmzfile.writestr('x.png', base64.b64decode(X))
+                # write the kml file
+                kmzfile.writestr(self.kml_name, "".join(self.kml).encode('utf8'))
+            self.closed = True
+            return True
+        else:
+            return False
 
     def __del__(self):
         """ make sure to close the netcdf file """
+        # anything to close?
         self.close()
+
 
 
 class Reader(object):
@@ -157,43 +173,25 @@ class Reader(object):
 
     (such as those written by GNOME or the Writer class above)
     """
-    def __init__(self, nc_file):
+    def __init__(self, kml_file):
         """
         initialize a file reader.
 
-        :param nc_file: the netcdf file to read. If a netCDF4 Dataset, it will be used,
-                        if a string, a new netCDF Dataset will be opened for reading
-                        using that filename
-        :type nc_file: string or netCDF4 Dataset object
+        :param kml_file: the kml/kmz file to read.
+        :type kml_file: string
 
         """
-
-        if type(nc_file) == netCDF4.Dataset:
-            # already open -- just use it
-            self.nc = nc_file
-        else:
-            # open a new one
-            self.nc = netCDF4.Dataset(nc_file)
-
-        time = self.nc.variables['time']
-        units = time.getncattr('units')
-        self.times = netCDF4.num2date(time[:], units)
-        self.time_units = units
-
-        self.particle_count = self.nc.variables['particle_count']
-        # build the index:
-        self.data_index = np.zeros((len(self.times) + 1,), dtype=np.int32)
-        self.data_index[1:] = np.cumsum(self.particle_count)
+        raise NotImplementedError
 
     @property
     def variables(self):
         """
         return the names of all the variables associated with the particles
         """
-        return [var for var in self.nc.variables.keys() if var not in SPECIAL_VARIABLES]
+        raise NotImplementedError
 
     def __str__(self):
-        return ("nc_particles Reader object:\n"
+        return ("kml_particles Reader object:\n"
                 "variables: {}\n"
                 "number of timesteps: {}\n"
                 ).format(self.variables, len(self.times))
@@ -212,14 +210,7 @@ class Reader(object):
                         of the data. The arrays are the flattened ragged
                         array of data.
         """
-        data = {}
-        for var in variables:
-            data[var] = []
-            for i in range(len(self.times)):
-                ind1 = self.data_index[i]
-                ind2 = self.data_index[i + 1]
-                data[var].append(self.nc.variables[var][ind1:ind2])
-        return data
+        raise NotImplementedError
 
     def get_units(self, variable):
         """
@@ -228,7 +219,7 @@ class Reader(object):
         :param variable: name of the variable for which the units are required
         :type variable: string
         """
-        return self.nc.variables[variable].units
+        raise NotImplementedError
 
     def get_attributes(self, variable):
         """
@@ -237,8 +228,7 @@ class Reader(object):
         :param variable: name of the variable for which the attributes are required
         :type variable: string
         """
-        var = self.nc.variables[variable]
-        return {name: var.getncattr(name) for name in var.ncattrs()}
+        raise NotImplementedError
 
     def get_timestep(self, timestep, variables=['latitude', 'longitude']):
         """
@@ -253,8 +243,7 @@ class Reader(object):
                        variable names, and the values are numpy arrays
                        of the data.
         """
-        ind1, ind2 = self.data_index[timestep:timestep + 2]
-        return {var: self.nc.variables[var][ind1:ind2] for var in variables}
+        raise NotImplementedError
 
     def get_individual_trajectory(self, particle_id, variables=['latitude', 'longitude']):
         """
@@ -262,23 +251,225 @@ class Reader(object):
 
         note: this is inefficient -- it has to read the entire file to get it.
         """
-        indexes = np.where(self.nc.variables['id'][:] == particle_id)
-        data = {}
-        for var in variables:
-            data[var] = self.nc.variables[var][indexes]
-        return data
+        raise NotImplementedError
 
     def close(self):
         """
-        close the netcdf file
+        close the kml file
+
+        -- anything to be done?
         """
-        try:
-            self.nc.close()
-            print ("netcdf file closed")
-        except RuntimeError:
-            # just in case it isn't still open
-            pass
+        pass
+
 
     def __del__(self):
-        """ make sure to close the netcdf file """
+        """ make sure to close the file """
         self.close()
+
+
+def nc2kmz(nc_file, kmz_file=None):
+    """
+    convert a nc_particles file to kmz
+
+    :param nc_file: name of nertcdf file to read
+
+    :param kmz_file=None: name of kmz file to write. If None, the nc_file's name wil be used, with .kmz as teh extansion.
+
+    """
+
+    if kmz_file is None:
+        root = nc_file
+        root = root[:-3] if root.endswith(".nc") else root
+        kmz_file = root + ".kmz"
+
+    reader = nc_particles.Reader(nc_file)
+
+    # create a kmz writer:
+    writer = Writer(kmz_file)
+    variables = reader.variables
+    # loop to read / write the data
+    for step, time in enumerate(reader.times):
+        try:
+            timestep = reader.times[step + 1] - time
+        except IndexError:
+            timestep = reader.times[-1] - reader.times[-2]
+        # get the data
+        data = reader.get_timestep(step, variables)
+        writer.write_timestep(time, timestep, data, uncertain=False)
+    writer.close()
+
+    return kmz_file
+
+
+# Templates for the kmz files
+
+caveat = ("This trajectory was produced by GNOME (General NOAA Operational Modeling",
+          " Environment), and should be used for educational and planning purposes only",
+          "--not for a real response. In the event of an oil or chemical spill in U.S.",
+          "waters, contact the U.S. Coast Guard National Response Center at 1-800-424-8802."
+          )
+
+# The kml templates:
+header_template = """<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>{kml_name}</name>
+    <open>1</open>
+    <description><![CDATA[<b>Valid for:</b> {valid_timestring}<br>
+                          <b>Issued:</b>{issued_timestring} <br>
+                          {caveat}]]>
+    </description>
+
+    <Style id="RedDotIcon">
+      <IconStyle>
+         <scale>0.2</scale>
+         <color>ff0000ff</color>
+         <Icon>
+            <href>dot.png</href>
+         </Icon>
+          <hotSpot x="0.5"  y="0.5" xunits="fraction" yunits="fraction"/>
+      </IconStyle>
+      <LabelStyle>
+         <color>00000000</color>
+      </LabelStyle>
+    </Style>
+
+    <Style id="BlackDotIcon">
+      <IconStyle>
+         <scale>0.2</scale>
+         <Icon>
+            <href>dot.png</href>
+         </Icon>
+         <color>ff000000</color>
+         <hotSpot x="0.5"  y="0.5" xunits="fraction" yunits="fraction"/>
+      </IconStyle>
+      <LabelStyle>
+         <color>00000000</color>
+      </LabelStyle>
+    </Style>
+
+    <Style id="YellowDotIcon">
+      <IconStyle>
+         <scale>0.2</scale>
+         <Icon>
+            <href>dot.png</href>
+         </Icon>
+         <color>ff00ffff</color>
+         <hotSpot x="0.5"  y="0.5" xunits="fraction" yunits="fraction"/>
+      </IconStyle>
+      <LabelStyle>
+         <color>00000000</color>
+      </LabelStyle>
+    </Style>
+
+    <Style id="RedXIcon">
+      <IconStyle>
+         <scale>0.2</scale>
+         <color>ff0000ff</color>
+         <Icon>
+            <href>x.png</href>
+         </Icon>
+          <hotSpot x="0.5"  y="0.5" xunits="fraction" yunits="fraction"/>
+      </IconStyle>
+      <LabelStyle>
+         <color>00000000</color>
+      </LabelStyle>
+    </Style>
+
+    <Style id="BlackXIcon">
+      <IconStyle>
+         <scale>0.2</scale>
+         <Icon>
+            <href>x.png</href>
+         </Icon>
+         <color>ff000000</color>
+         <hotSpot x="0.5"  y="0.5" xunits="fraction" yunits="fraction"/>
+      </IconStyle>
+      <LabelStyle>
+         <color>00000000</color>
+      </LabelStyle>
+    </Style>
+
+    <Style id="YellowXIcon">
+      <IconStyle>
+         <scale>0.2</scale>
+         <Icon>
+            <href>x.png</href>
+         </Icon>
+         <color>ff00ffff</color>
+         <hotSpot x="0.5"  y="0.5" xunits="fraction" yunits="fraction"/>
+      </IconStyle>
+      <LabelStyle>
+         <color>00000000</color>
+      </LabelStyle>
+    </Style>
+"""
+
+
+point_template = """             <Point>
+                     <altitudeMode>relativeToGround</altitudeMode>
+                     <coordinates>{:.6f},{:.6f},1.000000</coordinates>
+             </Point>
+"""
+
+
+timestep_header_template = """<Folder>
+  <name>{date_string}:{certain}</name>
+"""
+
+one_run_header = """    <Placemark>
+      <name>{certain} {status} Splots </name>
+      <styleUrl>{style}</styleUrl>
+      <TimeSpan id="ID">
+        <begin>{start_time}</begin>     <!-- kml:dateTime -->
+        <end>{end_time}</end>         <!-- kml:dateTime -->
+      </TimeSpan>
+      <MultiGeometry>
+"""
+one_run_footer = """      </MultiGeometry>
+    </Placemark>
+"""
+timestep_footer = """
+</Folder>
+"""
+
+
+def build_one_timestep(floating_positions,
+                       beached_positions,
+                       start_time,
+                       end_time,
+                       uncertain,
+                       ):
+
+    data = {'certain': "Uncertainty" if uncertain else "Best Guess",
+            'start_time': start_time,
+            'end_time': end_time,
+            'date_string': start_time,
+            }
+    kml = []
+    kml.append(timestep_header_template.format(**data))
+
+    for status, positions in [('Floating', floating_positions),
+                              ('Beached', beached_positions)]:
+        color = "Red" if uncertain else "Yellow"
+        data['style'] = "#" + color + "DotIcon" if status == "Floating" else "#" + color + "XIcon"
+
+        data['status'] = status
+        kml.append(one_run_header.format(**data))
+
+        for point in positions:
+            kml.append(point_template.format(*point[:2]))
+        kml.append(one_run_footer)
+    kml.append(timestep_footer)
+
+    return "".join(kml)
+
+footer = """
+  </Document>
+</kml>
+"""
+# These icons (these are base64 encoded 3-pixel sized dots in a 32x32 transparent PNG)
+#   these were encoded by the "build_icons" script
+DOT = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAJOgAACToB8GSSSgAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEASURBVFiF7ZY7DsIwEEQfET09Ej11lFtwK06Re3ANlCoFPQpnoGJoHClCXpOPg10wUhonnnlyvF5vJJFSRdL0P0AOANsZcwqgAkrg6MZuQANcgdckN0ljn52kWlInW537ZjfWd2z4SVIbCP5U6+ZEAThLek4I7/V0cxcBnGaGDyGCK/Htn09ZdkutAnsiBFBHCO9VWzkb+XtBAdyB/Ywy9ekBHPCUqHUQVRHDcV6V74UFUEYMD3paAEdjfIm8nsl7gQVwWyHL62kBNCsAeD2zLcMXcIkUjvPyt+nASZj8KE7ejLJox1lcSIZ7IvqVzCrDkKJeSucARFW2veAP8DO9AXV74Qmb/4vgAAAAAElFTkSuQmCC"
+X = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAN1wAADdcBQiibeAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAHKSURBVFiFrdXLq01hGMfx12HMzMCUU4zFQEYiROYkEkkpHbeTXI5LSDqHtomBEJGY+RMMGBlKKWVmaiDXzvExsN7admuv9azLU89k7ef5fb/ruhMSVuIy3uEOVhXH++w1mMEbnMFSpITl+Ob/+oOpHuFHiszh+oIVCbPGVx8Sh0vguaYT3lcIdJU4VAGHtwm3agTaShysgcMgYUNAoKnEgQAcVueFqR4l9mMhkHVJ8RbkPt6DxL4g/EreGQ3oIrE3CL86vFd2FidaSOzBfGDn+ihv3KU82UBidxB+o4xV9TBFJSKX/eY4Tt0TfSooUVWzVYzIO326A3yuLj/6YWkjcTuSHRVImG4AH0RzJ1K8PqSUFoKzn8KpQdNd+N3wFoT+OyLwnfjVEB6WqIPv6AAPSVTBt+NnR3itxDj4tiD8Hs52kSiDb8WPQOB9LCp2WkuMwrcE4Q8xMbJ7ro3EcMBmfA8EPCqBt5bIi5uC8McV8Nznm0gkLMPXwMKTADz3haDExoRjgcGnWByEN5EYJLyuGXrWAp57pib7Y8K1ioHnHeC5L1bkP0iYHPPjCyzpCK+SmMdkHliLl8XBVzjaIzz3Ov++H59xF+uR/gJmOo2+fdNArAAAAABJRU5ErkJggg=="
+
