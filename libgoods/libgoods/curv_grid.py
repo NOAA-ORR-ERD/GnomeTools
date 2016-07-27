@@ -328,7 +328,7 @@ class cgrid():
                 setattr(nc_v,key,val)
                 
         for var in extra_2dvars:
-            nc_var = nc.createVariable(var,'f4',('time','yc','xc'))
+            nc_var = nc.createVariable(var,'f4',('time','yc','xc'),fill_value=ufill)
             nc_var[:] = self.data[var]
             for key,val in self.atts[var].iteritems():
                 if not key.startswith('_'):
