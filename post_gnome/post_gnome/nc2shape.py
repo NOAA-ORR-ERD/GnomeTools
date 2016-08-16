@@ -41,7 +41,7 @@ def points(fn, package_dir, t2convert):
     w.field('Depth', 'N')
     w.field('Mass', 'N')
     w.field('Age', 'N')
-    w.field('Status', 'N')
+    w.field('Status_Code', 'N')
 
     TheData = particles.get_timestep(t, variables=['latitude',
                                                    'longitude',
@@ -63,7 +63,7 @@ def points(fn, package_dir, t2convert):
                  TheData['status_codes'][k])
 
     source_fdir = os.path.join(package_dir, 'source_files')
-    shapefile_name = os.path.split(fn)[-1].split('.')[0]       
+    shapefile_name = os.path.split(fn)[-1].split('.')[0]
     w.save(os.path.join(source_fdir, shapefile_name))
 
     nc.close()
@@ -104,10 +104,10 @@ def contours(fn,
                                                    'depth',
                                                    'mass',
                                                    'age',
-                                                   'status'])
+                                                   'status_codes'])
 
     # contouring
-    status = TheData['status']
+    status = TheData['status_codes']
     floating = np.where(status == 2)[0]
     x = TheData['longitude'][floating]
     y = TheData['latitude'][floating]

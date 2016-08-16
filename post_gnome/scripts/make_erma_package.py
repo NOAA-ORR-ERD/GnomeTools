@@ -1,14 +1,24 @@
 #!/usr/bin/env python
 
+"""
+script that reads netcdf particle files from GNOME, contours the particles,
+makes shape files of the particles, and creates and ERMA data pacakge out
+of all of it.
+
+You need to edit the info at the head of this file to tell it what to do
+"""
+
+
 import os
 import shutil
 import datetime
-import nc2shape
-import make_layer_file
-reload(make_layer_file)
+from post_gnome import make_layer_file, nc2shape
 
-# GNOME file info***************************************************************
-gnome_dir = ''
+
+# FIXME: this should be replaced by a dict
+#        of info that could be passed in from elsewhere
+# GNOME file info ***************************************************************
+
 metadata = """Data sources:
 
 Overflights from 5/16/2016
@@ -20,9 +30,10 @@ US Navy American Seas Model
 Winds:
 NWS GFS
 """
-
+gnome_dir = "../post_gnome/tests/sample_data/"
+outfile = os.path.join("24hrs.nc")
 uncertain = True
-outfile = 'Forecast-5-16.nc'
+
 t2convert = datetime.datetime(2016, 5, 19, 8, 0)
 # attachments = os.path.join(gnome_dir,'images','ChesapeakeBay_anim.gif')
 # Name for package directory****************************************************
@@ -82,21 +93,26 @@ if plot_type == 'points':
         make_layer_file.points(package_dir,'uncert',params)
 
 elif plot_type == 'contours':
-    #make shapefiles
-    fn = os.path.join(gnome_dir,outfile)
-    traj_zipfname = nc2shape.contours(fn,package_dir,t2convert)
+    # make shapefiles
+    fn = os.path.join(gnome_dir, outfile)
+    traj_zipfname = nc2shape.contours(fn, package_dir, t2convert)
     if uncertain:
-        ufn = os.path.join(gnome_dir,outfile.split('.')[0] + '_uncert.nc')
-        print ufn
-        uncert_zipfname = nc2shape.contours(ufn,package_dir,t2convert,levels=[0.1,],names=['Uncertainty',])
-        
-    #make layer files
+        ufn = os.path.join(gnome_dir, outfile.split('.')[0] + '_uncert.nc')
+        print "uncertainty file name:", ufn
+        uncert_zipfname = nc2shape.contours(ufn,
+                                            package_dir,
+                                            t2convert,
+                                            levels=[0.1],
+                                            names=['Uncertainty']
+                                            )
+
+    # make layer files
     params['shape_zipfilename'] = traj_zipfname
     params['title'] = 'Best estimate contours: ' + t2convert.strftime('%b %d %Y %H:%M')
     params['color'] = 'black'
     params['SinglePoly'] = True
     make_layer_file.contours(package_dir,'traj',params)
-    
+
     if uncertain:
         params['shape_zipfilename'] = uncert_zipfname
         params['title'] = 'Uncertainty contour: ' + t2convert.strftime('%b %d %Y %H:%M')
@@ -106,5 +122,5 @@ elif plot_type == 'contours':
 
 else:
     print 'Must specify either points or contours'
-    
+
 shutil.make_archive(package_dir,'zip',root_dir=package_dir)
