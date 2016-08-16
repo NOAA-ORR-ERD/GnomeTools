@@ -9,22 +9,22 @@ setup.py for the post_gnome package
 from setuptools import setup
 
 setup(
-    name = "post_gnome",
-    version = "0.1.0",
-    description = "utilities for post processing data for GNOME",
+    name="post_gnome",
+    version="0.1.0",
+    description="utilities for post processing data for GNOME",
     long_description=open("README.rst").read(),
-    packages = ["post_gnome",
-               "post_gnome.readers",
-               "post_gnome.kml_stuff"],
-    scripts = ["scripts/gnome_nc2kmz.py",
-               "scripts/moss2kmz_series.py",
-               "scripts/moss2kmz_simple.py",
-              ],
-    author = "Chris Barker",
-    author_email = "Chris.Barker@noaa.gov",
+    packages=["post_gnome",
+              "post_gnome.readers",
+              "post_gnome.kml_stuff"],
+    scripts=["scripts/gnome_nc2kmz.py",
+             "scripts/moss2kmz_series.py",
+             "scripts/moss2kmz_simple.py",
+             "scripts/make_erma_package.py"
+             ],
+    author="Chris Barker",
+    author_email="Chris.Barker@noaa.gov",
     url="http://www.response.restoration.noaa.gov/gnome",
-    license = "LICENSE.txt",
-    keywords = "GNOME netcdf kmz",
+    license="LICENSE.txt",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Topic :: Utilities",
@@ -38,6 +38,4 @@ setup(
         "Programming Language :: Python :: Implementation :: CPython",
     ],
 
-    )
-
-
+)
