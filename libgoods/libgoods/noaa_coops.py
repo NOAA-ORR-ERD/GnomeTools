@@ -57,7 +57,8 @@ def specify_bnd_types(grid,segs,ss_land_nodes=[]):
         ow = [68408,68409,68410,68411,68412,68414,68604,68605,68606,68607,68608,68791,68792,68793,68962,68963,68964,68965,69130,69131,69132,69133,69303,69304,69305,69479,69481,69669,69670,69671,69672,69674,69675,69866,69867,69868,69869,69870,70062,70063,70064,70065,70271,70272,70489,70490,70704,70705,70927,70928,71144,71346,71520,71683,71844,72001,72154,72281,72377,72462,72532,72583,72631,72676,72720,72765,72810,72851,72897,72939,72981,73023,73061,73099,73138,73178,73215,73251,73283,73313,73346,73381,73417,73453,73454,73481,73502,73523]
     elif grid.lower() == 'sfbofs':
         ow = [1,2,3,4,5,97,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,144,51,52,53,54,55,150,56,57,58,59,60,61,62,63,64,65,66,162,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91]
-    
+    else:
+        ow = [1,10000]
     seg_types= []
     
     if len(ss_land_nodes) > 0: #subset
@@ -217,7 +218,139 @@ def download_and_save(url,output_dir):
     nc_in.close()
     nc_out.close()
     
+def ofs_info(ofs):
+
+    ofs = ofs.upper()
+
+    if ofs == 'CREOFS':
+
+        info = '''
+        The <a href="http://tidesandcurrents.noaa.gov/ofs/creofs/creofs.html" target="_blank">
+        Columbia River Estuary Operational Forecast System (CREOFS)</a> was 
+        jointly developed by the <a href="http://www.ohsu.edu/xd/" target="_blank">
+        Oregon Health & Science University (OHSU)</a>, 
+        the <a href="http://www.nauticalcharts.noaa.gov/" target="_blank">
+        NOAA/National Ocean Service's (NOS) Office of Coast Survey </a> and 
+        <a href="http://tidesandcurrents.noaa.gov/" target="_blank">
+        Center for Operational Oceanographic Products and Services (CO-OPS)</a>, 
+        and the <a href="http://mag.ncep.noaa.gov" target="_blank">
+        NOAA/National Weather Service's (NWS) National Centers 
+        for Environmental Prediction (NCEP) Central Operations (NCO)</a>.
+        The CREOFS model domain includes the upper and lower Columbia River and Estuary. 
+        
+        For detailed model information, visit the NOAA CO-OPS 
+        <a href="http://tidesandcurrents.noaa.gov/ofs/creofs/creofs_info.html" target="_blank">
+        model information page</a>.
+        '''
+        
+    elif any(x in ofs for x in ['NGOFS','NEGOFS','NWGOFS']):
+        
+        info = '''
+        A <a href="http://tidesandcurrents.noaa.gov/ofs/ngofs/ngofs.html" target="_blank">
+        Northern Gulf of Mexico Operational Forecast System (NGOFS)</a>
+        including two nested Northeast and Northwest Gulf of Mexico Operational 
+        Forecast Systems (NEGOFS/NWGOFS)
+        has been developed to serve the maritime user community. 
+        NGOFS was developed in a joint project of the 
+        <a href="http://www.nauticalcharts.noaa.gov/" target="_blank">
+        NOAA/National Ocean Service's (NOS) Office of Coast Survey </a>, 
+        the <a href="http://tidesandcurrents.noaa.gov/" target="_blank">
+        NOAA/NOS Center for Operational Oceanographic Products and Services (CO-OPS)</a>, 
+        the <a href="http://mag.ncep.noaa.gov" target="_blank">
+        NOAA/National Weather Service's (NWS) National Centers 
+        for Environmental Prediction (NCEP) Central Operations (NCO)</a>, and the 
+        <a href="http://fvcom.smast.umassd.edu/" target="_blank">
+        University of Massachusetts, Dartmouth </a> using the Finite Volume Coastal Ocean 
+        Model (FVCOM). NGOFS generates water level, current, temperature and salinity 
+        nowcast and forecast guidance four times per day.
+        
+        For detailed model information, visit the NOAA CO-OPS 
+        <a href="http://tidesandcurrents.noaa.gov/ofs/ngofs/ngofs_info.html" target="_blank">
+        model information page.</a>
+        '''
+        
+    elif any(x in ofs for x in ['DBOFS','TBOFS','CBOFS']):
+        
+        info = '''
+        The <a href="http://tidesandcurrents.noaa.gov/ofs/cbofs/cbofs.html" target="_blank">
+        Chesapeake Bay Operational Forecast System (CBOFS)</a> was developed by 
+        the <a href="http://www.nauticalcharts.noaa.gov/" target="_blank">
+        NOAA/National Ocean Service/Office of Coast Survey</a> in a joint project 
+        with the <a href="http://tidesandcurrents.noaa.gov/" target="_blank">
+        NOAA/NOS/Center for Operational Oceanographic Products and Services 
+        (CO-OPS)</a> and the <a href="http://mag.ncep.noaa.gov" target="_blank">
+        NOAA/National Weather Service/National Centers for 
+        Environmental Prediction (NCEP) Central Operations (NCO)</a> using 
+        <a href="http://www.myroms.org/" target="_blank">Rutgers 
+        University's Regional Ocean Modeling System (ROMS)</a>. 
+        CBOFS generates water level, current, temperature and salinity nowcast 
+        and forecast guidance four times per day.
     
+        For detailed model information, visit the NOAA CO-OPS 
+        <a href="http://tidesandcurrents.noaa.gov/ofs/cbofs/cbofs_info.html" target="_blank">
+        model information page.</a>   
+        '''
+        if ofs == 'DBOFS':
+            info = info.replace('cbofs','dbofs')
+            info = info.replace('CBOFS','DBOFS')
+            info = info.replace('Chesapeake','Delaware')
+        elif ofs == 'TBOFS':
+            info = info.replace('cbofs','tbofs')
+            info = info.replace('CBOFS','TBOFS')
+            info = info.replace('Chesapeake','Tampa')
+            
+    elif ofs == 'SFBOFS':
+        
+        info = '''
+        A <a href="http://tidesandcurrents.noaa.gov/ofs/sfbofs/sfbofs.html" target="_blank">
+        San Francisco Bay Operational Forecast System (SFBOFS)</a>
+        has been developed to serve the San Francisco Bay maritime communities. 
+        SFBOFS was jointly developed by <a href="http://www.nauticalcharts.noaa.gov/" target="_blank">
+        NOAA/National Ocean Service's (NOS) Office of Coast Survey </a>, 
+        the <a href="http://tidesandcurrents.noaa.gov/" target="_blank">
+        NOAA/NOS Center for Operational Oceanographic Products and Services (CO-OPS)</a>, 
+        the <a href="http://mag.ncep.noaa.gov" target="_blank">
+        NOAA/National Weather Service's (NWS) National Centers 
+        for Environmental Prediction (NCEP) Central Operations (NCO)</a>, and the 
+        <a href="http://fvcom.smast.umassd.edu/" target="_blank">
+        University of Massachusetts, Dartmouth </a> using the Finite Volume Coastal Ocean 
+        Model (FVCOM).The NWS and NOS work together to run SFBOFS operationally.
+        
+        For detailed model information, visit the NOAA CO-OPS 
+        <a href="http://tidesandcurrents.noaa.gov/ofs/sfbofs/sfbofs_info.html" target="_blank">
+        model information page.</a>   
+        '''
+        
+    elif ofs == 'LEOFS':
+        
+        info = '''
+        
+        The upgraded <a href="http://tidesandcurrents.noaa.gov/ofs/leofs/leofs.html" target="_blank">
+        Lake Erie Operational Forecast System (LEOFS)</a> was jointly developed by the
+        <a href="http://tidesandcurrents.noaa.gov/" target="_blank">
+        NOAA/NOS Center for Operational Oceanographic Products and Services (CO-OPS)</a>
+        and <a href="http://www.nauticalcharts.noaa.gov/" target="_blank">
+        Office of Coast Survey</a>, <a href="http://www.glerl.noaa.gov/" target="_blank">
+        the Great Lakes Environmental Research Laboratory (GLERL)</a>, 
+        the <a href="http://mag.ncep.noaa.gov" target="_blank">
+        NOAA/National Weather Service's (NWS) National Centers 
+        for Environmental Prediction (NCEP) Central Operations (NCO)</a>, 
+        and the<a href="http://fvcom.smast.umassd.edu/" target="_blank">
+        University of Massachusetts, Dartmouth </a> using the Finite Volume Coastal Ocean 
+        Model (FVCOM). The NWS and NOS work together to run LEOFS operationally.
+        
+        For detailed model information, visit the NOAA CO-OPS 
+        <a href="http://tidesandcurrents.noaa.gov/ofs/leofs/leofs_info.html" target="_blank">
+        model information page.</a>   
+        
+        '''
+        
+    else:
+  
+        return ''
+        
+        
+    return info
 
     
 #if __name__ == "__main__":

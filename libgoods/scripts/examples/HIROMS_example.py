@@ -6,9 +6,9 @@ Sample script to retrieve data from Arakawa c-grid type model
 
 '''
 
-url = 'http://oos.soest.hawaii.edu/thredds/dodsC/hioos/roms_native/hiog/ROMS_Oahu_Regional_Ocean_Model_best.ncd'
+url = 'http://oos.soest.hawaii.edu/thredds/dodsC/hioos/roms_native/hiig/ROMS_Hawaii_Regional_Ocean_Model_Native_Grid_best.ncd'
 
-#HI ROMS output does not include psi grid -- create from rho grid
+
 var_map = { 'time':'time',
            }  
            
@@ -20,9 +20,9 @@ hiroms.data['lat'] = hiroms.data['lat_psi']
 #Only download last five timesteps
 ti=[len(hiroms.data['time'])-5,len(hiroms.data['time']),1]
 
-hiroms.subset([21.223,-158.387,21.647,-157.799],lat='lat_psi',lon='lon_psi')
-hiroms.get_grid_info(xindex=hiroms.x,yindex=hiroms.y)
-hiroms.get_data(var_map,tindex=ti,xindex=hiroms.x,yindex=hiroms.y)
+#hiroms.subset([21.223,-158.387,21.647,-157.799],lat='lat_psi',lon='lon_psi')
+hiroms.get_grid_info()
+hiroms.get_data(var_map)
 
 ofn = os.path.join(data_files_dir,'hiroms_example.nc')
 #hiroms.data['lon_ss'] = hiroms.data['lon_psi_ss']

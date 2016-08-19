@@ -14,9 +14,9 @@ class cgrid():
                 self.Dataset = MFDataset(FileName)
             else:
                 self.Dataset = Dataset(FileName)
-            self.data = dict()
-            self.atts = dict()
-            self.grid = dict()
+        self.data = dict()
+        self.atts = dict()
+        self.grid = dict()
             
     def update(self,FileName):
         #point to a new nc file or url without reinitializing everything

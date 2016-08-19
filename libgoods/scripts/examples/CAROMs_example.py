@@ -21,8 +21,9 @@ sdate = datetime.date(2015,6,1)
 while sdate < datetime.date(2015,6,10):
     day = sdate.day
     month = sdate.month
-    url_stem = 'http://west.rssoffice.com:8080/thredds/dodsC/pacific/CA3km-nowcast/SCB/ca_subSCB_das_2015' 
-    #url_stem = 'http://west.rssoffice.com:8080/thredds/dodsC/pacific/CA3km-nowcast/CA/ca_subCA_das_201505'
+    #url_stem = 'http://west.rssoffice.com:8080/thredds/dodsC/pacific/CA3km-nowcast/SCB/ca_subSCB_das_2015' 
+    #url_stem = 'http://west.rssoffice.com:8080/thredds/dodsC/pacific/CA3km-forecast'    
+    url_stem = 'http://west.rssoffice.com:8080/thredds/dodsC/pacific/CA3km-forecast/CA/'
     times = ['03','09','15','21']
 
     for hour in times:
