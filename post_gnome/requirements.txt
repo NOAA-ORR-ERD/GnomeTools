@@ -5,3 +5,4 @@ scipy
 matplotlib
 netCDF4
 pyshp
+cartopy #required for plotting
