@@ -98,7 +98,7 @@ def plot_particles(ax,filename,t,color='k',marker='.',markersize=4):
     
     return ax
     
-def plot_particles_3d(ax,filename,t,color='k',marker='.',markersize=4):
+def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', color='k',marker='.',markersize=4):
     '''
     plot all LEs at one time step
     ax: (matplotlib.axes object) the map on which the LEs will be plotted
@@ -111,7 +111,7 @@ def plot_particles_3d(ax,filename,t,color='k',marker='.',markersize=4):
     dt = [np.abs(((output_t - t).total_seconds())/3600) for output_t in times]
     tidx = dt.index(min(dt))
     try:
-        TheData = particles.get_timestep(tidx,variables=['latitude','longitude', 'depth', 'status_codes', 'rise_vel'])
+        TheData = particles.get_timestep(tidx,variables=['latitude','longitude', 'depth', 'status_codes', var])
     except: #GUI GNOME < 1.3.10
         TheData = particles.get_timestep(tidx,variables=['latitude','longitude', 'depth', 'status'])
         TheData['status_codes'] = TheData['status']
@@ -126,8 +126,8 @@ def plot_particles_3d(ax,filename,t,color='k',marker='.',markersize=4):
         if len(pid) > 0:
             import matplotlib
             import matplotlib.cm as cmx
-            cs = TheData['rise_vel']
-            cm = plt.get_cmap('inferno')
+            cs = TheData[var]
+            cm = plt.get_cmap(colormap)
             cNorm = matplotlib.colors.Normalize(vmin=min(cs), vmax=max(cs))
             scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
             ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid], TheData['depth'][pid],\
