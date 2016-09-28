@@ -52,6 +52,19 @@ def add_map(bbox=None,bna=None):
     ax.gridlines(draw_labels=True)
     
     return ax
+    
+def setup_3d(bbox=None):
+    from mpl_toolkits.mplot3d import Axes3D
+    print 'Using 3d projection' 
+    ax = plt.figure().add_subplot(111, projection='3d')
+    if bbox is None:
+        bbox=(-180,180,-80,80, 0, 3000)  
+    ax.set_xlim(bbox[0], bbox[1])
+    ax.set_ylim(bbox[2], bbox[3])
+    ax.set_zlim(bbox[5], bbox[4])
+    #ax.gridlines(draw_labels=True)
+    
+    return ax
 
 def plot_particles(ax,filename,t,color='k',marker='.',markersize=4,depth=None):
     '''
@@ -81,6 +94,45 @@ def plot_particles(ax,filename,t,color='k',marker='.',markersize=4,depth=None):
         if len(pid) > 0:
             ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],transform=ccrs.Geodetic(),\
                 color=color,marker=marker,s=markersize,label=label)
+
+    print 'Closest time found: ', times[tidx]
+    
+    return ax
+    
+def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', color='k',marker='.',markersize=4):
+    '''
+    plot all LEs at one time step
+    ax: (matplotlib.axes object) the map on which the LEs will be plotted
+    filename: (str) complete path filename of particle file
+    t: (datetime obj) closest time to this will be plottted
+    '''
+    
+    particles = nc_particles.Reader(filename)
+    times = particles.times
+    dt = [np.abs(((output_t - t).total_seconds())/3600) for output_t in times]
+    tidx = dt.index(min(dt))
+    try:
+        TheData = particles.get_timestep(tidx,variables=['latitude','longitude', 'depth', 'status_codes', var])
+    except: #GUI GNOME < 1.3.10
+        TheData = particles.get_timestep(tidx,variables=['latitude','longitude', 'depth', 'status'])
+        TheData['status_codes'] = TheData['status']
+    
+    status = TheData['status_codes']
+    label = t.isoformat()
+    for sc in [2,3]:
+        if sc==3:
+            marker='x'
+            label=None
+        pid = np.where(status==sc)[0]
+        if len(pid) > 0:
+            import matplotlib
+            import matplotlib.cm as cmx
+            cs = TheData[var]
+            cm = plt.get_cmap(colormap)
+            cNorm = matplotlib.colors.Normalize(vmin=min(cs), vmax=max(cs))
+            scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
+            ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid], TheData['depth'][pid],\
+                color=scalarMap.to_rgba(cs),marker=marker,s=markersize,label=label)
 
     print 'Closest time found: ', times[tidx]
     
