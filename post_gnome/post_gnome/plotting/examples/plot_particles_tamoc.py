@@ -1,0 +1,24 @@
+from post_gnome.plotting import geo_plots
+reload(geo_plots)
+import matplotlib.pyplot as plt
+import datetime
+
+plt.clf()
+
+ax = geo_plots.setup_3d(bbox=(-88,-87,27.5,28.5,0,2000)) 
+#if bbox not specified, this will use map bounds from bna
+
+#add particles at one time
+t0 = datetime.datetime(2016,9,18,1)
+#ax = geo_plots.plot_particles(ax,'script_plume.nc',t0,color='b')
+
+t1 = t0 + datetime.timedelta(hours=24)
+ax = geo_plots.plot_particles_3d(ax,'script_plume.nc',t1,color='b')
+
+ax.legend()
+
+#add initial location
+#t = datetime.datetime(2016,9,18,1)
+#geo_plots.plot_particles(ax,'script_plume.nc',t,marker='+',markersize=8)
+
+plt.show()
