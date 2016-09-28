@@ -9,10 +9,11 @@ def add_map(bbox=None,bna=None):
     print 'Using mercator projection' #might want to extend to include other options?
     ax = plt.axes(projection=ccrs.Mercator())
     
+    coast_polys = {}
+    
     if bna is not None:
         #load bna and determine bounding box from bna map bounds
         #no informative error messaging if invalid bna
-        coast_polys = {}
         
         with open(bna) as f:
             while True:
@@ -46,13 +47,13 @@ def add_map(bbox=None,bna=None):
         for poly in coast_polys.itervalues():
             ax.plot(poly[:,0],poly[:,1],'k',transform=ccrs.Geodetic())
     else:
-        ax.coastlines(resolution='10m')
+        ax.coastlines(resolution='110m')
     
     ax.gridlines(draw_labels=True)
     
     return ax
 
-def plot_particles(ax,filename,t,color='k',marker='.',markersize=4):
+def plot_particles(ax,filename,t,color='k',marker='.',markersize=4,depth=None):
     '''
     plot all LEs at one time step
     ax: (matplotlib.axes object) the map on which the LEs will be plotted
