@@ -9,10 +9,11 @@ def add_map(bbox=None,bna=None):
     print 'Using mercator projection' #might want to extend to include other options?
     ax = plt.axes(projection=ccrs.Mercator())
     
+    coast_polys = {}
+    
     if bna is not None:
         #load bna and determine bounding box from bna map bounds
         #no informative error messaging if invalid bna
-        coast_polys = {}
         
         with open(bna) as f:
             while True:
@@ -46,7 +47,7 @@ def add_map(bbox=None,bna=None):
         for poly in coast_polys.itervalues():
             ax.plot(poly[:,0],poly[:,1],'k',transform=ccrs.Geodetic())
     else:
-        ax.coastlines(resolution='10m')
+        ax.coastlines(resolution='110m')
     
     ax.gridlines(draw_labels=True)
     
@@ -66,7 +67,48 @@ def setup_3d(bbox=None):
     
     return ax
 
-def plot_particles(ax,filename,t,color='k',marker='.',markersize=4):
+def contour_particles(ax,filename,t,depth=0,levels=[0.1, 0.4, 0.8]):
+    '''
+    contour all LEs at one time step
+    ax: (matplotlib.axes object) the map on which the LEs will be plotted
+    filename: (str) complete path filename of particle file
+    t: (datetime obj) closest time to this will be plottted
+    depth: (float) depth of particles to include (all if None)
+    '''
+    import scipy.stats as st
+    particles = nc_particles.Reader(filename)
+    times = particles.times
+    dt = [np.abs(((output_t - t).total_seconds())/3600) for output_t in times]
+    tidx = dt.index(min(dt))
+    try:
+        TheData = particles.get_timestep(tidx,variables=['latitude','longitude','status_codes','depth'])
+    except: #GUI GNOME < 1.3.10
+        TheData = particles.get_timestep(tidx,variables=['latitude','longitude','status','depth'])
+        TheData['status_codes'] = TheData['status']
+    
+    pid = np.where((TheData['status_codes']==2) & (TheData['depth']==depth))[0]
+
+    x = TheData['longitude'][pid]
+    y = TheData['latitude'][pid]
+
+    # Peform the kernel density estimate
+    xx, yy = np.mgrid[min(x) - .1:max(x) + .1:100j, min(y) - .1:max(y) + .1:100j]
+    positions = np.vstack([xx.ravel(), yy.ravel()])
+    values = np.vstack([x, y])
+    kernel = st.gaussian_kde(values)
+    f = np.reshape(kernel(positions).T, xx.shape)
+    max_density = f.max()
+
+    levels.sort()
+    particle_contours = [lev * max_density for lev in levels]
+
+    ax.contourf(xx, yy, f, particle_contours,transform=ccrs.PlateCarree())
+    #ax.pcolor(xx,yy,f,transform=ccrs.PlateCarree())
+    print 'Closest time found: ', times[tidx]
+    
+    return ax
+
+def plot_particles(ax,filename,t,depth=0,color='k',marker='.',markersize=4):
     '''
     plot all LEs at one time step
     ax: (matplotlib.axes object) the map on which the LEs will be plotted
@@ -79,9 +121,9 @@ def plot_particles(ax,filename,t,color='k',marker='.',markersize=4):
     dt = [np.abs(((output_t - t).total_seconds())/3600) for output_t in times]
     tidx = dt.index(min(dt))
     try:
-        TheData = particles.get_timestep(tidx,variables=['latitude','longitude','status_codes'])
+        TheData = particles.get_timestep(tidx,variables=['latitude','longitude','status_codes','depth'])
     except: #GUI GNOME < 1.3.10
-        TheData = particles.get_timestep(tidx,variables=['latitude','longitude','status'])
+        TheData = particles.get_timestep(tidx,variables=['latitude','longitude','status','depth'])
         TheData['status_codes'] = TheData['status']
     
     status = TheData['status_codes']
@@ -90,7 +132,10 @@ def plot_particles(ax,filename,t,color='k',marker='.',markersize=4):
         if sc==3:
             marker='x'
             label=None
-        pid = np.where(status==sc)[0]
+        if depth is not None:
+            pid = np.where((status==sc) & (TheData['depth']==depth))[0]
+        else:
+            pid = np.where(status==sc)[0]
         if len(pid) > 0:
             ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],transform=ccrs.Geodetic(),\
                 color=color,marker=marker,s=markersize,label=label)
