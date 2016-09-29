@@ -144,7 +144,7 @@ def plot_particles(ax,filename,t,depth=0,color='k',marker='.',markersize=4):
     
     return ax
     
-def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', color='k',marker='.', drop_size=None, drop_scale_var='droplet_diameter'):
+def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', color='k',marker='.', drop_size=4, drop_scale_var=None):
     '''
     plot all LEs at one time step
     ax: (matplotlib.axes object) the map on which the LEs will be plotted
@@ -166,8 +166,6 @@ def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', 
     label = t.isoformat()
     if drop_scale_var is not None:
         drop_size = drop_size*TheData[drop_scale_var]
-    else:
-        drop_size = 4
     for sc in [2,3]:
         if sc==3:
             marker='x'
