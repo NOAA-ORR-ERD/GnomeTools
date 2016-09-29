@@ -16,7 +16,7 @@ t1 = t0 + datetime.timedelta(hours=48)
 ax = geo_plots.plot_particles_3d(ax, 'script_plume.nc',t1,
                                  colormap='plasma',
                                  var = 'droplet_diameter',
-                                 drop_scale=1000,
+                                 drop_size=None,
                                  drop_scale_var='droplet_diameter')
 
 ax.legend()
