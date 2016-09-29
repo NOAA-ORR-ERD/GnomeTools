@@ -12,8 +12,12 @@ ax = geo_plots.setup_3d(bbox=(-88,-87,27.5,28.5,0,2000))
 t0 = datetime.datetime(2016,9,18,1)
 #ax = geo_plots.plot_particles(ax,'script_plume.nc',t0,color='b')
 
-t1 = t0 + datetime.timedelta(hours=24)
-ax = geo_plots.plot_particles_3d(ax,'script_plume.nc',t1,colormap='plasma', var = 'droplet_diameter')
+t1 = t0 + datetime.timedelta(hours=48)
+ax = geo_plots.plot_particles_3d(ax, 'script_plume.nc',t1,
+                                 colormap='plasma',
+                                 var = 'droplet_diameter',
+                                 drop_scale=1000
+                                 drop_scale_var='droplet_diameter')
 
 ax.legend()
 

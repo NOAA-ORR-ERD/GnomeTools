@@ -58,9 +58,10 @@ def setup_3d(bbox=None):
     ax = plt.figure().add_subplot(111, projection='3d')
     if bbox is None:
         bbox=(-180,180,-80,80, 0, 3000)  
-    ax.set_xlim(bbox[0], bbox[1])
-    ax.set_ylim(bbox[2], bbox[3])
+    #ax.set_xlim(bbox[0], bbox[1])
+    #ax.set_ylim(bbox[2], bbox[3])
     ax.set_zlim(bbox[5], bbox[4])
+    plt.tight_layout()
     #ax.gridlines(draw_labels=True)
     
     return ax
@@ -98,7 +99,7 @@ def plot_particles(ax,filename,t,color='k',marker='.',markersize=4):
     
     return ax
     
-def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', color='k',marker='.',markersize=4):
+def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', color='k',marker='.', drop_scale=None, drop_scale_var='droplet_diameter'):
     '''
     plot all LEs at one time step
     ax: (matplotlib.axes object) the map on which the LEs will be plotted
@@ -118,6 +119,8 @@ def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', 
     
     status = TheData['status_codes']
     label = t.isoformat()
+    if drop_scale is not None:
+        drop_size = drop_scale*TheData[drop_scale_var]
     for sc in [2,3]:
         if sc==3:
             marker='x'
@@ -131,7 +134,7 @@ def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', 
             cNorm = matplotlib.colors.Normalize(vmin=min(cs), vmax=max(cs))
             scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
             ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid], TheData['depth'][pid],\
-                color=scalarMap.to_rgba(cs),marker=marker,s=markersize,label=label)
+                color=scalarMap.to_rgba(cs),marker=marker,label=label, s = drop_size)
 
     print 'Closest time found: ', times[tidx]
     
