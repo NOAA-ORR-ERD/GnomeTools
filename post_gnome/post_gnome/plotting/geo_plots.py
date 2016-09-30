@@ -47,7 +47,7 @@ def add_map(bbox=None,bna=None):
         for poly in coast_polys.itervalues():
             ax.plot(poly[:,0],poly[:,1],'k',transform=ccrs.Geodetic())
     else:
-        ax.coastlines(resolution='110m')
+        ax.coastlines(resolution='10m',linewidth=2)
     
     ax.gridlines(draw_labels=True)
     
