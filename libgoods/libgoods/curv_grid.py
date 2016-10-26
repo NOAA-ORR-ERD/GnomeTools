@@ -375,7 +375,10 @@ class cgrid():
         setattr(nc_v,'time','time')
                 
         for var in extra_2dvars:
-            nc_var = nc.createVariable(var,'f4',('yc','xc'))
+            print var
+            nc_var = nc.createVariable(var,'f4',('time','yc','xc'))
+            print nc_var.shape
+            print self.data[var].shape
             nc_var[:] = self.data[var]
             setattr(nc_var,'coordinates',u'time latc lonc')
             for key,val in self.atts[var].iteritems():
