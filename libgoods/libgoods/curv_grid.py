@@ -511,9 +511,9 @@ class roms(cgrid):
                
         if interp:
             self.data['u'],self.data['v'] = self.interp_and_rotate(u_on_upts,v_on_vpts)
-            self.data['lon_rho'] = self.data['lon_rho'][1:-1,1:-1]
-            self.data['lat_rho'] = self.data['lat_rho'][1:-1,1:-1]
-            self.grid['mask_rho'] = self.grid['mask_rho'][1:-1,1:-1]
+            # self.data['lon_rho'] = self.data['lon_rho'][1:-1,1:-1]
+            # self.data['lat_rho'] = self.data['lat_rho'][1:-1,1:-1]
+            # self.grid['mask_rho'] = self.grid['mask_rho'][1:-1,1:-1]
         else:
             self.data['u'] = u_on_upts
             self.data['v'] = v_on_vpts
@@ -525,6 +525,8 @@ class roms(cgrid):
         '''
         #self.grid['angle'] = self.grid['angle'][1:-1,1:-1]
         #self.grid['mask'] = self.grid['mask'][1:-1,1:-1]
+        print self.grid['angle'][1:-1,1:-1].shape
+        print self.grid['mask_rho'][1:-1,1:-1].shape
         cosa = (np.cos(self.grid['angle'][1:-1,1:-1]) * self.grid['mask_rho'][1:-1,1:-1])
         sina = (np.sin(self.grid['angle'][1:-1,1:-1]) * self.grid['mask_rho'][1:-1,1:-1])
         if is3d:
