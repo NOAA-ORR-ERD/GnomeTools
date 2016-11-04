@@ -20,10 +20,11 @@ var_map = { 'time':'MT',
             'latitude': 'Latitude',
             'u_velocity': 'u',
             'v_velocity': 'v',
+            'z': 'Depth',
             } 
             
 hycom = curv_grid.cgrid(url)
-hycom.get_dimensions(var_map)
+hycom.get_dimensions(var_map,get_z=True)
 ts = num2date(hycom.data['time'][:],hycom.atts['time']['units'])
 tid = np.where(np.logical_and(ts>=sdate,ts<=edate))[0]
 print 'Number of time steps:', len(tid)
@@ -38,9 +39,13 @@ native_tunits = hycom.atts['time']['units']
 hycom.subset(bbox) #south lat, west lon, north lat, east lon
 print hycom.x, hycom.y
 
+
+
+
 for num,ti in enumerate(tid):
     print 'getting data time:', ti
     hycom.get_data(var_map,tindex=[ti,ti+1,1],yindex=hycom.y,xindex=hycom.x,is3d=True)     
+    hycom.grid['depth'] = np.ones_like(hycom.data['lon_ss']) * -5000
     hycom.make_vel_mask()
     hycom.data['time_ss'],hycom.atts['time']['units'] = nctools.adjust_time(hycom.data['time_ss'],native_tunits)    
     print num2date(hycom.data['time_ss'],hycom.atts['time']['units'])

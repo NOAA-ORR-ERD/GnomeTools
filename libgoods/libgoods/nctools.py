@@ -5,17 +5,17 @@ import glob, os
 import math
 import datetime as dt
 
-def get_var_map(filename, var_list=['lon','lat','time','u','v','air_u','air_v']):
+def get_var_map(filename, var_list=['longitude','latitude','time','u_velocity','v_velocity','air_u','air_v']):
     
     var_map = dict()
     ncvars = Dataset(filename).variables
-    long_names = { 'lon':   'longitude',
-                   'lat':   'latitude',
-                   'time':  'time',
-                   'u':     'eastward_sea_water_velocity',
-                   'v':     'northward_sea_water_velocity',
-                   'air_u': 'eastward_wind',
-                   'air_v': 'northward_wind',
+    long_names = { 'longitude': 'longitude',
+                   'latitude':  'latitude',
+                   'time':      'time',
+                   'u_velocity':'eastward_sea_water_velocity',
+                   'v_velocity':'northward_sea_water_velocity',
+                   'air_u':     'eastward_wind',
+                   'air_v':     'northward_wind',
                  }
                  
     for var in var_list:

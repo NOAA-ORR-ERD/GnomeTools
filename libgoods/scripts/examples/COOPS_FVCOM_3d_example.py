@@ -2,17 +2,21 @@
 from libgoods import tri_grid, nctools, noaa_coops, data_files_dir
 import os 
 import datetime as dt
-from netCDF4 import Dataset
 '''
 Sample script to retrieve data from NOAA CO-OPS FVCOM netcdf "file" (can be
 OPeNDAP url), generate necessary grid topology (boundary info), and write 
 GNOME compatible output.
 
+Includes 3D and downloads data from multiple files (CO-OPS output is
+unaggregated and one file for output timestep). This could also be done
+using NetCDF4 "MFDataset" but could result in really large files
+
 '''
 # specify local file or opendap url
 start = dt.date(2015,3,9)
+end = dt.date(2015,3,10)
 hour0 = 3
-flist = noaa_coops.make_server_filelist('nwgofs',hour0,start,test_exist=False)
+flist = noaa_coops.make_server_filelist('nwgofs',hour0,start,end=end,test_exist=False)
 #data_url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/NWGOFS/MODELS/201501/nos.nwgofs.fields.f001.20150102.t15z.nc'
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -32,12 +36,9 @@ var_map = { 'longitude':'lon', \
 # class instantiation creates a netCDF Dataset object as an attribute
 nwgofs = tri_grid.ugrid(flist[0])
 
-# get longitude, latitude, and time variables
+# get longitude, latitude
 print 'Downloading data dimensions'
-nwgofs.get_dimensions(var_map)
-
-#display available time range for model output
-nctools.show_tbounds(nwgofs.Dataset.variables['time'])
+nwgofs.get_dimensions(var_map,get_time=False)
 
 # get grid topo variables (nbe, nv)
 print 'Downloading grid topo variables'
@@ -60,14 +61,16 @@ try:
     os.mkdir(out_dir)
 except:
     pass
+
 file_num = 1
 zi = len(nwgofs.data['sigma'])
 
-for f in flist[:1]:
-    nwgofs.Dataset = Dataset(f)
-    nctools.show_tbounds(nwgofs.Dataset.variables['time'])
+for f in flist[0:3]:
+    nwgofs.update(f)
+    nwgofs.get_dimensions(var_map,get_xy=False)
     nwgofs.get_data(var_map,zindex=zi) #All time steps in file, all depths
     print 'Writing to GNOME file'
     nwgofs.write_unstruc_grid(os.path.join(out_dir,str(file_num).zfill(3) + '.nc'))
     file_num = file_num + 1
+    
 nctools.make_filelist_for_GNOME(out_dir,'*.nc')

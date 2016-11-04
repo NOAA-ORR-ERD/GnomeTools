@@ -150,7 +150,7 @@ class nc_particle_file:
 
         time = nc.variables['time']
         units = time.getncattr('units')
-        self.times = netCDF4.num2date(time, units)
+        self.times = netCDF4.num2date(time[:], units)
         self.time_units = units
         self.num_times = len(self.times)
         mass = nc.variables['mass']

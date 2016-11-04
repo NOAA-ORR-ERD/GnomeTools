@@ -15,6 +15,7 @@ one_file = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/TBOFS/MODELS/2
 
 #We pick which variable we want to map to as this is sometimes not clear in virtual aggregations
 var_map = { 'time':'ocean_time',
+            'z':'s_rho',
            }  
            
 tbofs = curv_grid.roms(one_file)
@@ -22,29 +23,14 @@ tbofs = curv_grid.roms(one_file)
 tbofs.get_dimensions(var_map)
 #nctools.show_tbounds(tbofs.Dataset.variables['ocean_time'])
 
-# subset
-nl = 28.2; sl = 27.67
-wl = -82.5; el = -82.2
-#tbofs.subset([sl,wl,nl,el],lat='lat_psi',lon='lon_psi')
-
-#tbofs.data['lon'] = tbofs.data['lon_psi']
-#tbofs.data['lat'] = tbofs.data['lat_psi']
 
 #get grid info
-#tbofs.get_grid_info(xindex=tbofs.x,yindex=tbofs.y)
-tbofs.get_grid_info()
+tbofs.get_grid_info(is3d=True)
 
 print 'Getting data'
 #get_data interps to rho grid unless tinterp=False
 
-#tbofs.get_data(var_map,xindex=tbofs.x,yindex=tbofs.y) 
 tbofs.get_data(var_map) 
 
-tbofs.data['lonc'] = tbofs.data['lon_rho']
-tbofs.data['latc'] = tbofs.data['lat_rho']
-
-    
 print 'writing data'
-#tbofs.write_nc(os.path.join(data_files_dir,'tbofs_example.nc'),is3d=False)
-tbofs.reduce_latlon_mesh_for_GNOME()
-tbofs.write_nc(os.path.join(data_files_dir,'tbofs_example_old.nc'),gui_gnome=True,is3d=False)
+tbofs.write_nc(os.path.join(data_files_dir,'tbofs_3d.nc'),is3d=True)

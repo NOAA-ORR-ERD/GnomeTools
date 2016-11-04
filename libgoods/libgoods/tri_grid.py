@@ -235,8 +235,11 @@ class ugrid:
         
         return bnd
 
-    def order_boundary(self,b,seg_types):
+    def order_boundary(self,b,seg_types=None):
     
+        if seg_types is None:
+            seg_types = [0]*len(b)
+            
         obnd = dict()
         otype = dict()
         bnd_number = 0
