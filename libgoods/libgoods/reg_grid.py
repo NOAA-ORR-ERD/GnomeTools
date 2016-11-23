@@ -79,8 +79,10 @@ class rgrid:
             self.data['lat_ss'] = self.data['lat'][y1:y2:step]
         
         u = self.Dataset.variables[var_map['u_velocity']]
+        u.set_auto_maskandscale(False)
         self.atts['u'] = u.__dict__
         v = self.Dataset.variables[var_map['v_velocity']]
+        v.set_auto_maskandscale(False)
         self.atts['v'] = v.__dict__
 
 
