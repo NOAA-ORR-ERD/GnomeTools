@@ -10,7 +10,8 @@ import os
 
 plt.clf()
 
-ax = geo_plots.add_map(bbox=(-89,-85,27.5,31)) 
+#ax = geo_plots.add_map(bbox=(-89,-85,27.5,31))
+ax = geo_plots.add_map(bbox=(-90, -84, 27.5, 31))
 #land_10m = cfeature.NaturalEarthFeature('physical','land','50m',\
 #    edgecolor='face',facecolor='0.75')
 ##ax.add_feature(cfeature.LAND, facecolor='0.75')
@@ -23,12 +24,12 @@ bathy = Reader(bathy_file)
 for rec,geo in zip(bathy.records(),bathy.geometries()):
     if rec.attributes['DEPTH_METR'] in ['100m','500m','1000m']:
         shape_feature = ShapelyFeature(geo,ccrs.PlateCarree(), facecolor='none')
-        ax.add_feature(shape_feature)    
-        
-#add particles at one time
-t = datetime.datetime(2016,9,21,1)
+        ax.add_feature(shape_feature)
 
-filename = 'script_plume.nc'
+#add particles at one time
+t = datetime.datetime(2016, 9, 21, 1)
+
+filename = 'gulf_tamoc.nc'
 ax = geo_plots.contour_particles(ax,filename,t,levels=[0.1, 0.4, 0.6, 1])
 #ax = geo_plots.plot_particles(ax,filename,t,depth=0,color='b')
 
