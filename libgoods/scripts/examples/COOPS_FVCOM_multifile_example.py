@@ -9,7 +9,7 @@ OPeNDAP url), generate necessary grid topology (boundary info), and write
 GNOME compatible output.
 
 To script illustrates how to access data from multiple files (urls) by looping
-through a filelist.
+through a filelist. Also only extracts a small subset from unstructured grid file
 
 Alternatively, the list of filenames/urls can be passed directly when instantiating
 the ugrid object-- this creates a netcdf4 MFDataset and isa good option for not too 
@@ -18,14 +18,13 @@ many files (all output is written to one nc file for GNOME in this case)
 Since multiple files are created, also create a text file that can be loaded
 into GNOME pointing to the individual files
 '''
+
+out_dir = os.path.join(data_files_dir,'ngofs')
 start = dt.date(2015,1,14)
 end = dt.date(2015,1,21)
 hour0 = 3
 flist = noaa_coops.make_server_filelist('ngofs',hour0,start,end=end,test_exist=False)
 
-#generate text file with list of generated files
-list_of_ofns = file(os.path.join(data_files_dir,'ngofs_filelist.txt'), 'w')
-list_of_ofns.write('NetCDF Files\n')
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -40,50 +39,53 @@ var_map = { 'longitude':'lon', \
             'eles_surrounding_ele':'nbe',\
           }  
 
-firsttime = 1
+
+# class instantiation creates a netCDF Dataset object as an attribute -- 
+# use the first file in the list only
+ngofs = tri_grid.ugrid(flist[0])
+
+#get longitude, latitude
+print 'Downloading data dimensions'
+ngofs.get_dimensions(var_map,get_time=False)
+
+# get grid topo variables (nbe, nv)
+print 'Downloading grid topo variables'
+ngofs.get_grid_topo(var_map)
+
+ # subset bounding box
+nl = 30.4; sl = 30.322
+wl = -88.3; el = -88.22
+ngofs.find_nodes_eles_in_ss(nl,sl,wl,el)
+
+# find and order the boundary
+print 'Finding boundary'
+bnd = ngofs.find_bndry_segs(subset=True)
+print 'Ordering boundary'
+#In this case entire subset boundary will be set to land -- see COOPS_FVCOM_subset_example
+#for how to use entire domain boundary to correctly determine type of subset boundary
+ngofs.order_boundary(bnd)
+# GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
+ngofs.atts['nbe']['order'] = 'cw'
+
+try:
+    os.mkdir(out_dir)
+except:
+    pass
 
 for f in flist:
-    
-    if firsttime:
-        
-        firsttime = 0
-        # class instantiation creates a netCDF Dataset object as an attribute -- 
-        # use the first file in the list only
-        ngofs = tri_grid.ugrid(f)
-        
-#        # get longitude, latitude, and time variables
-#        print 'Downloading data dimensions'
-#        ngofs.get_dimensions(var_map)
-        
-        # get grid topo variables (nbe, nv)
-        print 'Downloading grid topo variables'
-        ngofs.get_grid_topo(var_map)
-        # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
-        ngofs.atts['nbe']['order'] = 'cw'
-         
-        # find and order the boundary
-        print 'Finding boundary'
-        bnd = ngofs.find_bndry_segs()
-        print 'Ordering boundary'
-        seg_types = noaa_coops.specify_bnd_types('ngofs',bnd)
-        ngofs.order_boundary(bnd,seg_types)
-        
-    else:
-        
-        ngofs.update(f) 
+    ngofs.update(f) 
 
     print 'Downloading data dimensions'
-    ngofs.get_dimensions(var_map)
+    ngofs.get_dimensions(var_map,get_xy=False)
     
     #get the data
     print 'Downloading data'
     #ngofs.get_data(var_map,tindex=[0,1,1]) #First time step only
-    ngofs.get_data(var_map) #All time steps in file
+    ngofs.get_data(var_map,nindex=ngofs.nodes_in_ss) #All time steps in file
     
     of_dt = nctools.round_time(num2date(ngofs.data['time'][0],ngofs.atts['time']['units']),roundto=3600)
     ofn = of_dt.strftime('%Y%m%d_%H') + '.nc'
-    list_of_ofns.write('[FILE]  ' + ofn + '\n')
     print 'Writing to GNOME file'
-    ngofs.write_unstruc_grid(os.path.join(data_files_dir,ofn))
+    ngofs.write_unstruc_grid(os.path.join(out_dir,ofn))
     
-list_of_ofns.close()
+nctools.make_filelist_for_GNOME(out_dir,'*.nc')

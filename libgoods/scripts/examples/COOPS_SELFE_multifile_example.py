@@ -79,6 +79,12 @@ for f in flist:
         print 'Ordering boundary'
         creofs.order_boundary(bnd,seg_types)
         
+        out_dir = os.path.join(data_files_dir,'creofs')
+        try:
+            os.mkdir(out_dir)
+        except:
+            pass
+        
     else:
         
         creofs.update(f) 
@@ -95,6 +101,6 @@ for f in flist:
     ofn = of_dt.strftime('%Y%m%d_%H') + '.nc'
     list_of_ofns.write('[FILE]  ' + ofn + '\n')
     print 'Writing to GNOME file'
-    creofs.write_unstruc_grid(os.path.join(data_files_dir,'creofs',ofn))
+    creofs.write_unstruc_grid(os.path.join(out_dir,ofn))
     
 list_of_ofns.close()

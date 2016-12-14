@@ -6,8 +6,12 @@ A simple script that copies all the cubes and everything into the right places
 This has not been well set up to work universally. It's only been tested on one setup
 
 """
+
 import os, shutil
 from TAP_Setup import setup
+import sys
+
+RootDir = sys.argv[1]
 
 TAPViewerDir = os.path.join(setup.RootDir, setup.TAPViewerPath)
 

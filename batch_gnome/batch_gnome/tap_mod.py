@@ -663,10 +663,10 @@ def CompThicknessCubeTimestepOld(Grid, LE_positions, LE_mass=None, flags=None, f
     
     return Vol.reshape(num_long, num_lat) 
 
-#from tap_comp_volume import comp_volume
-from cy_tap_comp_volume import comp_volume
+from tap_comp_volume import comp_volume
+#from cy_tap_comp_volume import comp_volume
 
-import nc_particles
+from post_gnome import nc_particles
 
 def CompThicknessCube(FileList, OutputTimes, Grid, Weather=None):
 
@@ -695,17 +695,17 @@ def CompThicknessCube(FileList, OutputTimes, Grid, Weather=None):
     # read the trajectory data from the first netcdf file
     #print "**************"
     #print "getting header info from file:", FileList[0]
-    print "nc_particles module:", nc_particles.__file__
-    traj_file = nc_particles.nc_particle_file(FileList[0])
-    
+    traj_file = nc_particles.Reader(FileList[0])
+
     if traj_file.get_units('age') != 'seconds':
         raise ValueError("particle age units in netcdf file must be in seconds")
     
-    NumTimesteps = traj_file.num_times
+    NumTimesteps = len(traj_file.times)
     MaxNumLEs = traj_file.particle_count[:].max() 
     
     TimeStep = traj_file.times[1] - traj_file.times[0] # assume constant timestep!
-    traj_file.close()
+    traj_file.nc.close()
+    
     TimeStepHours = TimeStep.total_seconds() / 3600.00
     ## OutputTimes should already be in hours
     OutputSteps = (np.array([0] + OutputTimes) / TimeStepHours).astype(np.int32) # in integer units of time step
@@ -715,34 +715,33 @@ def CompThicknessCube(FileList, OutputTimes, Grid, Weather=None):
     Cube = np.zeros((NumTimes,NumSites,NumSpills), np.float32)
 
     start = time.time() # just for timing how long it takes to run
+    print OutputSteps
 
     ## Loop through each individual trajectory
     for SpillNum in range(NumSpills):
         #print "computing spill number %i"%(SpillNum,)
         # read new trajectory file:
-        #print "working with file:", FileList[SpillNum]
-        traj_file = nc_particles.nc_particle_file(FileList[SpillNum])
+        print "working with file:", FileList[SpillNum]
+        traj_file = nc_particles.Reader(FileList[SpillNum])
         VolTable = np.zeros((NumSites), np.float32) # this will store the Maximum volume in each grid box.
 
         ## Step through the Cube output time steps
         for step in xrange( len(OutputSteps) - 1 ):
             ## step through the Trajectory time steps between each Cube Timestep
             for t in xrange(OutputSteps[step], OutputSteps[step+1]):
-                LE_lat = traj_file.get_timestep_single_var(t, 'latitude')
-                LE_long = traj_file.get_timestep_single_var(t, 'longitude')
+                LE_vars = traj_file.get_timestep(t,variables=['longitude','latitude','age','status_codes'])
+                LE_lat = LE_vars['latitude']
+                LE_long = LE_vars['longitude']
                 LE_positions = np.column_stack((LE_long, LE_lat))
                 NumLEs = LE_positions.shape[0]
-                LE_age = traj_file.get_timestep_single_var(t, 'age').astype(np.float32) / 3600.00 # age needs to be in hours
-                #print "age:", LE_age
+                LE_age = LE_vars['age'].astype(np.float32) / 3600.00                
                 #NOTE: for TAP -- we assume that are the particles have unit mass at the start
                 #      so we don't read it from the file
                 LE_mass = np.ones((NumLEs,), dtype = np.float32)
-                #print "before"
-                #print LE_mass
                 if Weather:
                     #print "weathering the LEs"
                     LE_mass = Weather.weather(LE_mass, LE_age)
-                flags = traj_file.get_timestep_single_var(t, 'flag').astype(np.uint8)
+                flags = LE_vars['status_codes'].astype(np.uint8)
                 Vol = comp_volume(LE_positions, LE_mass, flags, Grid)
                 # keep the largest volume computed between output timesteps
                 VolTable = np.maximum(Vol.flat, VolTable)

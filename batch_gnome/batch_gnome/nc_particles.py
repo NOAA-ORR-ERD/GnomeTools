@@ -16,6 +16,9 @@ import netCDF4
 
 class particle_trajectory:
     def __init__ (self):
+        
+        print 'This version of nc_particles is deprecated'
+        print 'Current version is in post_gnome package (GnomeTools)'
 
         # lots of defaults:
         self.Trajectory = []
@@ -143,6 +146,9 @@ class nc_particle_file:
 
     def __init__(self, nc):
 
+        print 'This version of nc_particles is deprecated'
+        print 'Current version is in post_gnome package (GnomeTools)'
+        
         if type(nc) == netCDF4.Dataset:
             self.nc = nc
         else: # it should be a filename
@@ -150,7 +156,7 @@ class nc_particle_file:
 
         time = nc.variables['time']
         units = time.getncattr('units')
-        self.times = netCDF4.num2date(time, units)
+        self.times = netCDF4.num2date(time[:], units)
         self.time_units = units
         self.num_times = len(self.times)
         mass = nc.variables['mass']

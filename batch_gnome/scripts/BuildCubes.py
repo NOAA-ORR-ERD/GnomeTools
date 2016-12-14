@@ -51,17 +51,25 @@ for ( (Season,junk), CubeRootName ) in zip(setup.Seasons, setup.CubesRootNames):
         os.mkdir(SeasonCubesDir)
 
     DirList = os.listdir(SeasonTrajDir)
-    DirList.sort()
     for d in DirList:
-        try:
-            int(d)
-            GoOn = True
-        except ValueError:
-            GoOn = False
-        if GoOn:
-            TrajName = os.path.join(setup.RootDir,setup.TrajectoriesPath,Season,d)
-            CubeName = os.path.join(setup.RootDir, setup.CubesPath, Season, "%s%s%s"%(CubeRootName, str(int(d)).zfill(4),".bin") )
-            CubesList.append((TrajName, CubeName))
+        TrajName = os.path.join(setup.RootDir,setup.TrajectoriesPath,Season,d)
+        print TrajName
+        traj_num = int(TrajName.split('_')[-1].split('.')[0])
+        CubeName = os.path.join(setup.RootDir, setup.CubesPath, Season, "%s%s%s"%(CubeRootName, str(int(traj_num)).zfill(4),".bin") )
+        CubesList.append((SeasonTrajDir, CubeName))
+#    print DirList
+#    DirList.sort()
+#    for d in DirList:
+#        try:
+#            int(d)
+#            GoOn = True
+#        except ValueError:
+#            GoOn = False
+#        if GoOn:
+#            TrajName = os.path.join(setup.RootDir,setup.TrajectoriesPath,Season,d)
+#            print TrajName
+#            CubeName = os.path.join(setup.RootDir, setup.CubesPath, Season, "%s%s%s"%(CubeRootName, str(int(d)).zfill(4),".bin") )
+#            CubesList.append((TrajName, CubeName))
             
 if setup.ReceptorType == "Grid":
     Grid = setup.Grid
@@ -86,7 +94,8 @@ if setup.ReceptorType == "Grid":
             print "EmptyCube: %s Exists less than 30min old...skipping"%(CubeName,)
         else:
             print "Compute Cube: %s \n from trajectory files in:\n %s"%(CubeName,TrajFilesDir)
-            TrajFiles = [os.path.join(TrajFilesDir, "time%03i.nc"%(i+1)) for i in range(setup.NumStarts)]
+            TrajFiles = [os.path.join(TrajFilesDir, fname) for fname in os.listdir(TrajFilesDir)]
+            #TrajFiles = os.listdir(TrajFilesDir)
             # make sure they exist
             ## fixme: should I check file size, too.
             for f in TrajFiles:

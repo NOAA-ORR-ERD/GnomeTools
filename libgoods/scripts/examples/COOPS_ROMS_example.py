@@ -49,7 +49,7 @@ for f in flist:
         os.mkdir(outdir)
     ofn = os.path.join(outdir,'dbofs' + str(fnum).zfill(3) + '.nc')
     
-    dbofs.reduce_latlon_mesh_for_GNOME()
+    #dbofs.reduce_latlon_mesh_for_GNOME()
     dbofs.write_nc(ofn)
     
 nctools.make_filelist_for_GNOME(outdir,'*.nc')

@@ -51,11 +51,11 @@ class cgrid():
             self.data['lat'] = lat[:]      
             
         if get_z:
-            sigma = self.Dataset.variables[var_map['sigma']]
-            self.atts['sigma'] = {}
-            for an_att in sigma.ncattrs():
-                self.atts['sigma'][an_att] = getattr(sigma,an_att)
-            self.data['sigma'] = sigma[:]    
+            z = self.Dataset.variables[var_map['z']]
+            self.atts['z'] = {}
+            for an_att in z.ncattrs():
+                self.atts['z'][an_att] = getattr(z,an_att)
+            self.data['z'] = z[:]    
             
     
     def subset_pt_in_poly(self,bbox,stride=1,lat='lat',lon='lon'):
@@ -272,7 +272,15 @@ class cgrid():
         nc.createDimension('xc',xc)
         nc.createDimension('yc',yc)
         if is3d:
-            nc.createDimension('sigma',len(self.data['sigma']))
+            zdim = 'sigma'
+            zvar = 'sigma'
+            try:            
+                if self.atts['z']['standard_name'] == 'depth':
+                    zdim= 'levels'
+                    zvar = 'depth_levels'
+            except KeyError:
+                pass       
+            nc.createDimension(zdim,len(self.data['z']))        
         nc.createDimension('time',None)
     
         try:
@@ -313,9 +321,9 @@ class cgrid():
             nc_v = nc.createVariable('air_v','f4',('time','yc','xc'), \
                 fill_value=vfill)
         elif is3d:
-            nc_u = nc.createVariable('water_u','f4',('time','sigma','yc','xc'), \
+            nc_u = nc.createVariable('water_u','f4',('time',zdim,'yc','xc'), \
                 fill_value=ufill)
-            nc_v = nc.createVariable('water_v','f4',('time','sigma','yc','xc'), \
+            nc_v = nc.createVariable('water_v','f4',('time',zdim,'yc','xc'), \
                 fill_value=vfill)
         else:
             nc_u = nc.createVariable('water_u','f4',('time','yc','xc'), \
@@ -330,8 +338,6 @@ class cgrid():
         else:
             nc_lon[:] = self.data[lon_key]
             nc_lat[:] = self.data[lat_key]
-            print nc_lonc.shape
-            print self.data['lonc'].shape
             nc_lonc[:] = self.data['lonc']
             nc_latc[:] = self.data['latc']
         
@@ -346,8 +352,8 @@ class cgrid():
             nc_v[:] = self.data['v']
     
         if is3d:
-            nc_sigma = nc.createVariable('sigma','f4',('sigma'))
-            nc_sigma[:] = self.data['sigma']
+            nc_z = nc.createVariable(zvar,'f4',(zdim))
+            nc_z[:] = self.data['z']
             nc_depth = nc.createVariable('depth','f4',('yc','xc'))
             nc_depth[:] = self.grid['depth']
             
@@ -375,7 +381,7 @@ class cgrid():
         setattr(nc_v,'time','time')
                 
         for var in extra_2dvars:
-            nc_var = nc.createVariable(var,'f4',('yc','xc'))
+            nc_var = nc.createVariable(var,'f4',('time','yc','xc'))
             nc_var[:] = self.data[var]
             setattr(nc_var,'coordinates',u'time latc lonc')
             for key,val in self.atts[var].iteritems():
@@ -426,6 +432,7 @@ class roms(cgrid):
                 
             self.data['lon'] = self.data['lon_psi']
             self.data['lat'] = self.data['lat_psi']
+
             
     def get_grid_info(self,yindex=None,xindex=None,is3d=False):
         
@@ -448,13 +455,14 @@ class roms(cgrid):
             
         #load lat/lon for rho, u, and v grids
         #TODO: I don't think is right indexing for u/v grids (not used yet)
-        #for var in ['lat_rho','lat_u','lat_v','lon_rho','lon_u','lon_v']:
-        for var in ['lat_rho','lon_rho']:
+        for var in ['lat_rho','lat_u','lat_v','lon_rho','lon_u','lon_v']:
+        #for var in ['lat_rho','lon_rho']:
             ds_var = self.Dataset.variables[var]
             self.atts[var] = {}
             for an_att in ds_var.ncattrs():
                 self.atts[var][an_att] = getattr(ds_var,an_att)
             self.data[var] = ds_var[y1:y2+1:step,x1:x2+1:step] 
+            
         self.data['lonc'] = self.data['lon_rho'][1:-1,1:-1]
         self.data['latc'] = self.data['lat_rho'][1:-1,1:-1]
 
@@ -511,9 +519,9 @@ class roms(cgrid):
                
         if interp:
             self.data['u'],self.data['v'] = self.interp_and_rotate(u_on_upts,v_on_vpts)
-            self.data['lon_rho'] = self.data['lon_rho'][1:-1,1:-1]
-            self.data['lat_rho'] = self.data['lat_rho'][1:-1,1:-1]
-            self.grid['mask_rho'] = self.grid['mask_rho'][1:-1,1:-1]
+            # self.data['lon_rho'] = self.data['lon_rho'][1:-1,1:-1]
+            # self.data['lat_rho'] = self.data['lat_rho'][1:-1,1:-1]
+            # self.grid['mask_rho'] = self.grid['mask_rho'][1:-1,1:-1]
         else:
             self.data['u'] = u_on_upts
             self.data['v'] = v_on_vpts
