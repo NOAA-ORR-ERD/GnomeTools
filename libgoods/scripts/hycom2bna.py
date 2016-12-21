@@ -16,6 +16,7 @@ This script was tested with one particular case of GNOME-compatilbe HYCONM files
 it may not work on others.
 """
 
+from __future__ import print_function
 import sys
 import numpy as np
 import netCDF4
@@ -34,7 +35,7 @@ except IndexError:
     # use the default
     outfilename = 'hycom_grid.bna' 
 
-print "reading:", infilename
+print("reading:", infilename)
 nc = netCDF4.Dataset(infilename)
 
 
@@ -59,16 +60,16 @@ lon[-1,:] = lon[-2,:]
 # land-water mask
 mask = nc.variables['mask'][:]
 
-print "grid size is:",  nx, ny
+print("grid size is:",  nx, ny)
 
 #generate the bna
-print "writing out:", outfilename
+print("writing out:", outfilename)
 bna = open(outfilename, 'w')
 
 # loop through the grid boxes:
 count = 1
-for i in xrange(nx):# nx
-    for j in xrange(ny):# ny
+for i in range(nx):# nx
+    for j in range(ny):# ny
         if not mask[i,j]:
             bna.write('"%i","1",5\n'%count)
             bna.write("%f, %f\n"%(lon[i,j], lat[i,j]) )
@@ -80,7 +81,7 @@ for i in xrange(nx):# nx
 
 bna.close()
 
-print "done"
+print("done")
 
 
 

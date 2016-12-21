@@ -1,3 +1,4 @@
+from __future__ import print_function
 from libgoods import curv_grid, nctools, noaa_coops, data_files_dir
 import os
 import datetime as dt
@@ -34,7 +35,7 @@ tlen = len(dbofs.data['time'])
 
 
 for f in flist:
-    print f    
+    print(f)    
     if fnum> 0:
         dbofs.update(f)
     

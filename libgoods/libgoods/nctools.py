@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from netCDF4 import Dataset, num2date, date2num, date2index
 import glob, os
 import math
@@ -46,19 +47,19 @@ def fix_time_units(units):
 def show_ncfile_tbounds(filename,tvar='time'):
     
     t = Dataset(filename).variables[tvar]
-    print 'Start date: ', num2date(t[0],t.units)
+    print('Start date: ', num2date(t[0],t.units))
     try:
-        print 'End date: ', num2date(t[-1],t.units)
+        print('End date: ', num2date(t[-1],t.units))
     except IndexError:
-        print num2date(t[0],t.units)
+        print(num2date(t[0],t.units))
 
 def show_tbounds(t):
     
-    print 'Start date: ', num2date(t[0],t.units)
+    print('Start date: ', num2date(t[0],t.units))
     try:
-        print 'End date: ', num2date(t[-1],t.units)
+        print('End date: ', num2date(t[-1],t.units))
     except IndexError:
-        print num2date(t[0],t.units)
+        print(num2date(t[0],t.units))
         
 def get_tindex(t,start_date,end_date,stride=None):
         

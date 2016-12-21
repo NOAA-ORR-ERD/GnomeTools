@@ -1,3 +1,4 @@
+from __future__ import print_function
 from libgoods import reg_grid,data_files_dir, nctools
 import os
 from netCDF4 import date2num
@@ -30,7 +31,7 @@ while sdate < edate:
     
     try:
         url = url_stem + model_time + '.nc'
-        print url
+        print(url)
         caroms = reg_grid.rgrid(url)
         caroms.get_dimensions(var_map)
         
@@ -50,7 +51,7 @@ while sdate < edate:
             caroms.get_data(var_map)
             caroms.write_nc(ofn)
     except:
-        print 'File not found'
+        print('File not found')
             
     sdate = sdate + datetime.timedelta(days=1)
 

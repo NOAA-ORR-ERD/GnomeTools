@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from libgoods import tri_grid, nctools, data_files_dir
 import os 
 import datetime
@@ -42,20 +43,20 @@ var_map = { 'longitude':'lon', \
 wfs = tri_grid.ugrid(data_url)
 
 # get longitude, latitude, and time variables
-print 'Downloading data dimensions'
+print('Downloading data dimensions')
 wfs.get_dimensions(var_map)
 
 #display available time range for model output
 nctools.show_tbounds(wfs.Dataset.variables['time'])
 
 # get grid topo variables (nbe, nv)
-print 'Downloading grid topo variables'
+print('Downloading grid topo variables')
 wfs.get_grid_topo(var_map)
 
 # find and order the boundary
-print 'Finding boundary segs'
+print('Finding boundary segs')
 bnd = wfs.find_bndry_segs()
-print 'Ordering boundary segs and assigning types'
+print('Ordering boundary segs and assigning types')
 ow1 = 1; ow2 = 190; #nodes defining start/end of open water boundary
 seg_types = []
 for b in bnd:
@@ -66,7 +67,7 @@ for b in bnd:
 wfs.order_boundary(bnd,seg_types)
 
 # get the data
-print 'Downloading data'
+print('Downloading data')
 #wfs.get_data(var_map,tindex=[0,1,1]) #First time step only
 #wfs.get_data(var_map) #All time steps in file
 wfs.get_data(var_map)
@@ -75,6 +76,6 @@ wfs.get_data(var_map)
 # why ccw?
 wfs.atts['nbe']['order'] = 'ccw'
 
-print 'Writing to GNOME file'
+print('Writing to GNOME file')
 wfs.write_unstruc_grid_only(os.path.join(data_files_dir, 'WFS_grid.nc'))
 wfs.write_unstruc_grid(os.path.join(data_files_dir, 'WFS_example.nc'))

@@ -1,6 +1,12 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import datetime
-import urllib2, requests
+try:
+    from urllib.request import urlopen, Request   #py3
+except ImportError:
+    from urllib2 import urlopen, Request          #py2
+
+import requests
 from netCDF4 import Dataset
 import os, glob
 '''
@@ -48,11 +54,11 @@ def specify_bnd_types(grid,segs,ss_land_nodes=[]):
     They are obtained by tri_grid remap_bry_nodes method
     '''
     if grid.lower() == 'ngofs':
-        ow = range(1,180)
+        ow = list(range(1,180))
     elif grid.lower() == 'nwgofs':
-        ow = range(1,207)
+        ow = list(range(1,207))
     elif grid.lower() == 'negofs':
-        ow = range(1,139)
+        ow = list(range(1,139))
     elif grid.lower() == 'creofs':
         ow = [68408,68409,68410,68411,68412,68414,68604,68605,68606,68607,68608,68791,68792,68793,68962,68963,68964,68965,69130,69131,69132,69133,69303,69304,69305,69479,69481,69669,69670,69671,69672,69674,69675,69866,69867,69868,69869,69870,70062,70063,70064,70065,70271,70272,70489,70490,70704,70705,70927,70928,71144,71346,71520,71683,71844,72001,72154,72281,72377,72462,72532,72583,72631,72676,72720,72765,72810,72851,72897,72939,72981,73023,73061,73099,73138,73178,73215,73251,73283,73313,73346,73381,73417,73453,73454,73481,73502,73523]
     elif grid.lower() == 'sfbofs':
@@ -172,7 +178,7 @@ def make_agg(fc_file0,type='fc'):
         # here we leave off the last file in order to make best time series of nowcast files
         # there is a one hour overlap between adjacent nowcasts
     else:
-        print 'Type must be fc or nc'
+        print('Type must be fc or nc')
     a,b = fc_file0.split('000')
     agg = [fc_file0,]
     for h in range(1,num_files+1):
@@ -180,12 +186,12 @@ def make_agg(fc_file0,type='fc'):
     return agg
 
 def test_existence(url):
-    req = urllib2.Request(url)
+    req = Request(url)
     try:
-        urllib2.urlopen(req)
+        urlopen(req)
         exists = True
     except:
-        print 'Not found: ', url
+        print('Not found: ', url)
         exists = False
     return exists
     
@@ -194,7 +200,7 @@ def test_server_existence(url):
     if resp.status_code == 200:
         exists = True
     else:
-        print 'Not found: ', url
+        print('Not found: ', url)
         exists = False
     return exists
      
@@ -204,7 +210,7 @@ def download_and_save(url,output_dir):
     nc_out = Dataset(os.path.join(output_dir,fname),'w')
     
     #Copy dimensions
-    for dname, the_dim in nc_in.dimensions.iteritems():
+    for dname, the_dim in nc_in.dimensions.items():
         nc_out.createDimension(dname, len(the_dim))
         
     for var in ['time','u','v']:

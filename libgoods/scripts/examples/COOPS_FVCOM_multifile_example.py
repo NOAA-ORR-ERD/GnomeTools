@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from libgoods import tri_grid, noaa_coops, data_files_dir, nctools
 import datetime as dt
 import os 
@@ -45,11 +46,11 @@ var_map = { 'longitude':'lon', \
 ngofs = tri_grid.ugrid(flist[0])
 
 #get longitude, latitude
-print 'Downloading data dimensions'
+print('Downloading data dimensions')
 ngofs.get_dimensions(var_map,get_time=False)
 
 # get grid topo variables (nbe, nv)
-print 'Downloading grid topo variables'
+print('Downloading grid topo variables')
 ngofs.get_grid_topo(var_map)
 
  # subset bounding box
@@ -58,9 +59,9 @@ wl = -88.3; el = -88.22
 ngofs.find_nodes_eles_in_ss(nl,sl,wl,el)
 
 # find and order the boundary
-print 'Finding boundary'
+print('Finding boundary')
 bnd = ngofs.find_bndry_segs(subset=True)
-print 'Ordering boundary'
+print('Ordering boundary')
 #In this case entire subset boundary will be set to land -- see COOPS_FVCOM_subset_example
 #for how to use entire domain boundary to correctly determine type of subset boundary
 ngofs.order_boundary(bnd)
@@ -75,17 +76,17 @@ except:
 for f in flist:
     ngofs.update(f) 
 
-    print 'Downloading data dimensions'
+    print('Downloading data dimensions')
     ngofs.get_dimensions(var_map,get_xy=False)
     
     #get the data
-    print 'Downloading data'
+    print('Downloading data')
     #ngofs.get_data(var_map,tindex=[0,1,1]) #First time step only
     ngofs.get_data(var_map,nindex=ngofs.nodes_in_ss) #All time steps in file
     
     of_dt = nctools.round_time(num2date(ngofs.data['time'][0],ngofs.atts['time']['units']),roundto=3600)
     ofn = of_dt.strftime('%Y%m%d_%H') + '.nc'
-    print 'Writing to GNOME file'
+    print('Writing to GNOME file')
     ngofs.write_unstruc_grid(os.path.join(out_dir,ofn))
     
 nctools.make_filelist_for_GNOME(out_dir,'*.nc')

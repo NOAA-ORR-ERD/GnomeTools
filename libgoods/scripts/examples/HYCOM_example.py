@@ -1,3 +1,4 @@
+from __future__ import print_function
 from libgoods import curv_grid, nctools, data_files_dir
 import numpy as np
 import datetime
@@ -27,7 +28,7 @@ hycom = curv_grid.cgrid(url)
 hycom.get_dimensions(var_map,get_z=True)
 ts = num2date(hycom.data['time'][:],hycom.atts['time']['units'])
 tid = np.where(np.logical_and(ts>=sdate,ts<=edate))[0]
-print 'Number of time steps:', len(tid)
+print('Number of time steps:', len(tid))
 #adjust longitude: HYCOM lon goes from 74 --> 1019 ??
 lon = np.mod(hycom.data['lon'],360)
 hycom.data['lon'] = (lon > 180).choose(lon,lon-360)
@@ -37,18 +38,18 @@ native_tunits = hycom.atts['time']['units']
 
 #Determine geographic subset indices
 hycom.subset(bbox) #south lat, west lon, north lat, east lon
-print hycom.x, hycom.y
+print(hycom.x, hycom.y)
 
 
 
 
 for num,ti in enumerate(tid):
-    print 'getting data time:', ti
+    print('getting data time:', ti)
     hycom.get_data(var_map,tindex=[ti,ti+1,1],yindex=hycom.y,xindex=hycom.x,is3d=True)     
     hycom.grid['depth'] = np.ones_like(hycom.data['lon_ss']) * -5000
     hycom.make_vel_mask()
     hycom.data['time_ss'],hycom.atts['time']['units'] = nctools.adjust_time(hycom.data['time_ss'],native_tunits)    
-    print num2date(hycom.data['time_ss'],hycom.atts['time']['units'])
+    print(num2date(hycom.data['time_ss'],hycom.atts['time']['units']))
     hycom.write_nc(os.path.join(out_dir,'HYCOM_example_ ' + str(num).zfill(3) + '.nc'),is3d=True)
  
 nctools.make_filelist_for_GNOME(out_dir,'HYCOM_example_*.nc',outfilename='HYCOM_filelist.txt')   
