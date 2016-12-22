@@ -97,8 +97,9 @@ class cgrid():
             if dl == 0:
                 [yvec,xvec] = np.where(np.logical_and(np.logical_and(glat>=sl,glat<=nl),np.logical_and(glon>=wl,glon<=el)))
             else:
-                [yvec,xvec] = np.where(np.logical_and(np.logical_and(glat>=sl,glat<=nl),np.logical_and(glon>=wl,glon<=el)))
-            
+                [yvec,xvec] = np.where(np.logical_and(np.logical_and(glat>=sl,glat<=nl),np.logical_or(glon>=wl,glon<=el)))
+                self.dlx = 1
+                
             if len(yvec) > 2 and len(xvec) > 2:
                 y1 = min(yvec)
                 y2 = max(yvec)+1
@@ -331,14 +332,24 @@ class cgrid():
             nc_v = nc.createVariable('water_v','f4',('time','yc','xc'), \
                 fill_value=vfill)
         
+        lon = self.data[lon_key]
+        if self.dlx:
+            lon = (lon < 0).choose(lon,lon+360)
+        try:
+            lonc = self.data['lonc']
+            if self.dlx:
+                lonc = (lonc < 0).choose(lonc,lonc+360)
+        except KeyError:
+            pass
+        
          # add data
         if center_only:
-            nc_lonc[:] = self.data[lon_key]
+            nc_lonc[:] = lon
             nc_latc[:] = self.data[lat_key]
         else:
-            nc_lon[:] = self.data[lon_key]
+            nc_lon[:] = lon
             nc_lat[:] = self.data[lat_key]
-            nc_lonc[:] = self.data['lonc']
+            nc_lonc[:] = lonc
             nc_latc[:] = self.data['latc']
         
         #!!!!!!!!!!!!Add 3d
