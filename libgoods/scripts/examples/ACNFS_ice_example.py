@@ -1,3 +1,4 @@
+from __future__ import print_function
 from libgoods import curv_grid, data_files_dir
 import numpy as np
 import os
@@ -17,11 +18,11 @@ if download_file:
     ftp.cwd('/SL.us008001/CS.navo/MT.arctic/')               
     try:
         files = ftp.nlst()
-    except ftplib.error_perm, resp:
+    except ftplib.error_perm as resp:
         if str(resp) == "550 No files found":
-            print "No files in this directory"
+            print("No files in this directory")
         else:
-            print "Failed to download ACNFS file"
+            print("Failed to download ACNFS file")
             raise
     ofn = os.path.join(acnfs_dir,files[0])
     ftp.retrbinary("RETR " + files[0] , open(ofn,'wb').write)
@@ -37,7 +38,7 @@ flist = []
 for fn in fns:
     if fn.split('_')[-1] in ['t000.nc','t024.nc','t048.nc','t072.nc']:
         flist.append(os.path.join(acnfs_dir,fn))
-print flist
+print(flist)
 
 
 bbox = [69,-172,72.5,-155] #Geographic domain [South Lat, West Lon, North Lat, East Lon]
@@ -66,7 +67,7 @@ acnfs.grid['mask'] = mask
 
 #rename ice vars
 rename_dict = {'hi':'ice_thickness','aice':'ice_fraction','uvel':'ice_u','vvel':'ice_v'}
-for key, val in rename_dict.iteritems():
+for key, val in rename_dict.items():
     acnfs.data[val] = acnfs.data[key]
     acnfs.atts[val] = acnfs.atts[key]
 

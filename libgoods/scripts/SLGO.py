@@ -1,6 +1,11 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import datetime as dt
-import urllib, os
+import os
+try:
+    from urllib.request import urlopen  #py3
+except ImportError:
+    from urllib import urlopen
 import numpy as np
 from netCDF4 import Dataset, date2num
 
@@ -48,7 +53,7 @@ def grid_latlon(model):
 def read_text_format(data,lat,lon):
     
     # Read and parse data from the "INI" (text) format downloaded from the SLGO web service
-    # data is a file object (can be loaded from local file or url using urllib.urlopen
+    # data is a file object (can be loaded from local file or url using urlopen
     atts = dict()
     keep_reading = True
     while keep_reading:
@@ -153,7 +158,7 @@ def write_reg_grid(time,lon,lat,u,v,atts,ofn):
     nc_time = nc.createVariable('time','f8',('time',))
     nc_lon = nc.createVariable('lon','f4',('lon',))
     nc_lat = nc.createVariable('lat','f4',('lat',))
-    if atts.has_key('wind'):
+    if 'wind' in atts:
         nc_u = nc.createVariable('air_u','f4',('time','lat','lon'), \
             fill_value=ufill)
         nc_v = nc.createVariable('air_v','f4',('time','lat','lon'), \
@@ -177,14 +182,14 @@ def write_reg_grid(time,lon,lat,u,v,atts,ofn):
         nc_v[:] = v
 
     # add variable attributes from 'atts' (nested dict object)
-    for an_att in atts['t'].iteritems():
+    for an_att in atts['t'].items():
         setattr(nc_time,an_att[0],an_att[1])
         
-    for an_att in atts['u'].iteritems():
+    for an_att in atts['u'].items():
         if an_att[0] != '_FillValue':
             setattr(nc_u,an_att[0],an_att[1])
 
-    for an_att in atts['v'].iteritems():
+    for an_att in atts['v'].items():
         if an_att[0] != '_FillValue':
             setattr(nc_v,an_att[0],an_att[1])
     
@@ -204,7 +209,7 @@ def main():
     
     # download data from web service in 1 day chunks and write to GNOME netCDF files
     # if data has already been downloaded, edit this loop to generate sequential filenames
-    # then use data = open(filename) instead of data = urllib.urlopen(q_url)
+    # then use data = open(filename) instead of data = urlopen(q_url)
     ofns = [] #this will hold the names of the output GNOME netCDF files -- used to generate a text file with the list of filenames
     while sdate < edate:
         sdate_plus1 = sdate + dt.timedelta(days=1)
@@ -212,16 +217,16 @@ def main():
         date_query_str2 = str(sdate_plus1.year) + str(sdate_plus1.month).zfill(2) + str(sdate_plus1.day).zfill(2) + '000000'
         q_url = 'http://ws.ns-shc.qc.dfo-mpo.gc.ca/OO-CurrentsIceWeb/ExportData?model=' + model + \
             '&format=text&data=u,v&datemin=' + date_query_str1 + '&datemax=' + date_query_str2
-        print q_url
+        print(q_url)
         try:
-            data = urllib.urlopen(q_url)
+            data = urlopen(q_url)
             # data = open('C:\\Users\\amy.macfadyen\\Downloads\\mogsldata_' + sdate.isoformat() + '.ini')
             time,u,v,atts = read_text_format(data,lat,lon)
             ofn = model + '_' + sdate.isoformat() + 'to' + sdate_plus1.isoformat() + '.nc'
             write_reg_grid(time,lon,lat,u,v,atts,os.path.join(data_files_dir,ofn))
             ofns.append(ofn)
         except:
-            print 'Data download must have failed'
+            print('Data download must have failed')
         finally:
             sdate = sdate_plus1
     

@@ -14,6 +14,7 @@ If infilename and outfilename are the same, the file will be changed in-place.
 
 """
 
+from __future__ import print_function
 import sys
 import shutil
 import netCDF4
@@ -36,14 +37,14 @@ def shift_time(infilename, outfilename, amount, shift_units):
 
     # make a copy of the file if it's different
     if not infilename == outfilename:
-        print "creating new file:", outfilename
+        print("creating new file:", outfilename)
         shutil.copyfile(infilename, outfilename)
 
     # pull the time units out of the source copy:
     nc = netCDF4.Dataset(infilename, mode='r')
     time_var = nc.variables['time']
     time_units = time_var.units
-    print "original time units", time_units
+    print("original time units", time_units)
     nc.close()
 
     units, epoch = time_units.split('since')
@@ -64,7 +65,7 @@ def shift_time(infilename, outfilename, amount, shift_units):
 
     dt+=shift
     new_units = "%s since %s"%(units.strip(), dt.isoformat())
-    print "new time units:", new_units
+    print("new time units:", new_units)
 
     ## write out to the new file:
     nc = netCDF4.Dataset(outfilename, mode='r+')
@@ -72,22 +73,22 @@ def shift_time(infilename, outfilename, amount, shift_units):
     time_var.units = new_units
     nc.close()
 
-    print "Done"
+    print("Done")
 
 
 if "__name__ == __main__":
     try:
         infilename, outfilename, amount = sys.argv[1:4]
     except ValueError:
-         print "*ERROR*\nYou must pass in infilename, outfilename, and amount"
-         print usage
+         print("*ERROR*\nYou must pass in infilename, outfilename, and amount")
+         print(usage)
          sys.exit(1)
     try: 
         units = sys.argv[4]
     except IndexError:
         units = 'days'
 
-    print infilename, outfilename, amount, units 
+    print(infilename, outfilename, amount, units) 
 
     shift_time(infilename, outfilename, amount, units)
 

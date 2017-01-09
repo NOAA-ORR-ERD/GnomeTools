@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from libgoods import tri_grid, nctools, noaa_coops, data_files_dir
 import os 
 import datetime as dt
@@ -37,24 +38,24 @@ var_map = { 'longitude':'lon', \
 nwgofs = tri_grid.ugrid(flist[0])
 
 # get longitude, latitude
-print 'Downloading data dimensions'
+print('Downloading data dimensions')
 nwgofs.get_dimensions(var_map,get_time=False)
 
 # get grid topo variables (nbe, nv)
-print 'Downloading grid topo variables'
+print('Downloading grid topo variables')
 nwgofs.get_grid_topo(var_map)
 # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
 nwgofs.atts['nbe']['order'] = 'cw'
 
 # find and order the boundary
-print 'Finding boundary'
+print('Finding boundary')
 bnd = nwgofs.find_bndry_segs()
-print 'Ordering boundary'
+print('Ordering boundary')
 seg_types = noaa_coops.specify_bnd_types('nwgofs',bnd)
 nwgofs.order_boundary(bnd,seg_types)
 
 # get the data
-print 'Downloading data'
+print('Downloading data')
 #nwgofs.get_data(var_map,tindex=[0,1,1]) #First time step only
 out_dir = os.path.join(data_files_dir,'nwgofs')
 try:
@@ -69,7 +70,7 @@ for f in flist[0:3]:
     nwgofs.update(f)
     nwgofs.get_dimensions(var_map,get_xy=False)
     nwgofs.get_data(var_map,zindex=zi) #All time steps in file, all depths
-    print 'Writing to GNOME file'
+    print('Writing to GNOME file')
     nwgofs.write_unstruc_grid(os.path.join(out_dir,str(file_num).zfill(3) + '.nc'))
     file_num = file_num + 1
     

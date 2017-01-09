@@ -31,7 +31,7 @@ for ii,line in enumerate(lines):
 
 vlons = []; vlats = [];
 for line in lines[v0:v1]:
-    vlon,vlat = map(float,line.split())
+    vlon,vlat = (float(l) for l in line.split())
     vlons.append(vlon);vlats.append(vlat)
 vlons = np.array(vlons);
 vlats = np.array(vlats);

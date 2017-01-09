@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import numpy as np
 from netCDF4 import Dataset, MFDataset
 from matplotlib import path
@@ -72,7 +73,7 @@ class cgrid():
         points = np.vstack((glon.flatten(),glat.flatten())).T   
         n,m = np.shape(glon)
         inside = p.contains_points(points).reshape((n,m))
-        ii,jj = np.meshgrid(xrange(m),xrange(n))
+        ii,jj = np.meshgrid(range(m),range(n))
         self.x = [min(ii[inside]),max(ii[inside])+1,stride]
         self.y = [min(jj[inside]),max(jj[inside])+1,stride]
         
@@ -125,7 +126,7 @@ class cgrid():
             try:
                 self.grid[var] = self.Dataset.variables[var_map[var]][y1:y2:step,x1:x2:step]
             except KeyError:
-                print 'KeyError', var
+                print('KeyError', var)
                 pass
 
     
@@ -168,7 +169,7 @@ class cgrid():
             self.atts['v'][an_att] = getattr(v,an_att) 
         
         if is3d: 
-            zindex=range(v.shape[1])
+            zindex=list(range(v.shape[1]))
             
         try:
             self.data['u'] = u[t1:t2:ts,zindex,y1:y2:step,x1:x2:step]
@@ -177,7 +178,7 @@ class cgrid():
             self.data['u'] = u[t1:t2:ts,y1:y2:step,x1:x2:step]
             self.data['v'] = v[t1:t2:ts,y1:y2:step,x1:x2:step]
         
-        if var_map.has_key('lonc'):
+        if 'lonc' in var_map:
             lonc = self.Dataset.variables[var_map['lonc']]
             latc = self.Dataset.variables[var_map['latc']]
             self.atts['lonc'] = {}
@@ -316,7 +317,7 @@ class cgrid():
         setattr(nc_lonc,'units','degrees_east')
         setattr(nc_latc,'units','degrees_north')
         
-        if self.atts.has_key('wind'):
+        if 'wind' in self.atts:
             nc_u = nc.createVariable('air_u','f4',('time','yc','xc'), \
                 fill_value=ufill)
             nc_v = nc.createVariable('air_v','f4',('time','yc','xc'), \
@@ -368,25 +369,25 @@ class cgrid():
             nc_depth = nc.createVariable('depth','f4',('yc','xc'))
             nc_depth[:] = self.grid['depth']
             
-        if self.grid.has_key('mask'):
+        if 'mask' in self.grid:
             nc_mask = nc.createVariable('mask','f4',('yc','xc'))
             nc_mask[:] = self.grid['mask']
             setattr(nc_mask,'standard_name','mask on center points')
             setattr(nc_mask,'coordinates',u'latc lonc')
 
         # add variable attributes from 'atts' (nested dict object)
-        for key,val in self.atts['time'].iteritems():
+        for key,val in self.atts['time'].items():
             if not key.startswith('_'):
                 setattr(nc_time,key,val)
             
         self.atts['u']['coordinates'] = u'latc lonc'
-        for key,val in self.atts['u'].iteritems():
+        for key,val in self.atts['u'].items():
             if not key.startswith('_'):
                 setattr(nc_u,key,val)
         setattr(nc_u,'time','time')
                 
         self.atts['v']['coordinates'] = u'latc lonc'
-        for key,val in self.atts['v'].iteritems():
+        for key,val in self.atts['v'].items():
             if not key.startswith('_'):
                 setattr(nc_v,key,val)
         setattr(nc_v,'time','time')
@@ -395,7 +396,7 @@ class cgrid():
             nc_var = nc.createVariable(var,'f4',('time','yc','xc'))
             nc_var[:] = self.data[var]
             setattr(nc_var,'coordinates',u'time latc lonc')
-            for key,val in self.atts[var].iteritems():
+            for key,val in self.atts[var].items():
                 if not key.startswith('_'):
                     setattr(nc_var,key,val)
             
@@ -433,7 +434,7 @@ class roms(cgrid):
                     self.atts['lat_psi'][an_att] = getattr(lat_psi,an_att) 
                 self.data['lat_psi'] = lat_psi[:]
             except KeyError:
-                print 'Using rho grid to create P grid'
+                print('Using rho grid to create P grid')
                 lon_rho = self.Dataset.variables['lon_rho'][:]
                 lat_rho = self.Dataset.variables['lat_rho'][:]
                 self.data['lon_psi'] = (lon_rho[0:-1,0:-1]+lon_rho[1:,1:])*0.5
@@ -564,7 +565,7 @@ class roms(cgrid):
         
     def reduce_latlon_mesh_for_GNOME(self):
            
-        if self.data.has_key('lon_ss'): #subset
+        if 'lon_ss' in self.data: #subset
             self.data['lon_ss'] = self.data['lon_ss'][:-1,:-1]
             self.data['lat_ss'] = self.data['lat_ss'][:-1,:-1]   
         else:
@@ -665,20 +666,20 @@ class roms(cgrid):
             nc_u[:] = self.data['u']
             nc_v[:] = self.data['v']
             
-        if self.grid.has_key('mask_rho'):
+        if 'mask_rho' in self.grid:
             nc_mask = nc.createVariable('mask_rho','f4',('yc','xc'))
             nc_mask[:] = self.grid['mask_rho']
 
         # add variable attributes from 'atts' (nested dict object)
-        for key,val in self.atts['time'].iteritems():
+        for key,val in self.atts['time'].items():
             if not key.startswith('_'):
                 setattr(nc_time,key,val)
             
-        for key,val in self.atts['u'].iteritems():
+        for key,val in self.atts['u'].items():
             if not key.startswith('_'):
                 setattr(nc_u,key,val)
     
-        for an_att in self.atts['v'].iteritems():
+        for an_att in self.atts['v'].items():
             if not key.startswith('_'):
                 setattr(nc_v,key,val)
     

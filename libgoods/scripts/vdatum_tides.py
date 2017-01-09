@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 from libgoods import tri_grid
 from libgoods import data_files_dir
 import os
@@ -15,7 +16,7 @@ wl = -82; el = -80.6
 adcirc.find_nodes_eles_in_ss(nl,sl,wl,el)
 
 bnd = adcirc.find_bndry_segs(subset=True)
-print 'Size of boundary: ', len(bnd)
+print('Size of boundary: ', len(bnd))
 seg_types = [0] * len(bnd)
 adcirc.order_boundary(bnd,seg_types)
 
@@ -84,7 +85,7 @@ v, u, f = FUV(t=np.array([date2num(start)]), tref=np.array([0]),
               lat=55, ngflgs=[0, 0, 0, 0])
               
 # Convert phase in radians.
-v, u, f = map(np.squeeze, (v, u, f))
+v, u, f = (np.squeeze(i) for i in (v, u, f))
 v = v * 2 * np.pi
 u = u * 2 * np.pi
 
