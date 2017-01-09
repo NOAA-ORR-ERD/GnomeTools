@@ -1,0 +1,32 @@
+REM keyword param1 param2
+REM CubeLocationMarkLength 5  // default is 5
+REM CubeLocationMarkThickness 1 // default is 1
+//LimitZoom NO // default is YES
+REM MaxZoomedSizeOfSmallestSite 1.5 // default is 1.5 inches
+
+AllowMultipleInstances yes
+UseWhiteForZero yes
+
+UsePlatform no
+SpillLatLong  23.37441667  -82.49286111   // Used?
+
+FixedOilItemNum  7  // note: always use 7 (Non_Weathering) unless you want TAP to weather the oil according to its formulas. 
+FixedOilItemAlias  "Non weathering" // name shown to the user
+UseThreatBySpill no
+UseResourceAnalysis no
+
+
+// for "Description" tags, You can put the text in double quotes if you want leading spaces.  
+DescriptionOffset 42  // pixels, default is 40 
+DescriptionLine1 TAP location name
+DescriptionLine2 Developed by NOAA
+DescriptionLine3 Office of Response and Restoration
+ResponseTimeLabel "Response Threshold"
+ResponseTimeInitialPercent 95 // default is 90
+//
+AboutTapDataFileName "About TAP" // this string is used for the menu item, and should correspond to the file name (when a ".txt" extension is added) in the TAPDAT folder.
+TapManualFilename "TAP Manual.pdf" // string should correspond to the manual file name in the TAPDATA or TAP folder
+ShowDecimalPercentages yes
+
+CubeLocationMarkLength 8
+CubeLocationMarkThickness 2

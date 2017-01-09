@@ -14,85 +14,85 @@ CF standard (or SOME standard..)
 """
 
 from __future__ import division
-from datetime import datetime
+# from datetime import datetime
 
 import numpy as np
 
 import netCDF4
 
-## default attributes -- can be updated by user later.
+# default attributes -- can be updated by user later.
 
-file_attributes = {'conventions' : "CF-1.6",
-                   'title' : "Sample data/file for particle trajectory format",
-                   'institution' : "NOAA Emergency Response Division",
-                   'source' : "example data from nc_particles",
-                   'history' : "Evolved with discussion on CF-metadata listserve",
-                   'references' : '',
-                   'comment' : 'Some simple test data',
-                   'CF:featureType' : "particle_trajectory" ,
+file_attributes = {'conventions': "CF-1.6",
+                   'title': "Sample data/file for particle trajectory format",
+                   'institution': "NOAA Emergency Response Division",
+                   'source': "example data from nc_particles",
+                   'history': "Evolved with discussion on CF-metadata listserve",
+                   'references': '',
+                   'comment': 'Some simple test data',
+                   'CF:featureType': "particle_trajectory" ,
                    }
 
-## variable attributes for the standard variables
-## these will be used when the data are created.
-## you can use a different set if you want.
+# variable attributes for the standard variables
+# these will be used when the data are created.
+# you can use a different set if you want.
 
-var_attributes = {'time': {'long_name':'time since the beginning of the simulation',
-                           'standard_name':'time',
-                           'calendar':'gregorian',
-                           'standard_name':'time',
-                           'comment':'unspecified time zone',
+var_attributes = {'time': {'long_name': 'time since the beginning of the simulation',
+                           'standard_name': 'time',
+                           'calendar': 'gregorian',
+                           'standard_name': 'time',
+                           'comment': 'unspecified time zone',
                            # units will get set based on data
-                            },
-                  'particle_count': {'units':'1',
-                                     'long_name':'number of particles in a given timestep',
-                                     'ragged_row_count':'particle count at nth timestep',
-                                     },
-                  'longitude': {'long_name':'longitude of the particle',
-                                'standard_name':'longitude',
-                                'units':'degrees_east',
-                            },
-                  'latitude': {'long_name':'latitude of the particle',
-                               'standard_name':'latitude',
-                               'units':'degrees_north',
-                            },
-                  'depth': {'long_name':'particle depth below sea surface',
-                            'standard_name':'depth',
-                            'units':'meters',
-                            'axis':'z positive down',
                            },
-                  'mass': {'long_name':'mass of particle',
-                           'units':'grams',
-                        },
-                  'age': {'long_name':'age of particle from time of release',
-                          'units':'seconds',
-                        },
-                  'status_code': {'long_name':'particle status code',
+                  'particle_count': {'units': '1',
+                                     'long_name': 'number of particles in a given timestep',
+                                     'ragged_row_count': 'particle count at nth timestep',
+                                     },
+                  'longitude': {'long_name': 'longitude of the particle',
+                                'standard_name': 'longitude',
+                                'units': 'degrees_east',
+                                },
+                  'latitude': {'long_name': 'latitude of the particle',
+                               'standard_name': 'latitude',
+                               'units': 'degrees_north',
+                               },
+                  'depth': {'long_name': 'particle depth below sea surface',
+                            'standard_name': 'depth',
+                            'units': 'meters',
+                            'axis': 'z positive down',
+                            },
+                  'mass': {'long_name': 'mass of particle',
+                           'units': 'grams',
+                           },
+                  'age': {'long_name': 'age of particle from time of release',
+                          'units': 'seconds',
+                          },
+                  'status_code': {'long_name': 'particle status code',
                                   'valid_range': (0, 5),
                                   'flag_values': "7 12 0 10 2 3",
-                                  'flag_meanings':"0: not_released, 2: in_water, 3: on_land, 7: off_maps, 10: evaporated, 12: to_be_removed,"
-                                  },                                  
-                  'id': {'long_name':'particle ID',
-                        },
-}
+                                  'flag_meanings': "0: not_released, 2: in_water, 3: on_land, 7: off_maps, 10: evaporated, 12: to_be_removed,"
+                                  },
+                  'id': {'long_name': 'particle ID',
+                         },
+                  }
 
 # alternate names:
 var_attributes['lon'] = var_attributes['longitude']
 var_attributes['lat'] = var_attributes['latitude']
 
-## variables used to support the stucture of the file, rather than data
-## used to remove them from the list of available data variables
-SPECIAL_VARIABLES = ['time','particle_count']
+# variables used to support the stucture of the file, rather than data
+# used to remove them from the list of available data variables
+SPECIAL_VARIABLES = ['time', 'particle_count']
 
 
 class Writer(object):
-    def __init__ (self,
-                  filename,
-                  num_timesteps=None,
-                  ref_time=None,
-                  file_attributes=file_attributes,
-                  var_attributes=var_attributes,
-                  nc_version=4,
-                  ):
+    def __init__(self,
+                 filename,
+                 num_timesteps=None,
+                 ref_time=None,
+                 file_attributes=file_attributes,
+                 var_attributes=var_attributes,
+                 nc_version=4,
+                 ):
 
         """
         create a nc_particle file Writer
@@ -103,8 +103,8 @@ class Writer(object):
         :param filename: name of netcdf file to open - if it exists,
                          it will be written over!
 
-        :param num_timesteps=None: number of timesteps that will be output. Must be defined for netcdf3.
-                                   Can be None for netcdf4
+        :param num_timesteps=None: number of timesteps that will be output. Must be
+                                   defined for netcdf3. Can be None for netcdf4
         :type num_timesteps: integer
 
         :param ref_time=None: reference time for time units (i.e. seconds since..).
@@ -130,6 +130,7 @@ class Writer(object):
 
         self.file_attributes = file_attributes
         self.var_attributes = var_attributes
+        self.nc = None
 
         try:
             nc_version = int(nc_version)
@@ -222,11 +223,12 @@ class Writer(object):
         """
         close the netcdf file
         """
-        try:
-            self.nc.close()
-        except RuntimeError:
-            # just in case it isn't still open
-            pass
+        if self.nc is not None:
+            try:
+                self.nc.close()
+            except RuntimeError:
+                # just in case it isn't still open
+                pass
 
     def __del__(self):
         """ make sure to close the netcdf file """
@@ -253,9 +255,11 @@ class Reader(object):
         if type(nc_file) == netCDF4.Dataset:
             # already open -- just use it
             self.nc = nc_file
+            self.manage_dataset = False
         else:
             # open a new one
             self.nc = netCDF4.Dataset(nc_file)
+            self.manage_dataset = True
 
         time = self.nc.variables['time']
         units = time.getncattr('units')
@@ -354,13 +358,16 @@ class Reader(object):
         """
         close the netcdf file
         """
-        try:
+        if self.nc.isopen():
             self.nc.close()
-            # print ("netcdf file closed")
-        except RuntimeError:
-            # just in case it isn't still open
-            pass
+
 
     def __del__(self):
-        """ make sure to close the netcdf file """
-        self.close()
+        """
+        Make sure to close the netcdf file
+
+        But only if this instance opened it in the first place
+        """
+
+        if self.manage_dataset:
+            self.close()

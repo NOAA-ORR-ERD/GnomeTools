@@ -7,7 +7,7 @@ import datetime
 import pytest
 import numpy as np
 import netCDF4
-import nc_particles
+from post_gnome import nc_particles
 
 ## test the Reader
 def test_read_required():
@@ -63,7 +63,7 @@ def test_get_timestep():
 
 def test_get_individual_trajectory():
     r = nc_particles.Reader('sample.nc')
-    
+
     path = r.get_individual_trajectory(1)
     assert np.array_equal(path['latitude'],  [28.0, 28.05, 28.1])
     assert np.array_equal(path['longitude'], [-88.1, -88.2, -88.3])

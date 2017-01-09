@@ -15,7 +15,7 @@ import datetime
 
 import pytest
 import netCDF4
-import nc_particles
+from post_gnome import nc_particles
 
 
 # test the writer...

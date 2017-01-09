@@ -704,7 +704,7 @@ def CompThicknessCube(FileList, OutputTimes, Grid, Weather=None):
     MaxNumLEs = traj_file.particle_count[:].max() 
     
     TimeStep = traj_file.times[1] - traj_file.times[0] # assume constant timestep!
-    traj_file.nc.close()
+    traj_file.close()
     
     TimeStepHours = TimeStep.total_seconds() / 3600.00
     ## OutputTimes should already be in hours
