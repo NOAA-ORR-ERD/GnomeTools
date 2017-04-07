@@ -6,17 +6,14 @@ setup.py for the post_gnome package
 
 # This setup is suitable for "python setup.py develop".
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name="post_gnome",
     version="0.1.1",
     description="utilities for post processing data for GNOME",
     long_description=open("README.rst").read(),
-    packages=["post_gnome",
-              "post_gnome.readers",
-              "post_gnome.kml_stuff",
-              "post_gnome.plotting"],
+    packages=find_packages(),
     scripts=["scripts/gnome_nc2kmz.py",
              "scripts/moss2kmz_series.py",
              "scripts/moss2kmz_simple.py",
