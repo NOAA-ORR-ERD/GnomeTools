@@ -10,7 +10,7 @@ from setuptools import setup
 
 setup(
     name="post_gnome",
-    version="0.1.0",
+    version="0.1.1",
     description="utilities for post processing data for GNOME",
     long_description=open("README.rst").read(),
     packages=["post_gnome",
