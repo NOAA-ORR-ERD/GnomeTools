@@ -19,11 +19,11 @@ Since multiple files are created, also create a text file that can be loaded
 into GNOME pointing to the individual files
 '''
 
-out_dir = os.path.join(data_files_dir,'ngofs')
-start = dt.date(2015,1,14)
-end = dt.date(2015,1,21)
+out_dir = os.path.join(data_files_dir,'sfbofs2')
+start = dt.date(2015,7,29)
+end = dt.date(2015,7,31)
 hour0 = 3
-flist = noaa_coops.make_server_filelist('ngofs',hour0,start,end=end,test_exist=False)
+flist = noaa_coops.make_server_filelist('sfbofs',hour0,start,end=end,test_exist=False)
 
 
 # the utools class requires a mapping of specific model variable names (values)
@@ -53,8 +53,8 @@ print 'Downloading grid topo variables'
 ngofs.get_grid_topo(var_map)
 
  # subset bounding box
-nl = 30.4; sl = 30.322
-wl = -88.3; el = -88.22
+nl = 37.9; sl = 37.66
+wl = -122.75; el = -122.3
 ngofs.find_nodes_eles_in_ss(nl,sl,wl,el)
 
 # find and order the boundary
@@ -65,7 +65,7 @@ print 'Ordering boundary'
 #for how to use entire domain boundary to correctly determine type of subset boundary
 ngofs.order_boundary(bnd)
 # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
-ngofs.atts['nbe']['order'] = 'cw'
+ngofs.atts['nbe']['order'] = 'cww'
 
 try:
     os.mkdir(out_dir)
@@ -80,7 +80,7 @@ for f in flist:
     
     #get the data
     print 'Downloading data'
-    #ngofs.get_data(var_map,tindex=[0,1,1]) #First time step only
+    #ngofs.get_data(var_map) #First time step only
     ngofs.get_data(var_map,nindex=ngofs.nodes_in_ss) #All time steps in file
     
     of_dt = nctools.round_time(num2date(ngofs.data['time'][0],ngofs.atts['time']['units']),roundto=3600)
