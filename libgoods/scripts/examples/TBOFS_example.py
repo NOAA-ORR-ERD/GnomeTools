@@ -10,7 +10,7 @@ import os
 #flist = noaa_coops.make_server_filelist('tbofs',0,sdate,test_exist=False)
 #print "Number of files to aggregate: ", len(flist)
 
-one_file = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/TBOFS/MODELS/201503/nos.tbofs.fields.n000.20150308.t00z.nc'
+one_file = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/TBOFS/MODELS/201703/nos.tbofs.fields.n000.20170308.t00z.nc'
 
 
 #We pick which variable we want to map to as this is sometimes not clear in virtual aggregations

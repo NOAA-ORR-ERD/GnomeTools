@@ -5,7 +5,7 @@ from utide import _ut_constants_fname
 from utide.utilities import loadbunch
 import pytz
 from datetime import datetime
-from pandas import date_range
+#from pandas import date_range
 
 import iris
 import warnings

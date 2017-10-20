@@ -4,8 +4,8 @@ from libgoods import data_files_dir
 import os
 import numpy as np
 
-nc_file = os.path.join(data_files_dir,'vdatum','vdatum_fl_sab_grid.nc')
-var_map = {'latitude':'lat','longitude':'lon','nodes_surrounding_ele':'nv','eles_surrounding_ele':'nbe'}
+nc_file = 'http://geoport.whoi.edu/thredds/dodsC/usgs/vault0/models/tides/FLsab_adcirc54.nc'
+var_map = {'latitude':'lat','longitude':'lon','nodes_surrounding_ele':'ele'}
 adcirc = tri_grid.ugrid(nc_file)
 adcirc.get_dimensions(var_map,get_time=False)
 adcirc.get_grid_topo(var_map)
@@ -19,20 +19,22 @@ print 'Size of boundary: ', len(bnd)
 seg_types = [0] * len(bnd)
 adcirc.order_boundary(bnd,seg_types)
 
-adcirc.update(os.path.join(data_files_dir,'vdatum','vdatum_fl_sab_adcirc54.nc'))
+#adcirc.update(os.path.join(data_files_dir,'vdatum','vdatum_fl_sab_adcirc54.nc'))
+
+def parse_string(name):
+    lista = [e.decode().strip() for e in name.tolist()]
+    return ''.join(lista)
 
 names = []
 const = adcirc.Dataset.variables['tidenames'][:]
 for name in const:
-    names.append(''.join(name.tolist()).strip())
-    
+    names.append(parse_string(name.data))
 
-
-
+con_info = loadbunch(_ut_constants_fname)['const']
 from utide import _ut_constants_fname
-from utide.utilities import loadmatbunch
+from utide.utilities import loadbunch
 
-con_info = loadmatbunch(_ut_constants_fname)['const']
+con_info = loadbunch(_ut_constants_fname)['const']
 
 k = 0
 ind_nc, ind_ttide = [], []
@@ -64,13 +66,17 @@ dt = 1.0  # Hours.
 glocals = date_range(start, stop, freq='1H').to_pydatetime()
 ntimes = len(glocals)
 
-uamp = adcirc.Dataset.variables['u_amp'][0,adcirc.nodes_in_ss,:][:,ind_nc]
+inbox = np.logical_and(np.logical_and(lon >= wl,
+                                      lon <= el),
+                       np.logical_and(lat >= sl,
+                                      lat <= nl))
+                                      
+uamp = adcirc.Dataset.variables['u_amp'][0,inbox,:][:,ind_nc]
 vamp = adcirc.Dataset.variables['v_amp'][0,adcirc.nodes_in_ss,:][:,ind_nc]
 upha = adcirc.Dataset.variables['u_phase'][0,adcirc.nodes_in_ss,:][:,ind_nc]
 vpha = adcirc.Dataset.variables['v_phase'][0,adcirc.nodes_in_ss,:][:,ind_nc]
+
 freq_nc = adcirc.Dataset.variables['tidefreqs'][:][ind_nc] 
-
-
 freq_ttide = con_info['freq'][ind_ttide]
 t_tide_names = np.array(const_name)[ind_ttide]
 omega_ttide = 2*np.pi * freq_ttide  # Convert from radians/s to radians/hour.
