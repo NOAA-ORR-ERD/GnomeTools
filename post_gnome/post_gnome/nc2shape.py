@@ -22,7 +22,7 @@ def write_proj_file(prj_filename):
 
 
 def points(fn, package_dir, t2convert):
-
+    print fn
     nc = Dataset(fn)
     particles = nc_particles.Reader(nc)
     times = particles.times
@@ -33,10 +33,7 @@ def points(fn, package_dir, t2convert):
     w = shp.Writer(shp.POINT)
     w.autobalance = 1
 
-    w.field('Year', 'C')
-    w.field('Month', 'C')
-    w.field('Day', 'C')
-    w.field('Hour', 'C')
+    w.field('Time', 'C')
     w.field('LE id', 'N')
     w.field('Depth', 'N')
     w.field('Mass', 'N')
@@ -52,10 +49,7 @@ def points(fn, package_dir, t2convert):
                                                    'status_codes'])
     for k, p in enumerate(zip(TheData['longitude'], TheData['latitude'])):
         w.point(p[0],p[1])
-        w.record(times[t].year,
-                 times[t].month,
-                 times[t].day,
-                 times[t].hour,
+        w.record(times[t].isoformat(),
                  TheData['id'][k],
                  TheData['depth'][k],
                  TheData['mass'][k],
@@ -128,10 +122,7 @@ def contours(fn,
     w = shp.Writer(shp.POLYGON)
     w.autobalance = 1
 
-    w.field('Year', 'C')
-    w.field('Month', 'C')
-    w.field('Day', 'C')
-    w.field('Hour', 'C')
+    w.field('Time', 'C')
     w.field('Depth', 'N')
     w.field('Type', 'C')
 
@@ -139,9 +130,8 @@ def contours(fn,
         p = cs.collections[c].get_paths()[0]
         v = p.vertices
         coords = [[[i[0], i[1]] for i in v]]
-        w.poly(shapeType=3, parts=coords)
-        w.record(times[t].year, times[t].month, times[t].day, times[t].hour,
-                 TheData['depth'][c], names[c])
+        w.poly(shapeType=5, parts=coords)
+        w.record(times[t].isoformat(),TheData['depth'][c], names[c])
         print names[c]
 
     source_fdir = os.path.join(package_dir, 'source_files')

@@ -1,4 +1,5 @@
 import cartopy.crs as ccrs
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import matplotlib.pyplot as plt
 from post_gnome import nc_particles
 from netCDF4 import Dataset, num2date
@@ -46,11 +47,15 @@ def add_map(bbox=None,bna=None):
     if len(coast_polys.keys()) > 0:
         for poly in coast_polys.itervalues():
             ax.plot(poly[:,0],poly[:,1],'k',transform=ccrs.Geodetic())
+            #ax.fill(poly[:,0],poly[:,1],'k',transform=ccrs.Geodetic())
     else:
         ax.coastlines(resolution='10m',linewidth=2)
-    
-    ax.gridlines(draw_labels=True)
-    
+
+    gl = ax.gridlines(draw_labels=True)
+    gl.xlabels_top = False
+    gl.ylabels_left = False
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
     return ax
     
 def setup_3d(bbox=None):
@@ -67,7 +72,52 @@ def setup_3d(bbox=None):
     
     return ax
 
-def contour_particles(ax,filename,t,depth=0,levels=[0.1, 0.4, 0.8]):
+def contour_particles_gridded(ax,filename,t,varname,depth=0,levels=[0.1, 0.4, 0.8]):
+    '''
+    contour all LEs at one time step by binning
+
+    '''
+    particles = nc_particles.Reader(filename)
+    times = particles.times
+    dt = [np.abs(((output_t - t).total_seconds())/3600) for output_t in times]
+    tidx = dt.index(min(dt))
+    variables=['latitude','longitude','status_codes','depth'] + [varname]
+    try:
+        TheData = particles.get_timestep(tidx,variables=variables)
+    except: #GUI GNOME < 1.3.10
+        variables=['latitude','longitude','status','depth'] + [varname]
+        TheData = particles.get_timestep(tidx,variables=variables)
+        TheData['status_codes'] = TheData['status']
+    
+    pid = np.where((TheData['status_codes']==2) & (TheData['depth']==depth))[0]
+    x = TheData['longitude'][pid]
+    y = TheData['latitude'][pid]
+    varname = TheData[varname][pid]
+    
+    #set up grid
+    x_grid = np.linspace(min(x),max(x),50)
+    y_grid = np.linspace(min(y),max(y),50)
+    pc_grid = np.zeros((len(y_grid),len(x_grid)),)
+    print 'Num_particles:', len(x)
+    for px,py,v in zip(x,y,varname):
+        ii = np.where(px>=x_grid)[0][-1]
+        jj = np.where(py>=y_grid)[0][-1]
+        pc_grid[jj,ii] = pc_grid[jj,ii] + 1
+    
+    max_value = pc_grid.max()
+    print max_value
+    levels.sort()
+    particle_contours = [lev * max_value for lev in levels]
+    print particle_contours
+
+    ax.contourf(x_grid, y_grid, pc_grid, [2,5,8,max_value],transform=ccrs.PlateCarree())
+    
+    #ax.pcolor(xx,yy,f,transform=ccrs.PlateCarree())
+    print 'Closest time found: ', times[tidx]
+    
+    return ax
+    
+def contour_particles(ax,filename,t,depth=0,varname=None,criteria=None,levels=[0.1, 0.4, 0.8, 1]):
     '''
     contour all LEs at one time step
     ax: (matplotlib.axes object) the map on which the LEs will be plotted
@@ -80,13 +130,20 @@ def contour_particles(ax,filename,t,depth=0,levels=[0.1, 0.4, 0.8]):
     times = particles.times
     dt = [np.abs(((output_t - t).total_seconds())/3600) for output_t in times]
     tidx = dt.index(min(dt))
+    if varname is not None:
+        variables = ['latitude','longitude','status_codes','depth'] + [varname]
     try:
-        TheData = particles.get_timestep(tidx,variables=['latitude','longitude','status_codes','depth'])
+        TheData = particles.get_timestep(tidx,variables=variables)
     except: #GUI GNOME < 1.3.10
         TheData = particles.get_timestep(tidx,variables=['latitude','longitude','status','depth'])
         TheData['status_codes'] = TheData['status']
-    
-    pid = np.where((TheData['status_codes']==2) & (TheData['depth']==depth))[0]
+    if varname is None or criteria is None:
+        pid = np.where((TheData['status_codes']==2) & (TheData['depth']==depth))[0]
+    else:
+        print 'Applying criteria'
+        print TheData[varname].min(),TheData[varname].max()
+        pid = np.where((TheData['status_codes']==2) & (TheData['depth']==depth) & (TheData[varname]<criteria))[0]
+        print len(pid)
 
     x = TheData['longitude'][pid]
     y = TheData['latitude'][pid]
@@ -108,7 +165,7 @@ def contour_particles(ax,filename,t,depth=0,levels=[0.1, 0.4, 0.8]):
     
     return ax
 
-def plot_particles(ax,filename,t,depth=0,color='k',marker='.',markersize=4):
+def plot_particles(ax,filename,t,depth=0,varname=None,color='k',marker='.',markersize=4,bins=None,binlabs=None):
     '''
     plot all LEs at one time step
     ax: (matplotlib.axes object) the map on which the LEs will be plotted
@@ -120,31 +177,53 @@ def plot_particles(ax,filename,t,depth=0,color='k',marker='.',markersize=4):
     times = particles.times
     dt = [np.abs(((output_t - t).total_seconds())/3600) for output_t in times]
     tidx = dt.index(min(dt))
+    if varname is not None:
+        variables = ['latitude','longitude','status_codes','depth'] + [varname]
     try:
-        TheData = particles.get_timestep(tidx,variables=['latitude','longitude','status_codes','depth'])
+        TheData = particles.get_timestep(tidx,variables=variables)
     except: #GUI GNOME < 1.3.10
         TheData = particles.get_timestep(tidx,variables=['latitude','longitude','status','depth'])
         TheData['status_codes'] = TheData['status']
     
     status = TheData['status_codes']
     label = t.isoformat()
-    for sc in [2,3]:
-        if sc==3:
-            marker='x'
-            label=None
-        if depth is not None:
-            pid = np.where((status==sc) & (TheData['depth']==depth))[0]
+    
+    if varname is None:
+        for sc in [2,3]:
+            if sc==3:
+                marker='x'
+                label=None
+            if depth is not None:
+                pid = np.where((status==sc) & (TheData['depth']==depth))[0]
+            else:
+                pid = np.where(status==sc)[0]
+            if len(pid) > 0:
+                ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],transform=ccrs.Geodetic(),\
+                    color=color,marker=marker,s=markersize,label=label)
+    else:
+        bins=[6*3600,24*3600]
+        binlabels=['> 24-hrs','< 24-hrs','< 6-hrs']
+        styles = ['r.','m.','b.']
+        if bins is not None:
+            pid = np.where((TheData['status_codes']==2) & (TheData['depth']==depth))[0]
+            lon = TheData['longitude'][pid]
+            lat = TheData['latitude'][pid]
+            var2p = TheData[varname][pid]
+            bins = [0] + bins + [var2p.max()]
+            for ii in range(len(bins)-2,-1,-1):
+                print ii
+                id = np.where((var2p>=bins[ii]) & (var2p<=bins[ii+1]))
+                ax.plot(lon[id],lat[id],styles[ii],transform=ccrs.Geodetic())
+                ax.legend(binlabels)
+            
         else:
-            pid = np.where(status==sc)[0]
-        if len(pid) > 0:
-            ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],transform=ccrs.Geodetic(),\
-                color=color,marker=marker,s=markersize,label=label)
-
+            pid = np.where((TheData['status_codes']==2) & (TheData['depth']==depth))[0]
+            ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],10,TheData[varname][pid],transform=ccrs.Geodetic())
     print 'Closest time found: ', times[tidx]
     
     return ax
     
-def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', color='k',marker='.', drop_size=4, drop_scale_var=None):
+def plot_particles_3d(ax,filename,t, varname='droplet_diameter', colormap='plasma', color='k',marker='.', drop_size=4, drop_scale_var=None):
     '''
     plot all LEs at one time step
     ax: (matplotlib.axes object) the map on which the LEs will be plotted
@@ -157,7 +236,7 @@ def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', 
     dt = [np.abs(((output_t - t).total_seconds())/3600) for output_t in times]
     tidx = dt.index(min(dt))
     try:
-        TheData = particles.get_timestep(tidx,variables=['latitude','longitude', 'depth', 'status_codes', var])
+        TheData = particles.get_timestep(tidx,variables=['latitude','longitude', 'depth', 'status_codes', varname])
     except: #GUI GNOME < 1.3.10
         TheData = particles.get_timestep(tidx,variables=['latitude','longitude', 'depth', 'status'])
         TheData['status_codes'] = TheData['status']
@@ -174,7 +253,7 @@ def plot_particles_3d(ax,filename,t, var='droplet_diameter', colormap='plasma', 
         if len(pid) > 0:
             import matplotlib
             import matplotlib.cm as cmx
-            cs = TheData[var]
+            cs = TheData[varname]
             cm = plt.get_cmap(colormap)
             cNorm = matplotlib.colors.Normalize(vmin=min(cs), vmax=max(cs))
             scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)

@@ -262,7 +262,7 @@ class Reader(object):
             self.manage_dataset = True
 
         time = self.nc.variables['time']
-        units = time.getncattr('units')
+        units = time.getncattr('units'
         self.times = netCDF4.num2date(time[:], units)
         self.time_units = units
 
@@ -270,6 +270,7 @@ class Reader(object):
         # build the index:
         self.data_index = np.zeros((len(self.times) + 1,), dtype=np.int32)
         self.data_index[1:] = np.cumsum(self.particle_count)
+        self.global_atttributes = {name: self.nc.getncattr(name) for name in self.nc.ncattrs()}
 
     @property
     def variables(self):

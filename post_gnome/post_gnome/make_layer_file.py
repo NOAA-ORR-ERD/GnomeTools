@@ -9,7 +9,7 @@ for name, rgb in colors.ColorConverter.colors.iteritems():
     cnames[name] = hex_
 
 
-def points(package_dir, fn, params):
+def particles(package_dir, fn, params):
     '''
     params is a dict with the following keys:
         site_name
@@ -221,7 +221,6 @@ def contours(package_dir, fn, params):
         folder_path - a list with the hierarchy of subfolders in TOC
         uncertain - just has to have this param for uncertainty layer
     '''
-
     sites = {}
     sites['dwh'] = {'site_id':1, 'zoom': 6, 'longitude': -90.42, 'latitude': 28.03}
     sites['arctic'] = {'site_id': 1, 'zoom': 5, 'longitude': -150.00, 'latitude': 70.00}
@@ -273,6 +272,7 @@ def contours(package_dir, fn, params):
             ]
 
     elif params.has_key('SinglePoly'):
+    
 
         layer_classes = [
               {
@@ -307,6 +307,7 @@ def contours(package_dir, fn, params):
               }
             ]
     else:
+
         layer_classes = [
            {
                 "styles": [
@@ -329,7 +330,7 @@ def contours(package_dir, fn, params):
                   }
                 ],
                 "name": "Heavy",
-                "ordering": 2,
+                "ordering": 4,
                 "expression_type": {
                       "expression_type": "V",
                       "description": "Exact Value"
@@ -389,7 +390,7 @@ def contours(package_dir, fn, params):
                   }
                 ],
                 "name": "Light",
-                "ordering": 4,
+                "ordering": 2,
                 "expression_type": {
                   "expression_type": "V",
                   "description": "Exact Value"
