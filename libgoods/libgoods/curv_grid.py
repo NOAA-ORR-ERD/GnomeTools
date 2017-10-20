@@ -17,6 +17,7 @@ class cgrid():
         self.data = dict()
         self.atts = dict()
         self.grid = dict()
+        self.dlx = 0 #default does not cross dateline
             
     def update(self,FileName):
         #point to a new nc file or url without reinitializing everything
@@ -209,8 +210,7 @@ class cgrid():
             u0 = self.data['u'][0,:,:]
         self.grid['mask'] = (u0==fill_val).choose(1,0)
         
-        
-    def write_nc(self,ofn,is3d=False,gui_gnome=False,extra_2dvars=[]):
+    def write_nc(self,ofn,is3d=False,gui_gnome=False,extra_2dvars=[],grid_only=False):
         """
         Write GNOME compatible netCDF file (netCDF3)
         * velocities are on center points and rotated to north/east
@@ -224,47 +224,53 @@ class cgrid():
         
         # Global Attributes
         setattr(nc,'grid_type','curvilinear')
-    
-        # test u/v dimensions
-        if self.data['u'].shape != self.data['v'].shape:
-            raise Exception('u/v dimensions differ')
         
-        # determine if its a subset in time
-        t_key = 'time'
-        try:
-            if self.data['u'].shape[0] == len(self.data['time_ss']):
-                t_key = 'time_ss'
-        except KeyError: #TODO -- if it has key time_ss but it doesn't match that case is not caught
-            if self.data['u'].shape[0] != len(self.data['time']):
-                raise Exception('Dimensions of u/v do not match time variable')
-                
         lon_key = 'lon'; lat_key = 'lat'
-        # determine if its a subset of the grid
-        try:
-            lon_ss_shape = self.data['lon_ss'].shape
-            lon_ss_shape_red = (lon_ss_shape[0]-1,lon_ss_shape[1]-1)
-            if self.data['u'].shape[-2:] == lon_ss_shape or \
-                self.data['u'].shape[-2:] == lon_ss_shape_red:
-                lon_key = 'lon_ss'; lat_key = 'lat_ss'
-        except KeyError:
-            lon_shape = self.data['lon'].shape
-            lon_shape_red = (lon_shape[0]-1,lon_shape[1]-1)
-            if self.data['u'].shape[-2:] != lon_shape and \
-                self.data['u'].shape[-2:] != lon_shape_red:
-                raise Exception('Dimensions of u/v do not match grid variables')
+        if not grid_only:
+            # test u/v dimensions
+            if self.data['u'].shape != self.data['v'].shape:
+                raise Exception('u/v dimensions differ')
+            
+            # determine if its a subset in time
+            t_key = 'time'
+            try:
+                if self.data['u'].shape[0] == len(self.data['time_ss']):
+                    t_key = 'time_ss'
+            except KeyError: #TODO -- if it has key time_ss but it doesn't match that case is not caught
+                if self.data['u'].shape[0] != len(self.data['time']):
+                    raise Exception('Dimensions of u/v do not match time variable')
+                
+            # determine if its a subset of the grid
+            try:
+                lon_ss_shape = self.data['lon_ss'].shape
+                lon_ss_shape_red = (lon_ss_shape[0]-1,lon_ss_shape[1]-1)
+                if self.data['u'].shape[-2:] == lon_ss_shape or \
+                    self.data['u'].shape[-2:] == lon_ss_shape_red:
+                    lon_key = 'lon_ss'; lat_key = 'lat_ss'
+            except KeyError:
+                lon_shape = self.data['lon'].shape
+                lon_shape_red = (lon_shape[0]-1,lon_shape[1]-1)
+                if self.data['u'].shape[-2:] != lon_shape and \
+                    self.data['u'].shape[-2:] != lon_shape_red:
+                    raise Exception('Dimensions of u/v do not match grid variables')
     
         x = self.data[lon_key].shape[1]
         y = self.data[lat_key].shape[0]
-         
-        if self.data[lon_key].shape == self.data['u'].shape[-2:]:
-            #lat/lon are centerpoints
-            center_only = True
+        
+        if grid_only:
             xc = x
             yc = y
+            center_only = True
         else:
-            center_only = False
-            xc = x-1
-            yc = y-1
+            if self.data[lon_key].shape == self.data['u'].shape[-2:]:
+                #lat/lon are centerpoints
+                center_only = True
+                xc = x
+                yc = y
+            else:
+                center_only = False
+                xc = x-1
+                yc = y-1
         
         # add Dimensions
         if not center_only:
@@ -283,20 +289,6 @@ class cgrid():
                 pass       
             nc.createDimension(zdim,len(self.data['z']))        
         nc.createDimension('time',None)
-    
-        try:
-            ufill = self.atts['u']['_FillValue']
-            vfill = self.atts['v']['_FillValue']
-        except KeyError:
-            try:
-                ufill = self.atts['u']['missing_value']
-                vfill = self.atts['v']['missing_value']
-            except KeyError:
-                ufill = 999.
-                vfill = 999.
-    
-        # create variables
-        nc_time = nc.createVariable('time','f4',('time',))
 
         if gui_gnome:
             nc_lonc = nc.createVariable('lon','f4',('yc','xc'))
@@ -316,21 +308,36 @@ class cgrid():
         setattr(nc_lonc,'units','degrees_east')
         setattr(nc_latc,'units','degrees_north')
         
-        if self.atts.has_key('wind'):
-            nc_u = nc.createVariable('air_u','f4',('time','yc','xc'), \
-                fill_value=ufill)
-            nc_v = nc.createVariable('air_v','f4',('time','yc','xc'), \
-                fill_value=vfill)
-        elif is3d:
-            nc_u = nc.createVariable('water_u','f4',('time',zdim,'yc','xc'), \
-                fill_value=ufill)
-            nc_v = nc.createVariable('water_v','f4',('time',zdim,'yc','xc'), \
-                fill_value=vfill)
-        else:
-            nc_u = nc.createVariable('water_u','f4',('time','yc','xc'), \
-                fill_value=ufill)
-            nc_v = nc.createVariable('water_v','f4',('time','yc','xc'), \
-                fill_value=vfill)
+        if not grid_only:
+
+            nc_time = nc.createVariable('time','f4',('time',))
+        
+            try:
+                ufill = self.atts['u']['_FillValue']
+                vfill = self.atts['v']['_FillValue']
+            except KeyError:
+                try:
+                    ufill = self.atts['u']['missing_value']
+                    vfill = self.atts['v']['missing_value']
+                except KeyError:
+                    ufill = 999.
+                    vfill = 999.
+                    
+            if self.atts.has_key('wind'):
+                nc_u = nc.createVariable('air_u','f4',('time','yc','xc'), \
+                    fill_value=ufill)
+                nc_v = nc.createVariable('air_v','f4',('time','yc','xc'), \
+                    fill_value=vfill)
+            elif is3d:
+                nc_u = nc.createVariable('water_u','f4',('time',zdim,'yc','xc'), \
+                    fill_value=ufill)
+                nc_v = nc.createVariable('water_v','f4',('time',zdim,'yc','xc'), \
+                    fill_value=vfill)
+            else:
+                nc_u = nc.createVariable('water_u','f4',('time','yc','xc'), \
+                    fill_value=ufill)
+                nc_v = nc.createVariable('water_v','f4',('time','yc','xc'), \
+                    fill_value=vfill)
         
         lon = self.data[lon_key]
         if self.dlx:
@@ -352,52 +359,53 @@ class cgrid():
             nc_lonc[:] = lonc
             nc_latc[:] = self.data['latc']
         
+        if not grid_only:
         #!!!!!!!!!!!!Add 3d
-        if len(self.data['u'].shape) == 2:
-            nc_time[0] = self.data[t_key]
-            nc_u[0,:] = self.data['u']
-            nc_v[0,:] = self.data['v']
-        else:
-            nc_time[:] = self.data[t_key]
-            nc_u[:] = self.data['u']
-            nc_v[:] = self.data['v']
-    
-        if is3d:
-            nc_z = nc.createVariable(zvar,'f4',(zdim))
-            nc_z[:] = self.data['z']
-            nc_depth = nc.createVariable('depth','f4',('yc','xc'))
-            nc_depth[:] = self.grid['depth']
-            
-        if self.grid.has_key('mask'):
-            nc_mask = nc.createVariable('mask','f4',('yc','xc'))
-            nc_mask[:] = self.grid['mask']
-            setattr(nc_mask,'standard_name','mask on center points')
-            setattr(nc_mask,'coordinates',u'latc lonc')
+            if len(self.data['u'].shape) == 2:
+                nc_time[0] = self.data[t_key]
+                nc_u[0,:] = self.data['u']
+                nc_v[0,:] = self.data['v']
+            else:
+                nc_time[:] = self.data[t_key]
+                nc_u[:] = self.data['u']
+                nc_v[:] = self.data['v']
+        
+            if is3d:
+                nc_z = nc.createVariable(zvar,'f4',(zdim))
+                nc_z[:] = self.data['z']
+                nc_depth = nc.createVariable('depth','f4',('yc','xc'))
+                nc_depth[:] = self.grid['depth']
+                
+            if self.grid.has_key('mask'):
+                nc_mask = nc.createVariable('mask','f4',('yc','xc'))
+                nc_mask[:] = self.grid['mask']
+                setattr(nc_mask,'standard_name','mask on center points')
+                setattr(nc_mask,'coordinates',u'latc lonc')
 
-        # add variable attributes from 'atts' (nested dict object)
-        for key,val in self.atts['time'].iteritems():
-            if not key.startswith('_'):
-                setattr(nc_time,key,val)
-            
-        self.atts['u']['coordinates'] = u'latc lonc'
-        for key,val in self.atts['u'].iteritems():
-            if not key.startswith('_'):
-                setattr(nc_u,key,val)
-        setattr(nc_u,'time','time')
-                
-        self.atts['v']['coordinates'] = u'latc lonc'
-        for key,val in self.atts['v'].iteritems():
-            if not key.startswith('_'):
-                setattr(nc_v,key,val)
-        setattr(nc_v,'time','time')
-                
-        for var in extra_2dvars:
-            nc_var = nc.createVariable(var,'f4',('time','yc','xc'))
-            nc_var[:] = self.data[var]
-            setattr(nc_var,'coordinates',u'time latc lonc')
-            for key,val in self.atts[var].iteritems():
+            # add variable attributes from 'atts' (nested dict object)
+            for key,val in self.atts['time'].iteritems():
                 if not key.startswith('_'):
-                    setattr(nc_var,key,val)
+                    setattr(nc_time,key,val)
+                
+            self.atts['u']['coordinates'] = u'latc lonc'
+            for key,val in self.atts['u'].iteritems():
+                if not key.startswith('_'):
+                    setattr(nc_u,key,val)
+            setattr(nc_u,'time','time')
+                    
+            self.atts['v']['coordinates'] = u'latc lonc'
+            for key,val in self.atts['v'].iteritems():
+                if not key.startswith('_'):
+                    setattr(nc_v,key,val)
+            setattr(nc_v,'time','time')
+                    
+            for var in extra_2dvars:
+                nc_var = nc.createVariable(var,'f4',('time','yc','xc'))
+                nc_var[:] = self.data[var]
+                setattr(nc_var,'coordinates',u'time latc lonc')
+                for key,val in self.atts[var].iteritems():
+                    if not key.startswith('_'):
+                        setattr(nc_var,key,val)
             
     
         nc.close()
@@ -423,7 +431,7 @@ class roms(cgrid):
             #Load or create P grid lat/lon (sometimes not included in ROMS output)
             try:
                 lon_psi = self.Dataset.variables['lon_psi']
-                self.atts['lon_psi'] = {}            
+                self.atts['lon_psi'] ={}            
                 for an_att in lon_psi.ncattrs():
                     self.atts['lon_psi'][an_att] = getattr(lon_psi,an_att) 
                 self.data['lon_psi'] = lon_psi[:]

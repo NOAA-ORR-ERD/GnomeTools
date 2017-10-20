@@ -242,9 +242,10 @@ class ugrid:
             
         obnd = dict()
         otype = dict()
+        start_point = 0
         bnd_number = 0
-        obnd[bnd_number] = [b.pop(0),]
-        otype[bnd_number] = [seg_types.pop(0),]
+        obnd[bnd_number] = [b.pop(start_point),]
+        otype[bnd_number] = [seg_types.pop(start_point),]
         while len(b)>0:
             idx = [i for i,edge in enumerate(b) if edge[0]==obnd[bnd_number][-1][-1]]
             if len(idx) == 1:
