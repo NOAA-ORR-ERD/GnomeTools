@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import numpy as np
 from netCDF4 import Dataset, MFDataset
 
@@ -168,10 +169,10 @@ class rgrid:
                 lon_key = 'lon_ss'; lat_key = 'lat_ss'
         except KeyError:
             lon_len = self.data['lon'].shape
-            print lon_len
-            print self.data['u'].shape[-1:]
+            print(lon_len)
+            print(self.data['u'].shape[-1:])
             if self.data['u'].shape[-1:] != lon_len:
-                print 'Dimensions dont match'
+                print('Dimensions dont match')
                 raise Exception('Dimensions of u/v do not match grid variables')
                 
         # add Dimensions
@@ -194,7 +195,7 @@ class rgrid:
         nc_time = nc.createVariable('time','f8',('time',))
         nc_lon = nc.createVariable('lon','f4',('lon',))
         nc_lat = nc.createVariable('lat','f4',('lat',))
-        if self.atts.has_key('wind'):
+        if 'wind' in self.atts:
             nc_u = nc.createVariable('air_u','f4',('time','lat','lon'), \
                 fill_value=ufill)
             nc_v = nc.createVariable('air_v','f4',('time','lat','lon'), \
@@ -218,14 +219,14 @@ class rgrid:
             nc_v[:] = self.data['v']
     
         # add variable attributes from 'atts' (nested dict object)
-        for an_att in self.atts['time'].iteritems():
+        for an_att in self.atts['time'].items():
             setattr(nc_time,an_att[0],an_att[1])
             
-        for an_att in self.atts['u'].iteritems():
+        for an_att in self.atts['u'].items():
             if an_att[0] != '_FillValue':
                 setattr(nc_u,an_att[0],an_att[1])
     
-        for an_att in self.atts['v'].iteritems():
+        for an_att in self.atts['v'].items():
             if an_att[0] != '_FillValue':
                 setattr(nc_v,an_att[0],an_att[1])
         

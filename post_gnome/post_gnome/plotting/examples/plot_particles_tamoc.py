@@ -13,10 +13,10 @@ ax = geo_plots.setup_3d(bbox=(-88, -87, 27.5, 28.5, 0, 2000))
 # if bbox not specified, this will use map bounds from bna
 
 # add bathymetry
-bathy_file = os.path.join('gom_bathy','Bathymetry.shp')
+bathy_file = os.path.join('gom_bathy', 'Bathymetry.shp')
 bathy = Reader(bathy_file)
 
-for rec,geo in zip(bathy.records(), bathy.geometries()):
+for rec, geo in zip(bathy.records(), bathy.geometries()):
     if rec.attributes['DEPTH_METR'] in ['1000m']:
         print rec.attributes['DEPTH_METR']
         for g in geo:

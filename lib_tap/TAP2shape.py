@@ -38,19 +38,19 @@ If no data_file is provided, an empty shape file will be produced.
 def IsClockwise(poly):
     """
     returns True if the polygon is clockwise ordered, false if not
-    
+
     expects a sequence of tuples, or something like it (Nx2 array for instance),
     of the points:
-    
+
     [ (x1, y1), (x2, y2), (x3, y3), ...(xi, yi) ]
-    
+
     See: http://paulbourke.net/geometry/clockwise/
     """
-    
+
     total = poly[-1][0] * poly[0][1] - poly[0][0]*poly[-1][1] # last point to first point
-    for i in xrange(len(poly)-1):
+    for i in range(len(poly)-1):
         total += poly[i][0] * poly[i+1][1] - poly[i+1][0]*poly[i][1]
-        
+
     if total <= 0:
         return True
     else:
@@ -60,7 +60,7 @@ def IsClockwise(poly):
 def WriteSites(filename, polys, data, field_name):
     w = shapefile.Writer(shapefile.POLYGON) # shape type 5 is a polygon
     w.autoBalance = True
-    
+
     # add the polygon index field:
     w.field("polygon", 'N', 10, 0)
     if data is not None:
@@ -87,12 +87,12 @@ def WriteSites(filename, polys, data, field_name):
 def ReadSites(filename):
     """
     reads the site polygons from the SITE.txt file
-    
+
     filename is the path to the SITE.txt file
     """
-    
+
     infile = file(filename, 'U')
-    
+
     # scan for sites line:
     print "Reading SITE.TXT file for site polygons"
     while True:
@@ -120,7 +120,7 @@ def ReadData(infilename):
     read the data from theTAP output file
     """
     # look for the "SITE" line:
-    
+
     infile = file(infilename, 'rU')
     while True:
         line = infile.readline()
@@ -135,7 +135,7 @@ def ReadData(infilename):
             else:
                 field_name = field_name[:10]
             break
-    
+
     # read the data:
     data = []
     for line in infile:
@@ -152,13 +152,13 @@ def ReadData(infilename):
 def WritePrjFile(filename, proj='WGS84'):
     if proj <> 'WGS84':
         raise ValueError("WritePrjFile only suporrts the WGS84 coordinates system for now")
-    
+
     # create the PRJ file
     if filename[-4:] == ".shp":
         filename = filename[:-4]
     prj = open("%s.prj" % filename, "w")
     wkt =  'GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]'
-    
+
     #'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
     prj.write(wkt)
     prj.close()
@@ -202,9 +202,8 @@ if __name__ == "__main__":
 The SITE.TXT file has %i polygons.
 The data file hasdata for %i polygons""")
 
-        
+
     print "Writing shapefile(s)"
     WriteSites(output_file, polys, data, field_name)
     WritePrjFile(output_file)
 
-    

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import numpy as np
 from netCDF4 import Dataset, MFDataset, num2date
 from libgoods import nctools
@@ -46,7 +47,7 @@ class ugrid:
                 lon = lon[:]
                 self.data['lon'] = (lon > 180).choose(lon,lon-360)
             except KeyError:
-                print 'Lat/lon variables missing or named differently'
+                print('Lat/lon variables missing or named differently')
                 pass
         
         if get_time:        
@@ -59,7 +60,7 @@ class ugrid:
                 try:
                     self.data['dtime'] = num2date(self.data['time'],time.units)
                 except:
-                    print 'Error converting to datetime object, invalid units'
+                    print('Error converting to datetime object, invalid units')
                     pass
             except KeyError:
                 pass
@@ -88,7 +89,7 @@ class ugrid:
             else:
                 self.data['nbe'] = nbe[:]
         except KeyError:
-            print 'Building face-face connectivity'
+            print('Building face-face connectivity')
             self.build_face_face_connectivity()
             
         try:
@@ -102,12 +103,12 @@ class ugrid:
 #                edges = edges + 1
             self.data['edges'] = edges
         except KeyError:
-            print 'No edge information'
+            print('No edge information')
             #TODO: call code to determine edges here
             pass
         
         for opt_var in ['depth','sigma','lonc','latc','a1u','a2u']:
-            if var_map.has_key(opt_var):
+            if opt_var in var_map:
                 theVar = self.Dataset.variables[var_map[opt_var]]
                 self.data[opt_var] = theVar[:]
                 self.atts[opt_var] = dict()
@@ -157,7 +158,7 @@ class ugrid:
                 self.data['u'] = u[tindex[0]:tindex[1]:tindex[2],:]
                 self.data['v'] = v[tindex[0]:tindex[1]:tindex[2],:]
             else:
-                print "Error:velocity is not 2 or 3 dimensional"
+                print("Error:velocity is not 2 or 3 dimensional")
                 raise
         else: #Spatial subset -- under development but *mostly* working (TODO: add 3D)
             if u.shape[-1] == max(self.data['nbe'].shape):
@@ -187,7 +188,7 @@ class ugrid:
                     this_u = u[tindex[0]:tindex[1]:tindex[2],indexer[sid]-1:indexer[fid]]
                     this_v = v[tindex[0]:tindex[1]:tindex[2],indexer[sid]-1:indexer[fid]]
                 else:
-                    print "Error:velocity is not 2 or 3 dimensional"
+                    print("Error:velocity is not 2 or 3 dimensional")
                     raise
                     
                 if firsttime:
@@ -258,7 +259,7 @@ class ugrid:
                 
         #format for GNOME ([node1,node2,bnd_num,bnd_type] - bnd_type=1 for open, 2 for closed)
         boundary = []
-        for i, a_bnd in obnd.iteritems():
+        for i, a_bnd in obnd.items():
             for j, seg in enumerate(a_bnd):
                 #TODO -- need to make separate method for adding 1 to nv,boundary...
                 boundary.append([seg[0], seg[1], i, otype[i][j]])
@@ -294,7 +295,7 @@ class ugrid:
         
         # test u/v dimensions
         if self.data['u'].shape != self.data['v'].shape:
-            print 'u/v dimensions differ'
+            print('u/v dimensions differ')
             raise
         
         # determine if its a subset in time
@@ -304,7 +305,7 @@ class ugrid:
                 t_key = 'time_ss'
         except KeyError:
             if self.data['u'].shape[0] != len(self.data['time']):
-                print 'Dimensions of u/v do not match time variable'
+                print('Dimensions of u/v do not match time variable')
                 raise
                 
         lon_key = 'lon'; lat_key = 'lat'
@@ -322,7 +323,7 @@ class ugrid:
         except KeyError:
             if self.data['u'].shape[-1] != len(self.data['lon']) and \
                 self.data['u'].shape[-1] != self.data['nbe'].shape[-1]:
-                print 'Dimensions of u/v do not match grid variables'
+                print('Dimensions of u/v do not match grid variables')
                 raise 
                 
         # add Dimensions
@@ -332,9 +333,9 @@ class ugrid:
         nc.createDimension('nbnd',len(self.data['bnd']))
         nc.createDimension('nbi',4)
         nc.createDimension('three',3)
-        if self.data.has_key('a1u'):
+        if 'a1u' in self.data:
             nc.createDimension('four',4)
-        if self.data.has_key('sigma'):
+        if 'sigma' in self.data:
             nc.createDimension('sigma',len(self.data['sigma'])) 
         
         try:
@@ -355,14 +356,14 @@ class ugrid:
         nc_nbe = nc.createVariable('nbe','int32',('three','nele'))
         nc_nv = nc.createVariable('nv','int32',('three','nele'))
         nc_bnd = nc.createVariable('bnd','int32',('nbnd','nbi'))
-        if self.data.has_key('sigma'):
+        if 'sigma' in self.data:
             nc_sigma = nc.createVariable('sigma','f4',('sigma','node'))
             #nc_sigma = nc.createVariable('sigma','f4',('sigma'))
             nc_depth = nc.createVariable('depth','f4',('node'))
-        if self.data.has_key('lonc'):
+        if 'lonc' in self.data:
             nc_lonc = nc.createVariable('lonc','f4',('nele'))
             nc_latc = nc.createVariable('latc','f4',('nele'))
-        if self.data.has_key('a1u'):
+        if 'a1u' in self.data:
             nc_a1u = nc.createVariable('a1u','f4',('four','nele'))
             nc_a2u = nc.createVariable('a2u','f4',('four','nele'))
             
@@ -385,7 +386,7 @@ class ugrid:
         ref_time = self.atts['time']['units'].split(' since ')[1]
         ref_year = int(ref_time[0:4])
         if ref_year < 1970:
-            print 'Adjusting reference time'
+            print('Adjusting reference time')
             self.data[t_key],self.atts['time']['units'] = \
                 nctools.adjust_time(self.data[t_key],self.atts['time']['units'])
         
@@ -398,43 +399,43 @@ class ugrid:
         nc_bnd[:] = self.data['bnd']
         nc_nbe[:] = self.data[nbe_key]
         nc_nv[:] = self.data[nv_key]
-        if self.data.has_key('sigma'):
+        if 'sigma' in self.data:
             nc_sigma[:] = self.data['sigma'][:]
             nc_depth[:] = self.data['depth']
-        if self.data.has_key('lonc'):
+        if 'lonc' in self.data:
             lonc = self.data[lonc_key]
             nc_lonc[:] = (lonc > 180).choose(lonc,lonc-360)
             nc_latc[:] = self.data[latc_key]
-        if self.data.has_key('a1u'):
-            print nc_a1u.shape
-            print self.data[a1u_key].shape
+        if 'a1u' in self.data:
+            print(nc_a1u.shape)
+            print(self.data[a1u_key].shape)
             nc_a1u[:] = self.data[a1u_key]
             nc_a2u[:] = self.data[a2u_key]
             
         #add variable attributes to netcdf file
-        for an_att in self.atts['time'].iteritems():
+        for an_att in self.atts['time'].items():
            setattr(nc_time,an_att[0],an_att[1])
         
-        for an_att in self.atts['lon'].iteritems():
+        for an_att in self.atts['lon'].items():
             setattr(nc_lon,an_att[0],an_att[1])
         
-        for an_att in self.atts['lat'].iteritems():
+        for an_att in self.atts['lat'].items():
             setattr(nc_lat,an_att[0],an_att[1])
         
-        for an_att in self.atts['bnd'].iteritems():
+        for an_att in self.atts['bnd'].items():
             setattr(nc_bnd,an_att[0],an_att[1])
 
-        for an_att in self.atts['nbe'].iteritems():
+        for an_att in self.atts['nbe'].items():
             setattr(nc_nbe,an_att[0],an_att[1])
 
-        for an_att in self.atts['nv'].iteritems():
+        for an_att in self.atts['nv'].items():
             setattr(nc_nv,an_att[0],an_att[1])
         
-        for an_att in self.atts['u'].iteritems():
+        for an_att in self.atts['u'].items():
             if an_att[0] != '_FillValue':
                 setattr(nc_u,an_att[0],an_att[1])
         
-        for an_att in self.atts['v'].iteritems():
+        for an_att in self.atts['v'].items():
             if an_att[0] != '_FillValue':
                 setattr(nc_v,an_att[0],an_att[1])
         
@@ -474,23 +475,23 @@ class ugrid:
         nc_nbe[:] = self.data['nbe']
         nc_nv[:] = self.data['nv']
         
-        for an_att in self.atts['lon'].iteritems():
+        for an_att in self.atts['lon'].items():
             setattr(nc_lon,an_att[0],an_att[1])   
-        for an_att in self.atts['lat'].iteritems():
+        for an_att in self.atts['lat'].items():
             setattr(nc_lat,an_att[0],an_att[1])       
-        for an_att in self.atts['bnd'].iteritems():
+        for an_att in self.atts['bnd'].items():
             setattr(nc_bnd,an_att[0],an_att[1])
-        for an_att in self.atts['nbe'].iteritems():
+        for an_att in self.atts['nbe'].items():
             setattr(nc_nbe,an_att[0],an_att[1])
-        for an_att in self.atts['nv'].iteritems():
+        for an_att in self.atts['nv'].items():
             setattr(nc_nv,an_att[0],an_att[1])
         
         nc.close()
         
     def find_nodes_eles_in_ss(self,nl,sl,wl,el):
        
-        print 'Total number of eles: ', self.data['nbe'].shape[1]
-        print 'Total number of nodes: ', self.data['lon'].shape[0]
+        print('Total number of eles: ', self.data['nbe'].shape[1])
+        print('Total number of nodes: ', self.data['lon'].shape[0])
         
         #returns lists of eles and nodes, plus truncated and edited topology arrays (nbe, nv)
         subset_lat = np.nonzero(np.logical_and(self.data['lat']>=sl,self.data['lat']<=nl))[0]
@@ -501,7 +502,7 @@ class ugrid:
         nv_ss = []; nbe_ss = []; 
         
         #determine which nodes are in subset boundary and elements with all nodes in ss
-        print 'Finding nodes and entire elements in ss'
+        print('Finding nodes and entire elements in ss')
         for ii, ele in enumerate(self.data['nv'].transpose()):
             #if all of the nodes are in subset domain keep -- otherwise get rid of it
             if (self.nodes_in_ss == ele[0]).any() and (self.nodes_in_ss == ele[1]).any() \
@@ -512,14 +513,14 @@ class ugrid:
             else:
                 pass
             
-        print 'Number of eles in ss: ', len(self.eles_in_ss)
-        print 'Number of nodes in ss: ', len(self.nodes_in_ss)
+        print('Number of eles in ss: ', len(self.eles_in_ss))
+        print('Number of nodes in ss: ', len(self.nodes_in_ss))
               
         nbe_ss = np.array(nbe_ss).transpose()
         nv_ss = np.array(nv_ss).transpose()
         self.eles_in_ss = np.array(self.eles_in_ss)
 
-        print 'Remapping nodes and elements'
+        print('Remapping nodes and elements')
         #now remap nbe_ss, nv_ss to number of remaining nodes, and elements
         nv_ssr = nv_ss.copy()
         nbe_ssr = nbe_ss.copy()
@@ -538,10 +539,10 @@ class ugrid:
         self.data['nv_ss'] = nv_ssr
         self.data['lon_ss'] = self.data['lon'][self.nodes_in_ss-1]
         self.data['lat_ss'] = self.data['lat'][self.nodes_in_ss-1]
-        if self.data.has_key('lonc'):
+        if 'lonc' in self.data:
             self.data['lonc_ss'] = self.data['lonc'][self.eles_in_ss-1]
             self.data['latc_ss'] = self.data['latc'][self.eles_in_ss-1]
-        if self.data.has_key('a1u'):
+        if 'a1u' in self.data:
             self.data['a1u_ss'] = self.data['a1u'][:,self.eles_in_ss-1]
             self.data['a2u_ss'] = self.data['a2u'][:,self.eles_in_ss-1]
         
@@ -549,11 +550,11 @@ class ugrid:
       
         #find all the land segments and re-number to match new subset node numbers
         
-        print 'Remapping boundary segs to new subset node numbers'
+        print('Remapping boundary segs to new subset node numbers')
         f = open(bndry_file)
         nodes = []
         for line in f:
-            node1,node2,bnumber,flag = map(int,line.split())
+            node1,node2,bnumber,flag = (int(l) for l in line.split())
             node1_id = np.where(self.nodes_in_ss == node1)[0]
             node2_id = np.where(self.nodes_in_ss == node2)[0]
             if len(node1_id) > 0 and len(node2_id) > 0 and flag == 0:

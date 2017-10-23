@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from libgoods import tri_grid, nctools, data_files_dir
 import os 
 
@@ -41,26 +42,26 @@ var_map = { 'longitude':'lon', \
 necofs = tri_grid.ugrid(data_url)
 
 # get longitude, latitude, and time variables
-print 'Downloading data dimensions'
+print('Downloading data dimensions')
 necofs.get_dimensions(var_map)
 
 #display available time range for model output
 nctools.show_tbounds(necofs.Dataset.variables['time'])
 
 # determine subset indices (temporal)
-print 'Determining subset indices'
+print('Determining subset indices')
 # start = dt.datetime(2011,4,13,6,0,0)
 # stop = dt.datetime(2011,4,13,6,0,0)
 # tindex = nctools.get_tindex(necofs.time,start,stop)
 
 # get grid topo variables (nbe, nv)
-print 'Downloading grid topo variables'
+print('Downloading grid topo variables')
 necofs.get_grid_topo(var_map)
 
 # find and order the boundary
-print 'Finding boundary segs'
+print('Finding boundary segs')
 bnd = necofs.find_bndry_segs()
-print 'Ordering boundary segs and assigning types'
+print('Ordering boundary segs and assigning types')
 if grid.lower() == 'gom2':
     ow1 = 1; ow2 = 60;
 elif grid.lower() == 'gom3':

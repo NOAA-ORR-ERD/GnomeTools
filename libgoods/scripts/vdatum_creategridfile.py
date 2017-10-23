@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 from libgoods import tri_grid
 import os
 
@@ -20,6 +21,7 @@ for ds,fn in files.iteritems():
     adcirc = tri_grid.ugrid(ncfile)
     adcirc.get_dimensions(var_map,get_time=False)
 
+
     adcirc.get_grid_topo(var_map)
 
     # find and order the boundary
@@ -29,3 +31,4 @@ for ds,fn in files.iteritems():
     print 'Ordering boundary'
     adcirc.order_boundary(bnd,seg_types)
     adcirc.write_bndry_file(os.path.join(vdatum_dir,ds + '.bry'))
+

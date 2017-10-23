@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from libgoods import curv_grid, nctools, noaa_coops, data_files_dir
 import datetime as dt
 import os 
@@ -27,10 +28,10 @@ tbofs.get_dimensions(var_map)
 #get grid info
 tbofs.get_grid_info(is3d=True)
 
-print 'Getting data'
+print('Getting data')
 #get_data interps to rho grid unless tinterp=False
 
 tbofs.get_data(var_map) 
 
-print 'writing data'
+print('writing data')
 tbofs.write_nc(os.path.join(data_files_dir,'tbofs_3d.nc'),is3d=True)

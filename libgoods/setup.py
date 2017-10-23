@@ -18,6 +18,7 @@ setup(
     scripts = [
                "scripts/hycom2bna.py",
                "scripts/nc_time_shift.py",
+               "scripts/shape2bna",
               ],
     author = "Amy MacFadyen",
     author_email = "amy.macfadyen@noaa.gov",

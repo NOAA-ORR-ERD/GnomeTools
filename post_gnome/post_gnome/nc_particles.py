@@ -332,6 +332,9 @@ class Reader(object):
         returns the requested variables data from a given timestep as a
         dictionary keyed by the variable names
 
+        :param timestep: Index of the timestep you want the data for.
+        :type timestep: int
+
         :param variables: The variables desired as a list string names.
                           Defaults to ['latitude','longitude']
         :type variables: list of strings
@@ -346,6 +349,10 @@ class Reader(object):
     def get_individual_trajectory(self, particle_id, variables=['latitude', 'longitude']):
         """
         returns the requested variables from trajectory of an individual particle
+
+        :param particle_id: the id of the particle you want to track
+
+        :param variables=['latitude', 'longitude']: which variables you want
 
         note: this is inefficient -- it has to read the entire file to get it.
         """

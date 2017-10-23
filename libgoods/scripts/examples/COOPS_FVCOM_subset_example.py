@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from libgoods import tri_grid, nctools, noaa_coops, data_files_dir
 import os 
 
@@ -32,14 +33,14 @@ var_map = { 'longitude':'lon', \
 ngofs = tri_grid.ugrid(data_url)
 
 # get longitude, latitude, and time variables
-print 'Downloading data dimensions'
+print('Downloading data dimensions')
 ngofs.get_dimensions(var_map)
 
 #display available time range for model output
 nctools.show_tbounds(ngofs.Dataset.variables['time'])
 
 # get grid topo variables (nbe, nv)
-print 'Downloading grid topo variables'
+print('Downloading grid topo variables')
 ngofs.get_grid_topo(var_map)
 # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
 ngofs.atts['nbe']['order'] = 'cw'
@@ -49,20 +50,20 @@ wl = -88.3; el = -88.22
 ngofs.find_nodes_eles_in_ss(nl,sl,wl,el)
 
 # find and order the boundary
-print 'Finding boundary'
+print('Finding boundary')
 bnd = ngofs.find_bndry_segs(subset=True)
 #In order to correctly specify land/ow segments requires comparison with full domain boundary
 #Create this by downloading entire domain grid info then saving it (write_bndry_file)
 bry_file = 'C:\\Users\\amy.macfadyen\\Documents\\Projects\\goods\\trunk\\static\\ocean_models\\COOPS\\negofs.bry'
 land_nodes = ngofs.find_subset_land_nodes(bry_file)
 seg_types = noaa_coops.specify_bnd_types('negofs',bnd,ss_land_nodes=land_nodes)
-print 'Ordering boundary'
+print('Ordering boundary')
 ngofs.order_boundary(bnd,seg_types)
 
 # get the data
-print 'Downloading data'
+print('Downloading data')
 #ngofs.get_data(var_map,tindex=[0,1,1]) #First time step only
 ngofs.get_data(var_map,nindex=ngofs.nodes_in_ss) #All time steps in file
  
-print 'Writing to GNOME file'
+print('Writing to GNOME file')
 ngofs.write_unstruc_grid(os.path.join(data_files_dir, 'negofs_small_ss_example.nc'))

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from libgoods import tri_grid, noaa_coops, data_files_dir, nctools
 import datetime as dt
 import os 
@@ -60,7 +61,7 @@ for f in flist:
 #        creofs.get_dimensions(var_map)
         
         # get grid topo variables (nbe, nv)
-        print 'Downloading grid topo variables'
+        print('Downloading grid topo variables')
         creofs.get_grid_topo(var_map)
         creofs.get_dimensions(var_map,get_time=False)
         # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
@@ -69,14 +70,14 @@ for f in flist:
         creofs.find_nodes_eles_in_ss(nl,sl,wl,el)
         
         # find and order the boundary
-        print 'Finding boundary'
+        print('Finding boundary')
         bnd = creofs.find_bndry_segs(subset=True)
         #In order to correctly specify land/ow segments requires comparison with full domain boundary
         #Create this by downloading entire domain grid info then saving it (write_bndry_file)
         bry_file = 'C:\\Users\\amy.macfadyen\\Documents\\Projects\\goods\\trunk\\static\\ocean_models\\COOPS\\creofs.bry'
         land_nodes = creofs.find_subset_land_nodes(bry_file)
         seg_types = noaa_coops.specify_bnd_types('creofs',bnd,ss_land_nodes=land_nodes)
-        print 'Ordering boundary'
+        print('Ordering boundary')
         creofs.order_boundary(bnd,seg_types)
         
         out_dir = os.path.join(data_files_dir,'creofs')
@@ -89,18 +90,18 @@ for f in flist:
         
         creofs.update(f) 
 
-    print 'Downloading data dimensions'
+    print('Downloading data dimensions')
     creofs.get_dimensions(var_map,get_xy=False)
     
     #get the data
-    print 'Downloading data'
+    print('Downloading data')
     #creofs.get_data(var_map,tindex=[0,1,1]) #First time step only
     creofs.get_data(var_map,zindex=-1,nindex=creofs.nodes_in_ss) #All time steps in file
     
     of_dt = nctools.round_time(num2date(creofs.data['time'][0],creofs.atts['time']['units']),roundto=3600)
     ofn = of_dt.strftime('%Y%m%d_%H') + '.nc'
     list_of_ofns.write('[FILE]  ' + ofn + '\n')
-    print 'Writing to GNOME file'
+    print('Writing to GNOME file')
     creofs.write_unstruc_grid(os.path.join(out_dir,ofn))
     
 list_of_ofns.close()
