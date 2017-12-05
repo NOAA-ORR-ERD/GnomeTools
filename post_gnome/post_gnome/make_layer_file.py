@@ -80,7 +80,7 @@ def particles(package_dir, fn, params):
         "layer_type": "point",
         "opacity": 100,
         "sort_field": "gid",
-        "classitem": "status",
+        "classitem": "Status",
         "labelitem": None,
         "date_modified": None,
         "shapefile": {

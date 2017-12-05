@@ -21,7 +21,7 @@ def write_proj_file(prj_filename):
     prj.close()
 
 
-def points(fn, package_dir, t2convert):
+def points(fn, package_dir, t2convert, beached_only=False):
     print fn
     nc = Dataset(fn)
     particles = nc_particles.Reader(nc)
@@ -38,7 +38,7 @@ def points(fn, package_dir, t2convert):
     w.field('Depth', 'N')
     w.field('Mass', 'N')
     w.field('Age', 'N')
-    w.field('Status_Code', 'N')
+    w.field('Status', 'N')
 
     TheData = particles.get_timestep(t, variables=['latitude',
                                                    'longitude',
@@ -47,7 +47,13 @@ def points(fn, package_dir, t2convert):
                                                    'mass',
                                                    'age',
                                                    'status_codes'])
-    for k, p in enumerate(zip(TheData['longitude'], TheData['latitude'])):
+    if beached_only:
+        les = np.where(TheData['status_codes'] == 3)[0]
+    else:
+        les = range(len(TheData['longitude']))   
+
+    for k in les:
+        p = (TheData['longitude'][k], TheData['latitude'][k])
         w.point(p[0],p[1])
         w.record(times[t].isoformat(),
                  TheData['id'][k],
@@ -57,7 +63,7 @@ def points(fn, package_dir, t2convert):
                  TheData['status_codes'][k])
 
     source_fdir = os.path.join(package_dir, 'source_files')
-    shapefile_name = os.path.split(fn)[-1].split('.')[0]
+    shapefile_name = os.path.split(fn)[-1].split('.')[0] + '_particles'
     w.save(os.path.join(source_fdir, shapefile_name))
 
     nc.close()
@@ -105,7 +111,7 @@ def contours(fn,
     floating = np.where(status == 2)[0]
     x = TheData['longitude'][floating]
     y = TheData['latitude'][floating]
-
+    
     # Peform the kernel density estimate
     xx, yy = np.mgrid[min(x) - .1:max(x) + .1:100j, min(y) - .1:max(y) + .1:100j]
     positions = np.vstack([xx.ravel(), yy.ravel()])
@@ -135,7 +141,7 @@ def contours(fn,
         print names[c]
 
     source_fdir = os.path.join(package_dir, 'source_files')
-    shapefile_name = os.path.split(fn)[-1].split('.')[0]
+    shapefile_name = os.path.split(fn)[-1].split('.')[0] + '_contours'
     w.save(os.path.join(source_fdir, shapefile_name))
 
     nc.close()

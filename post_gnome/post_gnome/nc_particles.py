@@ -262,7 +262,7 @@ class Reader(object):
             self.manage_dataset = True
 
         time = self.nc.variables['time']
-        units = time.getncattr('units'
+        units = time.getncattr('units')
         self.times = netCDF4.num2date(time[:], units)
         self.time_units = units
 
