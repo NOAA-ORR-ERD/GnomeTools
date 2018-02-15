@@ -97,7 +97,8 @@ def make_filelist_for_GNOME(file_dir,file_match='*.*',outfilename='filelist.txt'
     flist = glob.glob(os.path.join(file_dir,file_match))
     f = open(os.path.join(file_dir,outfilename),'w')
     f.write('NetCDF Files\n')
-    f.write('\n'.join(['[FILE] ' + os.path.split(file)[-1] for file in flist]))
+    #f.write('\n'.join(['[FILE] ' + os.path.split(file)[-1] for file in flist]))
+    f.write('\n'.join(['[FILE] ' + file for file in flist]))
     f.close()
 
 

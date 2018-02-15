@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from libgoods import tri_grid, noaa_coops, data_files_dir, nctools
+from libgoods import tri_grid, noaa_coops, nctools
 import datetime as dt
 import os 
 from netCDF4 import num2date
@@ -20,13 +20,16 @@ Since multiple files are created, also create a text file that can be loaded
 into GNOME pointing to the individual files
 '''
 
-out_dir = os.path.join(data_files_dir,'sfbofs2')
-start = dt.date(2015,7,29)
-end = dt.date(2015,7,31)
-hour0 = 3
-flist = noaa_coops.make_server_filelist('sfbofs',hour0,start,end=end,test_exist=False)
-
-
+out_dir = gnome_ready
+start = dt.date(2017,8,8)
+end = dt.date(2017,11,30)
+date = start
+dates = []
+while date <= end:
+    dates.append(date)
+    date += datetime.timedelta(days=1)
+	
+flist = ['fvcom_maine' + str(d.year) + str(d.month).zfill(2) + str(d.day).zfill(2) for d in dates]
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
 # and ADCIRC which have different variable names
