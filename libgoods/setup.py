@@ -19,9 +19,10 @@ setup(
                "scripts/hycom2bna.py",
                "scripts/nc_time_shift.py",
                "scripts/shape2bna",
+               "scripts/process_boem.py"
               ],
-    author = "Amy MacFadyen",
-    author_email = "amy.macfadyen@noaa.gov",
+    author = "Amy MacFadyen, Christopher Barker",
+    author_email = "amy.macfadyen@noaa.gov, chris.barker@noaa.gov",
     url="http://www.gnome.orr.noaa.gov",
     license = "LICENSE.txt",
     keywords = "GNOME GOODS ORR",

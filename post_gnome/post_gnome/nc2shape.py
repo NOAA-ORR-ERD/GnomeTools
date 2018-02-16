@@ -74,8 +74,6 @@ def mpl_contours_2_shape(cs,levs,t,shp_fdir,shp_fname):
     zip_shape_files(shp_fdir,shp_fname)
 
 def points(fn, package_dir, t2convert):
-    print 'Points'
-    print fn
     nc = Dataset(fn)
     particles = nc_particles.Reader(nc)
     times = particles.times
@@ -125,6 +123,7 @@ def points(fn, package_dir, t2convert):
         shapefile_name = os.path.split(fn)[-1].split('.')[0] + '_' + times[t].strftime('%Y%b%d_%H%M')
     print 'sfn:', shapefile_name
     print os.path.join(source_fdir, shapefile_name)
+
     w.save(os.path.join(source_fdir, shapefile_name))
 
     nc.close()
@@ -167,7 +166,7 @@ def contours(fn,
     floating = np.where(status == 2)[0]
     x = TheData['longitude'][floating]
     y = TheData['latitude'][floating]
-
+    
     # Peform the kernel density estimate
     xx, yy = np.mgrid[min(x) - .1:max(x) + .1:100j, min(y) - .1:max(y) + .1:100j]
     positions = np.vstack([xx.ravel(), yy.ravel()])
@@ -197,7 +196,7 @@ def contours(fn,
         print names[c]
 
     source_fdir = os.path.join(package_dir, 'source_files')
-    shapefile_name = os.path.split(fn)[-1].split('.')[0]
+    shapefile_name = os.path.split(fn)[-1].split('.')[0] + '_contours'
     w.save(os.path.join(source_fdir, shapefile_name))
 
     nc.close()
