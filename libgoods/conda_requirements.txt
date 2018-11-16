@@ -1,0 +1,12 @@
+# libgoods
+setuptools
+numpy>=1.15
+matplotlib
+netCDF4
+fiona
+
+
+# for development
+pytest
+sphinx
+
