@@ -338,7 +338,7 @@ def contours(package_dir, fn, params):
     filename = os.path.join(package_dir,'layers',fn + '.json')
     f = file(filename,'w')
 
-    if params.has_key('Uncertain'):
+    if params.has_key('uncertain'):
 
         layer_classes = [
               {

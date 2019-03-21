@@ -15,7 +15,6 @@ import yaml
 
 def create_package(params_file):
     params = yaml.load(file(params_file))
-    print 'hi again'
     # make directory structure
     try:
         print "removing:", params['package_dir']
@@ -64,7 +63,7 @@ def create_package(params_file):
         params['color_beached'] = 'black'
         make_layer_file.particles(params['package_dir'],'traj',params)
 
-        # Red params['uncertain']ty points if params['uncertain']=True    
+        # Red uncertainty points if params['uncertain']=True    
         if params['uncertain']:
             
             #make shapefiles
@@ -103,12 +102,12 @@ def create_package(params_file):
         params['color_beached'] = 'red'
         make_layer_file.particles(params['package_dir'],'traj',params)
         
-       # params['uncertain']ty contour if params['uncertain']=True
+       # uncertainty contour if params['uncertain']=True
         
         if params['uncertain']:
             # make shapefile
             ufn = os.path.join(params['gnome_dir'], params['particle_file'].split('.')[0] + '_uncertain.nc')
-            print "params['uncertain']ty file name:", ufn
+            print "uncertainty file name:", ufn
             uncert_zipfname = nc2shape.contours(ufn,
                                                 params['package_dir'],
                                                 params['t2convert'],
@@ -122,7 +121,6 @@ def create_package(params_file):
             except AttributeError:
                 params['title'] = 'Uncertainty contour'
             params['attachment_file'] = None
-            params['uncertain'] = True
             make_layer_file.contours(params['package_dir'],'uncert',params)
             
     elif params['styling'] == 'contours_forecast':
@@ -159,7 +157,6 @@ def create_package(params_file):
             except AttributeError:
                 params['title'] = 'Uncertainty contour'
             params['attachment_file'] = None
-            params['uncertain'] = True
             make_layer_file.contours(params['package_dir'],'uncert',params)
         
         # Add beached particles
@@ -183,7 +180,6 @@ def create_package(params_file):
     shutil.make_archive(params['package_dir'],'zip',root_dir=params['package_dir'])
 
 if __name__ == "__main__":
-    print 'hi'
     create_package(sys.argv[1])
    
     
