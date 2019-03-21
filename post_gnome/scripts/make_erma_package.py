@@ -5,122 +5,185 @@ script that reads netcdf particle files from GNOME, contours the particles,
 makes shape files of the particles, and creates and ERMA data pacakge out
 of all of it.
 
-You need to edit the info at the head of this file to tell it what to do
 """
-
-
 import os
+import sys
 import shutil
 import datetime
 from post_gnome import make_layer_file, nc2shape
+import yaml
 
+def create_package(params_file):
+    params = yaml.load(file(params_file))
+    print 'hi again'
+    # make directory structure
+    try:
+        print "removing:", params['package_dir']
+        shutil.rmtree(params['package_dir'])
+    except OSError:
+        pass
 
-# FIXME: this should be replaced by a dict
-#        of info that could be passed in from elsewhere
-# GNOME file info ***************************************************************
+    os.mkdir(params['package_dir'])
+    os.mkdir(os.path.join(params['package_dir'], 'attachments'))
+    os.mkdir(os.path.join(params['package_dir'], 'layers'))
+    os.mkdir(os.path.join(params['package_dir'], 'source_files'))
+    os.mkdir(os.path.join(params['package_dir'], 'support_files'))
 
-metadata = """Data sources:
+    # add attachments
+    try:
+        for f in params['attachments']:
+            attach_file = os.path.split(attachments)[-1]
+            shutil.copy(attachments, os.path.join(params['package_dir'], 'attachments', attach_file))
+            params['attachment_file'] = attach_file #need to figure out this for more than one
+    except:
+        print 'No attachments'
+        params['attachment_file'] = None
 
-Overflights from 5/18/2016
-No recoverable oil observed.
+    #determine time to convert
+    if params['t2convert'] is not None:
+        params['t2convert'] = datetime.datetime.strptime(params['t2convert'],'%Y-%m-%d %H:%M')
 
-Currents:
-US Navy American Seas Model
+    if params['styling'] == 'points_simple':
+        params['classitem'] = 'status'
+        
+        #GNOME best estimate points
+        
+        # make shapefiles
+        fn = os.path.join(params['gnome_dir'], params['particle_file'])
+        traj_zipfname = nc2shape.points(fn, params['package_dir'], params['t2convert'])
 
-Winds:
-NWS GFS
-"""
-gnome_dir = "../post_gnome/tests/sample_data/"
-outfile = os.path.join("24hrs.nc")
-uncertain = True
+        #make layer files
+        params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
+        print traj_zipfname
+        try:
+            params['title'] = 'Best estimate particles '  + params['t2convert'].strftime('%b %d %Y %H:%M')
+        except AttributeError:
+            params['title'] = 'Best estimate particles'
+        
+        params['color'] = 'black'
+        params['color_beached'] = 'black'
+        make_layer_file.particles(params['package_dir'],'traj',params)
 
-t2convert = datetime.datetime(2016, 5, 19, 8, 0)
-# attachments = os.path.join(gnome_dir,'images','ChesapeakeBay_anim.gif')
-# Name for package directory****************************************************
-package_dir = 'test2'
-# ERMA layer info
-plot_type = 'contours'  # points or contours
-params = {}
-params['site_name'] = "gulfofmexico"
-params['event'] = "Green Canyon 248 12-May-2015"
-params['metadata'] = metadata
-params['folder_path'] = ['Green Canyon 248 Incident',
-                         'Trajectory Forecast',
-                         'Trajectory for ' + t2convert.strftime('%b %d %Y %H:%M')]
-# ******************************************************************************
+        # Red params['uncertain']ty points if params['uncertain']=True    
+        if params['uncertain']:
+            
+            #make shapefiles
+            ufn = os.path.join(params['gnome_dir'],params['particle_file'].split('.')[0] + '_uncertain.nc')
+            uncert_zipfname = nc2shape.points(ufn,params['package_dir'],params['t2convert'])
+            
+            #make layer file
+            params['shape_zipfilename'] =  os.path.split(uncert_zipfname)[-1]
+            params['color'] = 'red'
+            params['color_beached'] = 'red'
+            try:
+                params['title'] = 'Uncertainty particles '  + params['t2convert'].strftime('%b %d %Y %H:%M')
+            except AttributeError:
+                params['title'] = 'Uncertainty particles'
+            params['attachment_file'] = None
+            make_layer_file.particles(params['package_dir'],'uncert',params)
 
-# make directory structure
-try:
-    print "removing:", package_dir
-    shutil.rmtree(package_dir)
-except OSError:
-    pass
+    elif params['styling'] == 'points_forecast':
+        params['classitem'] = 'surf_conc'
 
-os.mkdir(package_dir)
-os.mkdir(os.path.join(package_dir, 'attachments'))
-os.mkdir(os.path.join(package_dir, 'layers'))
-os.mkdir(os.path.join(package_dir, 'source_files'))
-os.mkdir(os.path.join(package_dir, 'support_files'))
-
-# add attachments
-try:
-    attach_file = os.path.split(attachments)[-1]
-    shutil.copy(attachments, os.path.join(package_dir, 'attachments', attach_file))
-    params['attachment_file'] = attach_file
-except:
-    print 'No attachments'
-    params['attachment_file'] = None
-
-if plot_type == 'points':
-    # make shapefiles
-    fn = os.path.join(gnome_dir, outfile)
-    traj_zipfname = nc2shape.points(fn, package_dir,t2convert)
-    if uncertain:
-        ufn = os.path.join(gnome_dir,outfile.split('.')[0] + '_uncert.nc')
-        uncert_zipfname = nc2shape.points(ufn,package_dir,t2convert)
-
-    #make layer files
-    params['shape_zipfilename'] = traj_zipfname
-    params['title'] = 'Best estimate particles: ' + t2convert.strftime('%b %d %Y %H:%M')
-    params['color'] = 'black'
-    make_layer_file.particles(package_dir,'traj',params)
-
-    if uncertain:
-        params['shape_zipfilename'] = uncert_zipfname
+        # Best estimate particles
+        
+         # make shapefiles
+        fn = os.path.join(params['gnome_dir'], params['particle_file'])
+        print fn
+        traj_zipfname = nc2shape.points(fn,params['package_dir'],params['t2convert'])
+     
+        #make layer files
+        params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
+        print traj_zipfname
+        try:
+            params['title'] = 'Forecast for '  + params['t2convert'].strftime('%b %d %Y %H:%M')
+        except AttributeError:
+            params['title'] = 'Forecast '
         params['color'] = 'red'
-        params['title'] = 'Uncertainty particles: ' + t2convert.strftime('%b %d %Y %H:%M')
-        params['attachment_file'] = None
-        make_layer_file.particles(package_dir,'uncert',params)
+        params['color_beached'] = 'red'
+        make_layer_file.particles(params['package_dir'],'traj',params)
+        
+       # params['uncertain']ty contour if params['uncertain']=True
+        
+        if params['uncertain']:
+            # make shapefile
+            ufn = os.path.join(params['gnome_dir'], params['particle_file'].split('.')[0] + '_uncertain.nc')
+            print "params['uncertain']ty file name:", ufn
+            uncert_zipfname = nc2shape.contours(ufn,
+                                                params['package_dir'],
+                                                params['t2convert'],
+                                                levels=[0.1],
+                                                names=['Uncertainty']
+                                                )
+            # make layer file
+            params['shape_zipfilename'] =  os.path.split(uncert_zipfname)[-1]
+            try:
+                params['title'] = 'Uncertainty contour ' + params['t2convert'].strftime('%b %d %Y %H:%M')
+            except AttributeError:
+                params['title'] = 'Uncertainty contour'
+            params['attachment_file'] = None
+            params['uncertain'] = True
+            make_layer_file.contours(params['package_dir'],'uncert',params)
+            
+    elif params['styling'] == 'contours_forecast':
 
-elif plot_type == 'contours':
-    # make shapefiles
-    fn = os.path.join(gnome_dir, outfile)
-    traj_zipfname = nc2shape.contours(fn, package_dir, t2convert)
-    if uncertain:
-        ufn = os.path.join(gnome_dir, outfile.split('.')[0] + '_uncert.nc')
-        print "uncertainty file name:", ufn
-        uncert_zipfname = nc2shape.contours(ufn,
-                                            package_dir,
-                                            t2convert,
-                                            levels=[0.1],
-                                            names=['Uncertainty']
-                                            )
+        # Best estimate contours
 
-    # make layer files
-    params['shape_zipfilename'] = traj_zipfname
-    params['title'] = 'Best estimate contours: ' + t2convert.strftime('%b %d %Y %H:%M')
-    params['color'] = 'black'
-    #params['SinglePoly'] = False
-    make_layer_file.contours(package_dir,'traj',params)
+        # make shapefiles
+        fn = os.path.join(params['gnome_dir'], params['particle_file'])
+        traj_zipfname = nc2shape.contours(fn, params['package_dir'], params['t2convert'])
+        # make layer files
+        params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
+        try:
+            params['title'] = 'Best estimate contours ' + params['t2convert'].strftime('%b %d %Y %H:%M')
+        except AttributeError:
+            params['title'] = 'Best estimate contours'
+        params['color'] = 'black'
+        #params['SinglePoly'] = True
+        make_layer_file.contours(params['package_dir'],'traj',params)
+        
+        if params['uncertain']:
+            # make shapefile
+            ufn = os.path.join(params['gnome_dir'], params['particle_file'].split('.')[0] + '_uncertain.nc')
+            print "params['uncertain']ty file name:", ufn
+            uncert_zipfname = nc2shape.contours(ufn,
+                                                params['package_dir'],
+                                                params['t2convert'],
+                                                levels=[0.1],
+                                                names=['Uncertainty']
+                                                )
+            # make layer file
+            params['shape_zipfilename'] =  os.path.split(uncert_zipfname)[-1]
+            try:
+                params['title'] = 'Uncertainty contour ' + params['t2convert'].strftime('%b %d %Y %H:%M')
+            except AttributeError:
+                params['title'] = 'Uncertainty contour'
+            params['attachment_file'] = None
+            params['uncertain'] = True
+            make_layer_file.contours(params['package_dir'],'uncert',params)
+        
+        # Add beached particles
+        params['classitem'] = 'status'
+        # make shapefiles
+        traj_zipfname = nc2shape.points(fn, params['package_dir'], params['t2convert'], beached_only=True, shapefile_name = 'Beached')
+        #make layer files
+        params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
+        print 'beached zipfilename ', traj_zipfname
+        try:
+            params['title'] = 'Beached particles '  + params['t2convert'].strftime('%b %d %Y %H:%M')
+        except AttributeError:
+            params['title'] = 'Beached particles'
+        params['color'] = 'black'
+        params['color_beached'] = 'black'
+        make_layer_file.particles(params['package_dir'],'beached',params)
 
-    if uncertain:
-        params['shape_zipfilename'] = uncert_zipfname
-        params['title'] = 'Uncertainty contour: ' + t2convert.strftime('%b %d %Y %H:%M')
-        params['attachment_file'] = None
-        params['Uncertain'] = True
-        make_layer_file.contours(package_dir,'uncert',params)
+    else:
+        print 'Must specify either points or contours'
 
-else:
-    print 'Must specify either points or contours'
+    shutil.make_archive(params['package_dir'],'zip',root_dir=params['package_dir'])
 
-shutil.make_archive(package_dir,'zip',root_dir=package_dir)
+if __name__ == "__main__":
+    print 'hi'
+    create_package(sys.argv[1])
+   
+    

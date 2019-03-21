@@ -11,7 +11,7 @@ Usage:
 
 from __future__ import print_function
 import sys
-import shapefile
+import fiona
 
 USAGE = """ shape2bna.py -- convert shapefiles withland polygons to a BNA file for GNOME
 
@@ -49,16 +49,18 @@ except IndexError:
 
 print("reading:", infilename)
 
-shp = shapefile.Reader(infilename)
-
 # start the BNA file
 print("writing out:", outfilename)
 with open(outfilename, 'w') as bna:
 
-    for count, shape in enumerate(shp.iterShapes()):
-        points = shape.points
-        bna.write('"%i","1", %i\n' % (count, len(shape.points)))
-        for p in points:
-            bna.write("%f, %f\n" % (p))
+    for feature in fiona.open(infilename):
+        
+        coords = feature['geometry']['coordinates']
+        
+        for count, points in enumerate(coords):
+            points = points[0]
+            bna.write('"%i","1", %i\n' % (count, len(points)))
+            for p in points:
+                bna.write("%f, %f\n" % (p))
 
 print("Wrote %i polygons to the BNA file" % (count + 1))

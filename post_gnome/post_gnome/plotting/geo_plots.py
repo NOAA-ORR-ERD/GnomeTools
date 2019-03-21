@@ -5,6 +5,39 @@ from post_gnome import nc_particles
 from netCDF4 import Dataset, num2date
 import numpy as np
 
+def read_bna(bna,get_bbox=True):
+
+    coast_polys = {}
+    with open(bna) as f:
+        while True:
+            try:
+                id, type, num_pts = f.readline().split(',')
+                points = np.zeros((int(num_pts), 2))
+                for i in range(int(num_pts)):
+                    points[i,:] = [float(j) for j in f.readline().split(',')]
+                coast_polys[id] = points
+            except ValueError:
+                if len(coast_polys.keys()) == 0:
+                    print 'bna did not load correctly'
+                break
+                
+    if coast_polys.has_key('"Map Bounds"'):
+        mb = coast_polys.pop('"Map Bounds"') #need to get rid of this regardless for plotting
+        if get_bbox==True:
+            print 'Using map bounds from bna file'
+            x0 = mb[:,0].min()
+            x1 = mb[:,0].max()
+            y0 = mb[:,1].min()
+            y1 = mb[:,1].max()
+            bbox = (x0,x1,y0,y1)
+            print 'bbox:', bbox
+        else:
+            bbox = None
+            
+        return coast_polys, bbox
+            
+
+
 def add_map(bbox=None,bna=None):
     
     print 'Using mercator projection' #might want to extend to include other options?
@@ -15,33 +48,14 @@ def add_map(bbox=None,bna=None):
     if bna is not None:
         #load bna and determine bounding box from bna map bounds
         #no informative error messaging if invalid bna
-        
-        with open(bna) as f:
-            while True:
-                try:
-                    id, type, num_pts = f.readline().split(',')
-                    points = np.zeros((int(num_pts), 2))
-                    for i in range(int(num_pts)):
-                        points[i,:] = [float(j) for j in f.readline().split(',')]
-                    coast_polys[id] = points
-                except ValueError:
-                    if len(coast_polys.keys()) == 0:
-                        print 'bna did not load correctly'
-                    break
-                    
-        if coast_polys.has_key('"Map Bounds"'):
-            mb = coast_polys.pop('"Map Bounds"') #need to get rid of this regardless for plotting
-            if bbox is None:
-                print 'Using map bounds from bna file'
-                x0 = mb[:,0].min()
-                x1 = mb[:,0].max()
-                y0 = mb[:,1].min()
-                y1 = mb[:,1].max()
-                bbox = (x0,x1,y0,y1)
-                print 'bbox:', bbox
+        coast_polys, bna_bbox = read_bna(bna)
     
     if bbox is None:
-            bbox=(-180,180,-80,80)  
+        if bna_bbox is None:
+            bbox=(-180,180,-80,80)
+        else: 
+            bbox = bna_bbox
+  
     ax.set_extent(bbox)
     
     if len(coast_polys.keys()) > 0:
@@ -56,6 +70,37 @@ def add_map(bbox=None,bna=None):
     gl.ylabels_left = False
     gl.xformatter = LONGITUDE_FORMATTER
     gl.yformatter = LATITUDE_FORMATTER
+
+    return ax
+    
+def add_map_simple(bbox=None,bna=None):
+    
+    ax = plt.axes()
+    
+    coast_polys = {}
+    
+    if bna is not None:
+        #load bna and determine bounding box from bna map bounds
+        #no informative error messaging if invalid bna
+        coast_polys, bna_bbox = read_bna(bna)
+   
+    if bbox is None:
+        if bna_bbox is None:
+            bbox=(-180,180,-80,80)
+        else: 
+            bbox = bna_bbox
+            
+
+    
+    if len(coast_polys.keys()) > 0:
+        for poly in coast_polys.itervalues():
+            ax.plot(poly[:,0],poly[:,1],'k')
+
+    ax.set_xlim(bbox[0:2])
+    ax.set_ylim(bbox[2:4])   
+    ax.set_aspect(1/np.cos(np.mean(bbox[2:4])*np.pi/180))
+    ax.grid()
+
     return ax
     
 def setup_3d(bbox=None):
@@ -188,7 +233,7 @@ def plot_particles(ax,filename,t,depth=0,varname=None,color='k',marker='.',marke
     status = TheData['status_codes']
     label = t.isoformat()
     
-    if varname is None:
+    if varname is None: #plot based on status codes
         for sc in [2,3]:
             if sc==3:
                 marker='x'
@@ -198,9 +243,13 @@ def plot_particles(ax,filename,t,depth=0,varname=None,color='k',marker='.',marke
             else:
                 pid = np.where(status==sc)[0]
             if len(pid) > 0:
-                ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],transform=ccrs.Geodetic(),\
-                    color=color,marker=marker,s=markersize,label=label)
-    else:
+                if not hasattr(ax,'coastlines'):
+                    ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],\
+                        color=color,marker=marker,s=markersize,label=label)
+                else:
+                    ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],transform=ccrs.Geodetic(),\
+                        color=color,marker=marker,s=markersize,label=label)
+    else: #color in bins based on LE variables (under contstruction)
         bins=[6*3600,24*3600]
         binlabels=['> 24-hrs','< 24-hrs','< 6-hrs']
         styles = ['r.','m.','b.']
@@ -212,13 +261,20 @@ def plot_particles(ax,filename,t,depth=0,varname=None,color='k',marker='.',marke
             bins = [0] + bins + [var2p.max()]
             for ii in range(len(bins)-2,-1,-1):
                 print ii
-                id = np.where((var2p>=bins[ii]) & (var2p<=bins[ii+1]))
-                ax.plot(lon[id],lat[id],styles[ii],transform=ccrs.Geodetic())
+                id = np.where((var2p>=bins[ii]) & (var2p<=bins[ii+1]))[0]
+                if len(id) >0:
+                    if not hasattr(ax,'coastlines'):
+                        ax.plot(lon[id],lat[id],styles[ii])
+                    else:
+                        ax.plot(lon[id],lat[id],styles[ii],transform=ccrs.Geodetic())
                 ax.legend(binlabels)
             
         else:
             pid = np.where((TheData['status_codes']==2) & (TheData['depth']==depth))[0]
-            ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],10,TheData[varname][pid],transform=ccrs.Geodetic())
+            if not hasattr(ax,'coastlines'):
+                ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],10,TheData[varname][pid])
+            else:
+                ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],10,TheData[varname][pid],transform=ccrs.Geodetic())
     print 'Closest time found: ', times[tidx]
     
     return ax

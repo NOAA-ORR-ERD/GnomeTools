@@ -8,7 +8,20 @@ for name, rgb in colors.ColorConverter.colors.iteritems():
     hex_ = colors.rgb2hex(rgb)
     cnames[name] = hex_
 
+sites = {}
+sites['dwh'] = {'site_id': 1, 'zoom': 6, 'longitude': -90.42, 'latitude': 28.03}
+sites['arctic'] = {'site_id': 1, 'zoom': 5, 'longitude': -150.00, 'latitude': 70.00}
+sites['atlantic'] = {'site_id': 2, 'zoom': 7, 'longitude': -74.10, 'latitude': 	38.94}
+sites['caribbean'] = {'site_id': 3, 'zoom': 6, 'longitude': -65.44, 'latitude': 18.20}
+sites['greatlakes'] = {'site_id': 9, 'zoom': 1, 'longitude': -83.44, 'latitude': 45.60}
+sites['gulfofmexico'] = {'site_id': 4, 'zoom': 4, 'longitude': -90.42, 'latitude': 28.03}
+sites['northwest'] = {'site_id': 6, 'zoom': 6, 'longitude': -125.00, 'latitude': 47.00}
+sites['pacific'] = {'site_id': 7, 'zoom': 4, 'longitude': -178.00, 'latitude': 11.00}
+sites['southwest'] = {'site_id': 8, 'zoom': 6, 'longitude': -122.00, 'latitude': 37.00}
+    
 
+
+            
 def particles(package_dir, fn, params):
     '''
     params is a dict with the following keys:
@@ -21,25 +34,198 @@ def particles(package_dir, fn, params):
         color - matplotlib named colors (e.g. "r" or "red")
         folder_path - a list with the hierarchy of subfolders in TOC
     '''
-    try:
-        color = cnames[params['color']]
-    except:
-        color = '#000000'
-
-    sites = {}
-    sites['dwh'] = {'site_id': 1, 'zoom': 6, 'longitude': -90.42, 'latitude': 28.03}
-    sites['arctic'] = {'site_id': 1, 'zoom': 5, 'longitude': -150.00, 'latitude': 70.00}
-    sites['atlantic'] = {'site_id': 2, 'zoom': 7, 'longitude': -74.10, 'latitude': 	38.94}
-    sites['caribbean'] = {'site_id': 3, 'zoom': 6, 'longitude': -65.44, 'latitude': 18.20}
-    sites['greatlakes'] = {'site_id': 9, 'zoom': 1, 'longitude': -83.44, 'latitude': 45.60}
-    sites['gulfofmexico'] = {'site_id': 4, 'zoom': 4, 'longitude': -90.42, 'latitude': 28.03}
-    sites['northwest'] = {'site_id': 6, 'zoom': 6, 'longitude': -125.00, 'latitude': 47.00}
-    sites['pacific'] = {'site_id': 7, 'zoom': 4, 'longitude': -178.00, 'latitude': 11.00}
-    sites['southwest'] = {'site_id': 8, 'zoom': 6, 'longitude': -122.00, 'latitude': 37.00}
-
-
+    
     filename = os.path.join(package_dir, 'layers', fn + '.json')
     f = file(filename, 'w')
+    
+    if params['classitem'] == 'status':
+    
+        layer_classes = [
+          {
+            "styles": [
+              {
+                "angle_field": None,
+                "angle": None,
+                "font_character": None,
+                "map_layer_class": 101964,
+                "ordering": 1,
+                "symbol": {
+                  "style_text": None,
+                  "symbol_def": "NAME 'cross'\nTYPE vector\nPOINTS\n 2 0\n 2 4\n -99 -99\n 0 2\n 4 2\nEND\n",
+                  "symbol_desc": "Cross",
+                  "symbol_name": "cross"
+                },
+                "size_field": None,
+                "color": cnames[params['color_beached']],
+                "style_width": None,
+                "offset_x": None,
+                "offset_y": None,
+                "outlinesymbol": None,
+                "outlinecolor": None,
+                "width_field": None,
+                "style_size": 5
+              }
+            ],
+            "name": "Beached",
+            "ordering": 2,
+            "expression_type": {
+              "expression_type": "V",
+              "description": "Exact Value"
+            },
+            "labels": [
+              
+            ],
+            "expression": "3"
+          },
+          {
+            "styles": [
+              {
+                "angle_field": None,
+                "angle": None,
+                "font_character": None,
+                "map_layer_class": 101965,
+                "ordering": 1,
+                "symbol": {
+                  "style_text": None,
+                  "symbol_def": "NAME 'filledcircle'\nTYPE ellipse\nFILLED true\nPOINTS\n 1 1\nEND\n",
+                  "symbol_desc": "Circle (Filled)",
+                  "symbol_name": "filledcircle"
+                },
+                "size_field": None,
+                "color": cnames[params['color']],
+                "style_width": None,
+                "offset_x": None,
+                "offset_y": None,
+                "outlinesymbol": None,
+                "outlinecolor": None,
+                "width_field": None,
+                "style_size": 5
+              }
+            ],
+            "name": "Floating",
+            "ordering": 3,
+            "expression_type": {
+              "expression_type": "V",
+              "description": "Exact Value"
+            },
+            "labels": [
+
+            ],
+            "expression": "2"
+          }
+        ]
+        
+    elif params['classitem'] == 'surf_conc':
+    
+        layer_classes = [
+          {
+            "styles": [
+              {
+                "angle_field": None,
+                "angle": None,
+                "font_character": None,
+                "map_layer_class": 169684,
+                "ordering": 1,
+                "symbol": {
+                  "symbol_def": "NAME 'filledcircle'\nTYPE ellipse\nFILLED true\nPOINTS\n 1 1\nEND\n", 
+                  "symbol_name": "filledcircle", 
+                  "style_text": None, 
+                  "symbol_desc": "Circle (Filled)"
+                }, 
+                "size_field": None,
+                "color": "#00ffff",
+                "style_width": None,
+                "offset_x": None,
+                "offset_y": None,
+                "outlinesymbol": None,
+                "outlinecolor": "#00ffff",
+                "width_field": None,
+                "style_size": 5
+              }
+            ],
+            "name": "Light",
+            "ordering": 1,
+            "expression_type": {
+              "expression_type": "M",
+              "description": "Mapserver Expressions"
+            },
+            "labels": [],
+            "expression": "[surf_conc] >= 0 AND [surf_conc] < 50"
+          },
+          {
+            "styles": [
+              {
+                "angle_field": None,
+                "angle": None,
+                "font_character": None,
+                "map_layer_class": 169683,
+                "ordering": 1,
+                "symbol": {
+                  "symbol_def": "NAME 'filledcircle'\nTYPE ellipse\nFILLED true\nPOINTS\n 1 1\nEND\n", 
+                  "symbol_name": "filledcircle", 
+                  "style_text": None, 
+                  "symbol_desc": "Circle (Filled)"
+                }, 
+                "size_field": None,
+                "color": "#007fff",
+                "style_width": None,
+                "offset_x": None,
+                "offset_y": None,
+                "outlinesymbol": None,
+                "outlinecolor": "#007fff",
+                "width_field": None,
+                "style_size": 5
+              }
+            ],
+            "name": "Medium",
+            "ordering": 2,
+            "expression_type": {
+              "expression_type": "M",
+              "description": "Mapserver Expressions"
+            },
+            "labels": [],
+            "expression": "[surf_conc] >= 50 AND [surf_conc] < 100"
+          },
+          {
+            "styles": [
+              {
+                "angle_field": None,
+                "angle": None,
+                "font_character": None,
+                "map_layer_class": 169682,
+                "ordering": 1,
+                "symbol": {
+                  "symbol_def": "NAME 'filledcircle'\nTYPE ellipse\nFILLED true\nPOINTS\n 1 1\nEND\n", 
+                  "symbol_name": "filledcircle", 
+                  "style_text": None, 
+                  "symbol_desc": "Circle (Filled)"
+                }, 
+                "size_field": None,
+                "color": "#0000ff",
+                "style_width": None,
+                "offset_x": None,
+                "offset_y": None,
+                "outlinesymbol": None,
+                "outlinecolor": "#0000ff",
+                "width_field": None,
+                "style_size": 5
+              }
+            ],
+            "name": "Heavy",
+            "ordering": 3,
+            "expression_type": {
+              "expression_type": "M",
+              "description": "Mapserver Expressions"
+            },
+            "labels": [],
+            "expression": "[surf_conc] >= 100"
+          }
+        ]
+    
+        
+    else:
+    
+        print 'no classitem specified for styling'
 
     layer_info = {
       "layer_type": "wms internal",
@@ -80,7 +266,7 @@ def particles(package_dir, fn, params):
         "layer_type": "point",
         "opacity": 100,
         "sort_field": "gid",
-        "classitem": "Status",
+        "classitem": params['classitem'],
         "labelitem": None,
         "date_modified": None,
         "shapefile": {
@@ -99,80 +285,7 @@ def particles(package_dir, fn, params):
         "maxscaledenom": None,
         "created_by": None,
         "labelminscaledenom": None,
-        "layer_classes": [
-          {
-            "styles": [
-              {
-                "angle_field": None,
-                "angle": None,
-                "font_character": None,
-                "map_layer_class": 101964,
-                "ordering": 1,
-                "symbol": {
-                  "style_text": None,
-                  "symbol_def": "NAME 'cross'\nTYPE vector\nPOINTS\n 2 0\n 2 4\n -99 -99\n 0 2\n 4 2\nEND\n",
-                  "symbol_desc": "Cross",
-                  "symbol_name": "cross"
-                },
-                "size_field": None,
-                "color": color,
-                "style_width": None,
-                "offset_x": None,
-                "offset_y": None,
-                "outlinesymbol": None,
-                "outlinecolor": None,
-                "width_field": None,
-                "style_size": 5
-              }
-            ],
-            "name": "Beached",
-            "ordering": 2,
-            "expression_type": {
-              "expression_type": "V",
-              "description": "Exact Value"
-            },
-            "labels": [
-              
-            ],
-            "expression": "3"
-          },
-          {
-            "styles": [
-              {
-                "angle_field": None,
-                "angle": None,
-                "font_character": None,
-                "map_layer_class": 101965,
-                "ordering": 1,
-                "symbol": {
-                  "style_text": None,
-                  "symbol_def": "NAME 'filledcircle'\nTYPE ellipse\nFILLED True\nPOINTS\n 1 1\nEND\n",
-                  "symbol_desc": "Circle (Filled)",
-                  "symbol_name": "filledcircle"
-                },
-                "size_field": None,
-                "color": color,
-                "style_width": None,
-                "offset_x": None,
-                "offset_y": None,
-                "outlinesymbol": None,
-                "outlinecolor": None,
-                "width_field": None,
-                "style_size": 5
-              }
-            ],
-            "name": "Floating",
-            "ordering": 3,
-            "expression_type": {
-              "expression_type": "V",
-              "description": "Exact Value"
-            },
-            "labels": [
-
-            ],
-            "expression": "2"
-          }
-        ],
+        "layer_classes": layer_classes,
         "sort_order": None,
         "labelmaxscaledenom": None,
         "template": False,
@@ -182,7 +295,7 @@ def particles(package_dir, fn, params):
         "layer_name": "trajectory_points_layer"
       },
       "metadata_url": None,
-      "visibility": None,
+      "visibility": 'Testing',
       "strokewidth": None,
       "proxy": False,
       "animate_script": None,
@@ -221,16 +334,6 @@ def contours(package_dir, fn, params):
         folder_path - a list with the hierarchy of subfolders in TOC
         uncertain - just has to have this param for uncertainty layer
     '''
-    sites = {}
-    sites['dwh'] = {'site_id':1, 'zoom': 6, 'longitude': -90.42, 'latitude': 28.03}
-    sites['arctic'] = {'site_id': 1, 'zoom': 5, 'longitude': -150.00, 'latitude': 70.00}
-    sites['atlantic'] = {'site_id': 2, 'zoom': 7, 'longitude': -74.10, 'latitude': 38.94}
-    sites['caribbean'] = {'site_id': 3, 'zoom': 6, 'longitude': -65.44, 'latitude': 18.20}
-    sites['greatlakes'] = {'site_id': 9, 'zoom': 1, 'longitude': -83.44, 'latitude': 45.60}
-    sites['gulfofmexico'] = {'site_id': 4, 'zoom': 4, 'longitude': -90.42, 'latitude': 28.03}
-    sites['northwest'] = {'site_id': 6, 'zoom': 6, 'longitude': -125.00, 'latitude': 47.00}
-    sites['pacific'] = {'site_id': 7, 'zoom': 4, 'longitude': -178.00, 'latitude': 11.00}
-    sites['southwest'] = {'site_id': 8, 'zoom': 6, 'longitude': -122.00, 'latitude': 37.00}
 
     filename = os.path.join(package_dir,'layers',fn + '.json')
     f = file(filename,'w')
@@ -400,6 +503,7 @@ def contours(package_dir, fn, params):
                 "expression": "Light"
               }
               ]
+              
     layer_info = {
         "layer_type": "wms internal",
         "folder_path": ' > '.join(params['folder_path']),
@@ -468,7 +572,7 @@ def contours(package_dir, fn, params):
         "layer_name": "trajectory_contour_layer"
       },
       "metadata_url": None,
-      "visibility": None,
+      "visibility": 'Testing',
       "strokewidth": None,
       "proxy": False,
       "animate_script": None,
