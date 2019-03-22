@@ -30,18 +30,26 @@ def create_package(params_file):
 
     # add attachments
     try:
-        for f in params['attachments']:
-            attach_file = os.path.split(attachments)[-1]
-            shutil.copy(attachments, os.path.join(params['package_dir'], 'attachments', attach_file))
-            params['attachment_file'] = attach_file #need to figure out this for more than one
+        if len(params['attachments']) > 0:
+            for f in params['attachments']:
+                attach_filename = os.path.split(f)[-1]
+                shutil.copy(f, os.path.join(params['package_dir'], 'attachments', attach_filename))
+                params['attachment_file'] = attach_filename #need to figure out this for more than one
+        else:
+            params['attachment_file'] = None
     except:
-        print 'No attachments'
         params['attachment_file'] = None
 
     #determine time to convert
     if params['t2convert'] is not None:
         params['t2convert'] = datetime.datetime.strptime(params['t2convert'],'%Y-%m-%d %H:%M')
 
+    # make folder name and append
+    if params['folder_name'] is None:
+        params['folder_name'] = "Trajectory for " + params['t2convert'].strftime('%Y-%m-%d %H:%M')
+    params['folder_path'].append(params['folder_name'])
+        
+    
     if params['styling'] == 'points_simple':
         params['classitem'] = 'status'
         
