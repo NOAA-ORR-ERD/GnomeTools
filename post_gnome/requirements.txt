@@ -6,3 +6,4 @@ matplotlib
 netCDF4
 pyshp
 cartopy #required for plotting
+shapely

@@ -1,0 +1,19 @@
+gnome_dir : .
+particle_file : Guam_particles2.nc
+uncertain : True # include uncertainty contour (boolean)
+
+t2convert : 2019-03-12 03:00 # null for animation time series or %Y-%m-%d %H:%M
+metadata : [Hypothetical trajectory for Guam Science of Oil Spills Training Class, March 11-15, 2019]
+
+attachments : ['file1','file2'] # relative path 2 single file OR list of paths or []
+
+package_dir : 24hr_fc # name of directory to create files in (will be created and destroyed if need be
+
+styling : points_forecast  # points_simple (floating/beached); points_forecast (surface_concentation); or contours_forecast
+
+site_name : pacific
+event : Guam SOS Training Scenario (DRILL)
+
+folder_path : [Incidents & Drills, Guam SOS/SCAT Training Class Scenario, Trajectories]
+folder_name : 12 hour trajectory # if null folder will be named "Trajectory for %Y-%m-%d %H:%M"
+                       
