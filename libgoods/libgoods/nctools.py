@@ -87,6 +87,7 @@ def get_tindex(t, start_date, end_date, stride=None):
 
 def adjust_time(t, t_units):
     # GNOME can't handle pre-1970 date units
+    # fixme: but using days ???
 
     dtime = num2date(t, t_units)
     new_units = 'days since 1980-1-1 00:00:00'
