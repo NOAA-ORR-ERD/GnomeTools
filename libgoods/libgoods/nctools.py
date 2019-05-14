@@ -44,7 +44,52 @@ def get_var_map(filename, var_list=['longitude',
 
     return var_map
 
+def sync_filelist_time_units(file_list,time_var='time'):
+    '''
+    Make all times relative to units in first file
+    '''
+    first_file = True
+    for f in file_list:
+        nc = Dataset(f,'r+')
+        t = nc.variables[time_var]
+        if first_file:
+            first_file = False
+            base_units = t.units
+        else:
+            ts = num2date(t[:],t.units)
+            t[:] = date2num(ts,base_units)
+            t.units = base_units
+        print('Start date: ', num2date(t[0], t.units))
+        nc.close()
+    
 
+def shift_time(filename, tshift, tvar='time'):
+    '''
+    Shift time by hours in tshift
+    for reference:
+          [[0,'GMT'],
+          [-10,'HST (-10)'],
+          [-9,'AKST (-9)'],
+          [-8,'AKDT (-8)'],
+          [-8,'PST (-8)'],
+          [-7,'PDT (-7)'],
+          [-7,'MST (-7)'],
+          [-6,'MDT (-6)'],       
+          [-6,'CST (-6)'],
+          [-5,'CDT (-5)'],
+          [-5,'EST (-5)'],
+          [-4,'EDT (-4)'],
+          [-3,'ADT (-3)']]
+    '''
+    nc = Dataset(filename,'r+')
+    t = nc.variables[tvar]
+    
+    dt = datetime.timedelta(hours = tshift)
+    oldtime = num2date(t[:],t.units)
+    newtime = date2num(oldtime + dt, t.units)
+    t[:] = newtime
+    nc.close()
+    
 def fix_time_units(units):
     '''
     GNOME doesn't support units of this form: 'hours since 2014-12-12T18:00:00Z'
@@ -55,7 +100,10 @@ def fix_time_units(units):
 
 
 def show_ncfile_tbounds(filename, tvar='time'):
-
+    '''
+    pass in a netcdf filename to see time bounds
+    assumes time variable is "time" unless specified.
+    '''
     t = Dataset(filename).variables[tvar]
     print('Start date: ', num2date(t[0], t.units))
     try:
