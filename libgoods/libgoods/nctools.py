@@ -84,9 +84,9 @@ def shift_time(filename, tshift, tvar='time'):
     nc = Dataset(filename,'r+')
     t = nc.variables[tvar]
     
-    dt = datetime.timedelta(hours = tshift)
+    offset = dt.timedelta(hours = tshift)
     oldtime = num2date(t[:],t.units)
-    newtime = date2num(oldtime + dt, t.units)
+    newtime = date2num(oldtime + offset, t.units)
     t[:] = newtime
     nc.close()
     
@@ -135,6 +135,7 @@ def get_tindex(t, start_date, end_date, stride=None):
 
 def adjust_time(t, t_units):
     # GNOME can't handle pre-1970 date units
+    # fixme: but using days ???
 
     dtime = num2date(t, t_units)
     new_units = 'days since 1980-1-1 00:00:00'
