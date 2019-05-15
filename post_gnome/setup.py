@@ -17,7 +17,8 @@ setup(
     scripts=["scripts/gnome_nc2kmz.py",
              "scripts/moss2kmz_series.py",
              "scripts/moss2kmz_simple.py",
-             "scripts/make_erma_package.py"
+             "scripts/make_erma_package.py",
+             "scripts/set_status_for_beached.py"
              ],
     author="Chris Barker",
     author_email="Chris.Barker@noaa.gov",
