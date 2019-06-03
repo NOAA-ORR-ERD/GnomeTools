@@ -73,7 +73,10 @@ def mpl_contours_2_shape(cs,levs,t,shp_fdir,shp_fname):
 
     zip_shape_files(shp_fdir,shp_fname)
 
-def points(fn, package_dir, t2convert, beached_only = False, shapefile_name=None):
+def points(fn, package_dir, t2convert, status_code = None, shapefile_name=None):
+    '''
+    status_code = 3 for beached only, status_code = 2 for floating only
+    '''
     nc = Dataset(fn)
     particles = nc_particles.Reader(nc)
     times = particles.times
@@ -106,9 +109,10 @@ def points(fn, package_dir, t2convert, beached_only = False, shapefile_name=None
                                                        'status_codes',
                                                        'surface_concentration']
                                        )
-        if beached_only:
+        if status_code is not None:
             sc = TheData['status_codes']        
-            id = np.where(sc==3)[0]
+            id = np.where(sc==status_code)[0]
+            print 'found this many pts', len(id)
             for key in TheData.keys():
                 TheData[key] = TheData[key][id]
         
@@ -160,7 +164,8 @@ def contours(fn,
              t2convert,
              levels=[0.1, 0.4, 0.8],
              names=['Light', 'Medium', 'Heavy'],
-             shapefile_name=None
+             shapefile_name=None,
+             include_beached=False
              ):
 
     print "contouring data in:", fn
@@ -196,9 +201,13 @@ def contours(fn,
 
             # contouring
             status = TheData['status_codes']
-            floating = np.where(status == 2)[0]
-            x = TheData['longitude'][floating]
-            y = TheData['latitude'][floating]
+            if not include_beached:
+                floating = np.where(status == 2)[0]
+                x = TheData['longitude'][floating]
+                y = TheData['latitude'][floating]
+            else:
+                x = TheData['longitude']
+                y = TheData['latitude']
             
             # Peform the kernel density estimate
             xx, yy = np.mgrid[min(x) - .1:max(x) + .1:100j, min(y) - .1:max(y) + .1:100j] #to do:should the grid be static?

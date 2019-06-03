@@ -19,8 +19,6 @@ sites['northwest'] = {'site_id': 6, 'zoom': 6, 'longitude': -125.00, 'latitude':
 sites['pacific'] = {'site_id': 7, 'zoom': 4, 'longitude': -178.00, 'latitude': 11.00}
 sites['southwest'] = {'site_id': 8, 'zoom': 6, 'longitude': -122.00, 'latitude': 37.00}
     
-
-
             
 def particles(package_dir, fn, params):
     '''
@@ -150,7 +148,7 @@ def particles(package_dir, fn, params):
               "description": "Mapserver Expressions"
             },
             "labels": [],
-            "expression": "[surf_conc] >= 0 AND [surf_conc] < 50"
+            "expression": "[surf_conc] >= 0 AND [surf_conc] < 10"
           },
           {
             "styles": [
@@ -184,7 +182,7 @@ def particles(package_dir, fn, params):
               "description": "Mapserver Expressions"
             },
             "labels": [],
-            "expression": "[surf_conc] >= 50 AND [surf_conc] < 100"
+            "expression": "[surf_conc] >= 10 AND [surf_conc] < 30"
           },
           {
             "styles": [
@@ -218,7 +216,7 @@ def particles(package_dir, fn, params):
               "description": "Mapserver Expressions"
             },
             "labels": [],
-            "expression": "[surf_conc] >= 100"
+            "expression": "[surf_conc] >= 30"
           }
         ]
     
@@ -250,12 +248,12 @@ def particles(package_dir, fn, params):
           }
         }
       ],
-      "tilecache": True,
+      "tilecache": False,
       "modified_by": None,
       "layer_names": None,
       "refresh_rate": 0,
       "title": params['title'],  # name of layer as it appears in TOC
-      "single_tile": False,
+      "single_tile": True,
       "created_by": None,
       "legendgraphic": None,
       "marker_icon": None,

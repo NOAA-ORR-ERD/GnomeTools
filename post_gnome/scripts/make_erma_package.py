@@ -92,25 +92,41 @@ def create_package(params_file):
     elif params['styling'] == 'points_forecast':
         params['classitem'] = 'surf_conc'
 
-        # Best estimate particles
+        # ***************Best estimate particles
         
          # make shapefiles
         fn = os.path.join(params['gnome_dir'], params['particle_file'])
         print fn
-        traj_zipfname = nc2shape.points(fn,params['package_dir'],params['t2convert'])
+        traj_zipfname = nc2shape.points(fn,params['package_dir'],params['t2convert'],status_code=2)
      
         #make layer files
         params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
         print traj_zipfname
         try:
-            params['title'] = 'Forecast for '  + params['t2convert'].strftime('%b %d %Y %H:%M')
+            params['title'] = 'Floating Oil at '  + params['t2convert'].strftime('%b %d %Y %H:%M')
         except AttributeError:
-            params['title'] = 'Forecast '
-        params['color'] = 'red'
-        params['color_beached'] = 'red'
+            params['title'] = 'Floating Oil '
         make_layer_file.particles(params['package_dir'],'traj',params)
         
-       # uncertainty contour if params['uncertain']=True
+       # ***************Beached particles
+        
+        # make shapefiles
+        fn = os.path.join(params['gnome_dir'], params['particle_file'])
+        print fn
+        traj_zipfname = nc2shape.points(fn,params['package_dir'],params['t2convert'],status_code=3, shapefile_name=params['particle_file'].split('.nc')[0]+'_beached')
+     
+        #make layer files
+        params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
+        print traj_zipfname
+        try:
+            params['title'] = 'Beached particles at '  + params['t2convert'].strftime('%b %d %Y %H:%M')
+        except AttributeError:
+            params['title'] = 'Beached particles '
+        params['color'] = 'red'
+        params['color_beached'] = 'red'
+        params['classitem'] = 'status'
+        make_layer_file.particles(params['package_dir'],'beached',params) 
+       # **************Uncertainty contour if params['uncertain']=True
         
         if params['uncertain']:
             # make shapefile
@@ -119,8 +135,9 @@ def create_package(params_file):
             uncert_zipfname = nc2shape.contours(ufn,
                                                 params['package_dir'],
                                                 params['t2convert'],
-                                                levels=[0.1],
-                                                names=['Uncertainty']
+                                                levels=[0.001],
+                                                names=['Uncertainty'],
+                                                include_beached=True
                                                 )
             # make layer file
             params['shape_zipfilename'] =  os.path.split(uncert_zipfname)[-1]
