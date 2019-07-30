@@ -182,7 +182,7 @@ def particles(package_dir, fn, params):
               "description": "Mapserver Expressions"
             },
             "labels": [],
-            "expression": "[surf_conc] >= 10 AND [surf_conc] < 30"
+            "expression": "[surf_conc] >= 10 AND [surf_conc] < 25"
           },
           {
             "styles": [
@@ -216,7 +216,7 @@ def particles(package_dir, fn, params):
               "description": "Mapserver Expressions"
             },
             "labels": [],
-            "expression": "[surf_conc] >= 30"
+            "expression": "[surf_conc] >= 25"
           }
         ]
     
@@ -293,7 +293,7 @@ def particles(package_dir, fn, params):
         "layer_name": "trajectory_points_layer"
       },
       "metadata_url": None,
-      "visibility": 'Testing',
+      "visibility": None,
       "strokewidth": None,
       "proxy": False,
       "animate_script": None,
@@ -570,7 +570,7 @@ def contours(package_dir, fn, params):
         "layer_name": "trajectory_contour_layer"
       },
       "metadata_url": None,
-      "visibility": 'Testing',
+      "visibility": None,
       "strokewidth": None,
       "proxy": False,
       "animate_script": None,

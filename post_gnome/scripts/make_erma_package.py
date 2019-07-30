@@ -135,7 +135,7 @@ def create_package(params_file):
             uncert_zipfname = nc2shape.contours(ufn,
                                                 params['package_dir'],
                                                 params['t2convert'],
-                                                levels=[0.001],
+                                                levels=[0.01],
                                                 names=['Uncertainty'],
                                                 include_beached=True
                                                 )
