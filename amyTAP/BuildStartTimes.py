@@ -135,7 +135,7 @@ def FindGaps():
         AllGaps.MergeGaps(gaps)
     return Start, End, AllGaps
 
-def FindStarts(Start, End, AllGaps, RunTime,random=True,interval=None):
+def FindStarts(Start, End, AllGaps, RunTime,random_starts=True,interval=None):
     # find the start times:
     TotalHours = Timedelta2Hours(End - Start - RunTime)
     StartHours = []
@@ -144,7 +144,7 @@ def FindStarts(Start, End, AllGaps, RunTime,random=True,interval=None):
     count = 1
     print TotalHours
     while not Done:
-        if random==False:
+        if random_starts==False:
             StartHour = count * interval
             count = count + 1
         else:
@@ -206,13 +206,15 @@ if __name__ == "__main__":
     
     if setup.TimeSeries is None:
         Start, End = setup.DataStartEnd
+        print setup.EvenStarts
         if setup.EvenStarts is not None: #start times set to even intervals
-            FindStarts(Start, End, EmptyGapSet(), RunTime, random=False, interval=setup.EvenStarts)
+            FindStarts(Start, End, EmptyGapSet(), RunTime, random_starts=False, interval=setup.EvenStarts)
         else:
             if setup.DataGaps:
                 FindStarts(Start, End, SimpleGapSet(setup.DataGaps), RunTime)
             else:  
-                ## fixme: isthe required, or would an empty list be fine for gaps            
+                ## fixme: isthe required, or would an empty list be fine for gaps 
+                print 'finding starts'
                 FindStarts(Start, End, EmptyGapSet(), RunTime)
     else: #Amy: I don't know what this "time series" option is for? deprecated?
         files = setup.TimeSeries
