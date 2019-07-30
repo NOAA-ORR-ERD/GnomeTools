@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import datetime
+
 try:
     from urllib.request import urlopen, Request   #py3
 except ImportError:
@@ -46,43 +47,43 @@ Confusing? Yes. Run the code and look at the output, the hard work is already do
 still have old file structure with more than one time step per file
 
 '''
-def specify_bnd_types(grid,segs,ss_land_nodes=[]):
-    '''
-    The node values were determined by plotting grid, they
-    are not included in the model output
-    Land_bnd_segs are needed to get the boundary right for subset grids only
-    They are obtained by tri_grid remap_bry_nodes method
-    '''
-    if grid.lower() == 'ngofs':
-        ow = list(range(1,180))
-    elif grid.lower() == 'nwgofs':
-        ow = list(range(1,207))
-    elif grid.lower() == 'negofs':
-        ow = list(range(1,139))
-    elif grid.lower() == 'creofs':
-        ow = [68408,68409,68410,68411,68412,68414,68604,68605,68606,68607,68608,68791,68792,68793,68962,68963,68964,68965,69130,69131,69132,69133,69303,69304,69305,69479,69481,69669,69670,69671,69672,69674,69675,69866,69867,69868,69869,69870,70062,70063,70064,70065,70271,70272,70489,70490,70704,70705,70927,70928,71144,71346,71520,71683,71844,72001,72154,72281,72377,72462,72532,72583,72631,72676,72720,72765,72810,72851,72897,72939,72981,73023,73061,73099,73138,73178,73215,73251,73283,73313,73346,73381,73417,73453,73454,73481,73502,73523]
-    elif grid.lower() == 'sfbofs':
-        ow = [1,2,3,4,5,97,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,144,51,52,53,54,55,150,56,57,58,59,60,61,62,63,64,65,66,162,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91]
-    elif grid.lower() == 'gom3':
-		ow = list(range(1,120))
-	else:
-        ow = [1,10000]
-    seg_types= []
+# def specify_bnd_types(grid,segs,ss_land_nodes=[]):
+    # '''
+    # The node values were determined by plotting grid, they
+    # are not included in the model output
+    # Land_bnd_segs are needed to get the boundary right for subset grids only
+    # They are obtained by tri_grid remap_bry_nodes method
+    # '''
+    # if grid.lower() == 'ngofs':
+        # ow = list(range(1,180))
+    # elif grid.lower() == 'nwgofs':
+        # ow = list(range(1,207))
+    # elif grid.lower() == 'negofs':
+        # ow = list(range(1,139))
+    # elif grid.lower() == 'creofs':
+        # ow = [68408,68409,68410,68411,68412,68414,68604,68605,68606,68607,68608,68791,68792,68793,68962,68963,68964,68965,69130,69131,69132,69133,69303,69304,69305,69479,69481,69669,69670,69671,69672,69674,69675,69866,69867,69868,69869,69870,70062,70063,70064,70065,70271,70272,70489,70490,70704,70705,70927,70928,71144,71346,71520,71683,71844,72001,72154,72281,72377,72462,72532,72583,72631,72676,72720,72765,72810,72851,72897,72939,72981,73023,73061,73099,73138,73178,73215,73251,73283,73313,73346,73381,73417,73453,73454,73481,73502,73523]
+    # elif grid.lower() == 'sfbofs':
+        # ow = [1,2,3,4,5,97,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,144,51,52,53,54,55,150,56,57,58,59,60,61,62,63,64,65,66,162,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91]
+    # elif grid.lower() == 'gom3':
+		# ow = list(range(1,120))
+	# else:
+        # ow = [1,10000]
+    # seg_types= []
     
-    if len(ss_land_nodes) > 0: #subset
-        for seg in segs:
-            if seg[0] in ss_land_nodes and seg[1] in ss_land_nodes:
-                seg_types.append(0)
-            else:
-                seg_types.append(1)
-    else:
-        for seg in segs:
-            if seg[0] in ow and seg[1] in ow:
-                seg_types.append(1)
-            else:
-                seg_types.append(0)
+    # if len(ss_land_nodes) > 0: #subset
+        # for seg in segs:
+            # if seg[0] in ss_land_nodes and seg[1] in ss_land_nodes:
+                # seg_types.append(0)
+            # else:
+                # seg_types.append(1)
+    # else:
+        # for seg in segs:
+            # if seg[0] in ow and seg[1] in ow:
+                # seg_types.append(1)
+            # else:
+                # seg_types.append(0)
             
-    return seg_types
+    # return seg_types
     
 def make_server_filelist(model,hour0,start,end=None,test_exist=False):
     '''
@@ -107,7 +108,7 @@ def make_server_filelist(model,hour0,start,end=None,test_exist=False):
     '''    
     
     flist = []
-    stem = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/' + model.upper() + '/MODELS/'
+    stem = 'https://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/' + model.upper() + '/MODELS/'
     sdate = datetime.datetime.combine(start,datetime.time(hour0,0))
     if end is None or end > datetime.datetime.utcnow().date() - datetime.timedelta(hours=8):
         edate = datetime.datetime.utcnow() - datetime.timedelta(hours=8)
@@ -179,12 +180,19 @@ def make_agg(fc_file0,type='fc'):
         num_files = 5
         # here we leave off the last file in order to make best time series of nowcast files
         # there is a one hour overlap between adjacent nowcasts
+    elif type == 'spec':
+        num_files = [3,6]
     else:
         print('Type must be fc or nc')
     a,b = fc_file0.split('000')
-    agg = [fc_file0,]
-    for h in range(1,num_files+1):
-        agg.append(a + str(h).zfill(3) + b)
+    if not type == 'spec':
+        agg = [fc_file0,]
+        for h in range(1,num_files+1):
+            agg.append(a + str(h).zfill(3) + b)
+    else:
+        agg = []
+        for h in num_files:
+            agg.append(a + str(h).zfill(3) + b)
     return agg
 
 def test_existence(url):

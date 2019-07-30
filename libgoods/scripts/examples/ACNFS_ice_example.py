@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 acnfs_dir = os.path.join(data_files_dir,'acnfs')
-download_file = 0
+download_file = 1
 
 if not os.path.exists(acnfs_dir):
     os.mkdir(acnfs_dir)

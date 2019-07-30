@@ -20,16 +20,19 @@ Since multiple files are created, also create a text file that can be loaded
 into GNOME pointing to the individual files
 '''
 
-out_dir = gnome_ready
-start = dt.date(2017,8,8)
-end = dt.date(2017,11,30)
-date = start
-dates = []
-while date <= end:
-    dates.append(date)
-    date += datetime.timedelta(days=1)
-	
-flist = ['fvcom_maine' + str(d.year) + str(d.month).zfill(2) + str(d.day).zfill(2) for d in dates]
+out_dir = 'ngofs'
+
+# start = dt.date(2018,10,2)
+# end = dt.date(2018,10,4)
+# date = start
+# dates = []
+# while date <= end:
+    # dates.append(date)
+    # date += datetime.timedelta(days=1)	
+#flist = ['fvcom_maine' + str(d.year) + str(d.month).zfill(2) + str(d.day).zfill(2) for d in dates]
+
+flist = noaa_coops.make_server_filelist('ngofs',3,dt.date(2019,5,30),end=None,test_exist=False)
+
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
 # and ADCIRC which have different variable names
@@ -57,8 +60,8 @@ print('Downloading grid topo variables')
 ngofs.get_grid_topo(var_map)
 
  # subset bounding box
-nl = 37.9; sl = 37.66
-wl = -122.75; el = -122.3
+nl = 30.7; sl = 28.1
+wl = -90.4; el = -87.4
 ngofs.find_nodes_eles_in_ss(nl,sl,wl,el)
 
 # find and order the boundary
@@ -69,7 +72,7 @@ print('Ordering boundary')
 #for how to use entire domain boundary to correctly determine type of subset boundary
 ngofs.order_boundary(bnd)
 # GNOME needs to know whether the elements are ordered clockwise (FVCOM) or counter-clockwise (SELFE)
-ngofs.atts['nbe']['order'] = 'cww'
+ngofs.atts['nbe']['order'] = 'cw'
 
 try:
     os.mkdir(out_dir)
@@ -77,21 +80,27 @@ except:
     pass
 
 for f in flist:
+    print(f)
+    
     ngofs.update(f) 
-
     print('Downloading data dimensions')
     ngofs.get_dimensions(var_map,get_xy=False)
-    
-    #get the data
-
-    print 'Downloading data'
-    #ngofs.get_data(var_map) #First time step only
-
-    ngofs.get_data(var_map,nindex=ngofs.nodes_in_ss) #All time steps in file
-    
     of_dt = nctools.round_time(num2date(ngofs.data['time'][0],ngofs.atts['time']['units']),roundto=3600)
     ofn = of_dt.strftime('%Y%m%d_%H') + '.nc'
-    print('Writing to GNOME file')
-    ngofs.write_unstruc_grid(os.path.join(out_dir,ofn))
+    
+    if not os.path.exists(ofn):
+
+        #get the data
+        print('Downloading data')
+        #ngofs.get_data(var_map) #First time step only
+
+        ngofs.get_data(var_map,nindex=ngofs.nodes_in_ss) #All time steps in file
+        
+
+        print('Writing to GNOME file')
+        ngofs.write_unstruc_grid(os.path.join(out_dir,ofn))
+        
+    else:
+        print(ofn + ' aready exists')
     
 nctools.make_filelist_for_GNOME(out_dir,'*.nc')
