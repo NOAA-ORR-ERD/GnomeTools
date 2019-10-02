@@ -1,7 +1,8 @@
-from libgoods import curv_grid, nctools, data_files_dir
+from libgoods import curv_grid, nctools, data_files_dir, noaa_coops
+import datetime as dt
 import os
 
-
+flist = noaa_coops.make_server_filelist('nyofs',5,dt.date(2018,12,10),end=None,test_exist=True)
 url = 'http://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NYOFS/fmrc/Aggregated_7_day_NYOFS_Fields_Forecast_best.ncd'
 
 var_map = nctools.get_var_map(url,var_list=['longitude','latitude','time','u_velocity','v_velocity'])

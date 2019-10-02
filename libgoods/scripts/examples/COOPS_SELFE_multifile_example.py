@@ -20,8 +20,8 @@ many files (all output is written to one nc file for GNOME in this case)
 Since multiple files are created, also create a text file that can be loaded
 into GNOME pointing to the individual files
 '''
-start = dt.date(2015,5,6)
-end = dt.date(2015,5,12)
+start = dt.date(2019,3,1)
+end = dt.date(2019,3,8)
 hour0 = 3
 flist = noaa_coops.make_server_filelist('creofs',hour0,start,end=end,test_exist=False)
 
@@ -29,8 +29,8 @@ flist = noaa_coops.make_server_filelist('creofs',hour0,start,end=end,test_exist=
 list_of_ofns = file(os.path.join(data_files_dir,'creofs_filelist.txt'), 'w')
 list_of_ofns.write('NetCDF Files\n')
 
-nl = 46.4; sl = 46.1
-wl = -124.2; el = -123.193
+nl = 47; sl = 45
+wl = -126.2; el = -123.6
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -74,11 +74,11 @@ for f in flist:
         bnd = creofs.find_bndry_segs(subset=True)
         #In order to correctly specify land/ow segments requires comparison with full domain boundary
         #Create this by downloading entire domain grid info then saving it (write_bndry_file)
-        bry_file = 'C:\\Users\\amy.macfadyen\\Documents\\Projects\\goods\\trunk\\static\\ocean_models\\COOPS\\creofs.bry'
+        bry_file = 'C:\\Users\\amy.macfadyen\\PyProjects\\goods\\trunk\\static\\ocean_models\\COOPS\\creofs.bry'
         land_nodes = creofs.find_subset_land_nodes(bry_file)
-        seg_types = noaa_coops.specify_bnd_types('creofs',bnd,ss_land_nodes=land_nodes)
+        #seg_types = noaa_coops.specify_bnd_types('creofs',bnd,ss_land_nodes=land_nodes)
         print('Ordering boundary')
-        creofs.order_boundary(bnd,seg_types)
+        creofs.order_boundary(bnd)
         
         out_dir = os.path.join(data_files_dir,'creofs')
         try:

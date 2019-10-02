@@ -383,7 +383,7 @@ class cgrid():
                 nc_mask[:] = self.grid['mask']
                 setattr(nc_mask,'standard_name','mask on center points')
                 setattr(nc_mask,'coordinates',u'latc lonc')
-
+    
             # add variable attributes from 'atts' (nested dict object)
             for key,val in self.atts['time'].iteritems():
                 if not key.startswith('_'):
@@ -465,7 +465,8 @@ class roms(cgrid):
             y1 = yindex[0]; y2 = yindex[1]; step = yindex[2]
             x1 = xindex[0]; x2 = xindex[1]
         
-
+        #temp fix, need to look at this (mask)
+        self.grid['mask'] = self.Dataset.variables['mask_rho'][y1+1:y2:step,x1+1:x2:step] 
         self.grid['mask_rho'] = self.Dataset.variables['mask_rho'][y1:y2+1:step,x1:x2+1:step] 
         self.grid['angle'] = self.Dataset.variables['angle'][y1:y2+1:step,x1:x2+1:step] 
         
@@ -622,7 +623,7 @@ class roms(cgrid):
         nc.createDimension('y',y)
         nc.createDimension('xc',xc)
         nc.createDimension('yc',yc)
-        nc.createDimension('time',None)
+        nc.createDimension('ocean_time',None)
     
         try:
             ufill = self.atts['u']['_FillValue']
@@ -636,7 +637,7 @@ class roms(cgrid):
                 vfill = 999.
     
         # create variables
-        nc_time = nc.createVariable('time','f4',('time',))
+        nc_time = nc.createVariable('ocean_time','f4',('ocean_time',))
         nc_lonp = nc.createVariable('lon_psi','f4',('y','x'))
         nc_latp = nc.createVariable('lat_psi','f4',('y','x'))
         nc_lonr = nc.createVariable('lon_rho','f4',('yc','xc'))
@@ -650,12 +651,12 @@ class roms(cgrid):
         if is3d:
             pass
         else:
-            nc_u = nc.createVariable('water_u','f4',('time','yc','x'), \
+            nc_u = nc.createVariable('u','f4',('ocean_time','yc','x'), \
                 fill_value=ufill)
-            nc_v = nc.createVariable('water_v','f4',('time','y','xc'), \
+            nc_v = nc.createVariable('v','f4',('ocean_time','y','xc'), \
                 fill_value=vfill)
         
-         # add data
+        # add data
         nc_lonp[:] = self.data['lon_psi']
         nc_latp[:] = self.data['lat_psi']
         nc_lonr[:] = self.data['lon_rho']
@@ -684,15 +685,17 @@ class roms(cgrid):
         for key,val in self.atts['time'].items():
             if not key.startswith('_'):
                 setattr(nc_time,key,val)
-            
+        
+        self.atts['u']['coordinates'] = "lon_u lat_u ocean_time"        
         for key,val in self.atts['u'].items():
             if not key.startswith('_'):
                 setattr(nc_u,key,val)
-    
-        for an_att in self.atts['v'].items():
+        
+        self.atts['v']['coordinates'] = "lon_v lat_v ocean_time"
+        for key,val in self.atts['v'].items():
             if not key.startswith('_'):
                 setattr(nc_v,key,val)
-    
+        
     
         nc.close()
         

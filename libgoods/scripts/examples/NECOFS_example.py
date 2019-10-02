@@ -2,6 +2,7 @@
 from __future__ import print_function
 from libgoods import tri_grid, nctools, data_files_dir
 import os 
+import datetime as dt
 
 '''
 Sample script to retrieve data from unstructured grid netcdf "file" (can be
@@ -22,8 +23,10 @@ this only has to be done once). See NGOFS_multifile_example.py
 
 # specify local file or opendap url
 #data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/archives/necofs_mb'
-data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_FVCOM_OCEAN_MASSBAY_FORECAST.nc'
-grid = 'massb' #gom2, gom3, or massb
+#data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_FVCOM_OCEAN_MASSBAY_FORECAST.nc'
+# data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/models/fvcom/NECOFS/Archive/NECOFS_GOM/2018/gom4_201809.nc'
+data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3'
+grid = 'gom3' #gom2, gom3, or massb
 #data_url = 'http://www.smast.umassd.edu:8080/thredds/dodsC/FVCOM/NECOFS/Forecasts/NECOFS_GOM3_FORECAST.nc' 
 # the tri_grid class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -50,9 +53,9 @@ nctools.show_tbounds(necofs.Dataset.variables['time'])
 
 # determine subset indices (temporal)
 print('Determining subset indices')
-# start = dt.datetime(2011,4,13,6,0,0)
-# stop = dt.datetime(2011,4,13,6,0,0)
-# tindex = nctools.get_tindex(necofs.time,start,stop)
+start = dt.datetime(2018,9,15,0,0,0)
+stop = dt.datetime(2018,9,30,22,58,07)
+tindex = nctools.get_tindex(necofs.Dataset.variables['time'],start,stop)
 
 # get grid topo variables (nbe, nv)
 print('Downloading grid topo variables')
@@ -68,6 +71,8 @@ elif grid.lower() == 'gom3':
     ow1 = 1; ow2 = 120;
 elif grid.lower() == 'massb':
     ow1 = 1; ow2 = 124;
+else:
+    ow1 = 1; ow2 = 1;
 seg_types = []
 for b in bnd:
     if max(b) <= ow2 and min(b) >=ow1: #open water
@@ -78,7 +83,7 @@ necofs.order_boundary(bnd,seg_types)
 
 ## get the data
 #print 'Downloading data'
-necofs.get_data(var_map,tindex=[0,1,1]) #First time step only
+necofs.get_data(var_map,tindex=tindex) #First time step only
 #necofs.get_data(var_map) #All time steps in file
 #
 
@@ -86,4 +91,4 @@ necofs.get_data(var_map,tindex=[0,1,1]) #First time step only
 necofs.atts['nbe']['order'] = 'cw'
 #
 #print 'Writing to GNOME file'
-necofs.write_unstruc_grid(os.path.join(data_files_dir, 'NECOFS_massb_example.nc'))
+necofs.write_unstruc_grid(os.path.join(data_files_dir, 'NECOFS_Sep.nc'))
