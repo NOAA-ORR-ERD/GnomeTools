@@ -7,9 +7,14 @@ requires the py shapefile library:
 
 http://pypi.python.org/pypi/pyshp
 
+Note:Currently only works with pyshp version 1.*
+     It needs to update to version 2)
+
+Also:
+
 fixme: We should add polygon ID to this file -- see example from Jill
 ( the issue is that TAP uses indexing from 1, Arc shape files use
-  indexing from 0, so explicitly setting an ID make sit clear )
+  indexing from 0, so explicitly setting an ID makes it clear )
 
 """
 import sys
@@ -23,7 +28,7 @@ Usage:
 TAP2shape.py site.txt_file [data_file] output_file
 
 site.txt_file:  the path to the site.txt file delivered with TAP.
-                It canbe found in the TAPDATA directory.
+                It can be found in the TAPDATA directory.
 
 data_file: is the path to the data file exported from TAP
 
@@ -38,19 +43,19 @@ If no data_file is provided, an empty shape file will be produced.
 def IsClockwise(poly):
     """
     returns True if the polygon is clockwise ordered, false if not
-    
+
     expects a sequence of tuples, or something like it (Nx2 array for instance),
     of the points:
-    
+
     [ (x1, y1), (x2, y2), (x3, y3), ...(xi, yi) ]
-    
+
     See: http://paulbourke.net/geometry/clockwise/
     """
-    
+
     total = poly[-1][0] * poly[0][1] - poly[0][0]*poly[-1][1] # last point to first point
     for i in xrange(len(poly)-1):
         total += poly[i][0] * poly[i+1][1] - poly[i+1][0]*poly[i][1]
-        
+
     if total <= 0:
         return True
     else:
@@ -60,7 +65,7 @@ def IsClockwise(poly):
 def WriteSites(filename, polys, data, field_name):
     w = shapefile.Writer(shapefile.POLYGON) # shape type 5 is a polygon
     w.autoBalance = True
-    
+
     # add the polygon index field:
     w.field("polygon", 'N', 10, 0)
     if data is not None:
@@ -87,12 +92,12 @@ def WriteSites(filename, polys, data, field_name):
 def ReadSites(filename):
     """
     reads the site polygons from the SITE.txt file
-    
+
     filename is the path to the SITE.txt file
     """
-    
+
     infile = file(filename, 'U')
-    
+
     # scan for sites line:
     print "Reading SITE.TXT file for site polygons"
     while True:
@@ -105,26 +110,27 @@ def ReadSites(filename):
     for i in xrange(num_sites):
         header = infile.readline().strip().split(",")
         num_points = int(header[2])
-        #read the points
+        # read the points
         poly = []
         for j in xrange(num_points):
             point = infile.readline().strip().split(",")
             point = (float(point[0]), float(point[1]))
             poly.append(point)
         polys.append(poly)
-    print "Read %i polygons"%len(polys)
+    print "Read %i polygons" % len(polys)
     return polys
+
 
 def ReadData(infilename):
     """
     read the data from theTAP output file
     """
     # look for the "SITE" line:
-    
+
     infile = file(infilename, 'rU')
     while True:
         line = infile.readline()
-        if line.startswith("Site"):
+        if line.lower().startswith("site") or line.lower().startswith("cell"):
             field_name = line.split('\t')[1].strip()
             if field_name == "% spills exceeding the LOC":
                 field_name = "% spills"
@@ -135,35 +141,37 @@ def ReadData(infilename):
             else:
                 field_name = field_name[:10]
             break
-    
+
     # read the data:
     data = []
     for line in infile:
         d = line.strip().split("\t")[1]
         if d.startswith('<'):
             data.append(0.0)
-        elif d.startswith ('>'):
+        elif d.startswith('>'):
             data.append(float(d[1:]))
         else:
             data.append(float(d))
 
     return data, field_name
 
+
 def WritePrjFile(filename, proj='WGS84'):
-    if proj <> 'WGS84':
-        raise ValueError("WritePrjFile only suporrts the WGS84 coordinates system for now")
-    
+    if proj != 'WGS84':
+        raise ValueError("WritePrjFile only supports the WGS84 coordinates system for now")
+
     # create the PRJ file
     if filename[-4:] == ".shp":
         filename = filename[:-4]
     prj = open("%s.prj" % filename, "w")
     wkt =  'GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]'
-    
+
     #'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
     prj.write(wkt)
     prj.close()
 
     return None
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
@@ -197,14 +205,12 @@ if __name__ == "__main__":
         except:
             print 'There is something wrong with the data file'
             raise
-        if len(data) <> len(polys):
-            raise ValueError("""The SITE.TXT file doesn't match the TAP export file:
-The SITE.TXT file has %i polygons.
-The data file hasdata for %i polygons""")
+        if len(data) != len(polys):
+            raise ValueError("The SITE.TXT file doesn't match the TAP export file:\n"
+                             "The SITE.TXT file has %i polygons.\n"
+                             "The data file hasdata for %i polygons" % (len(polys), len(data)))
 
-        
     print "Writing shapefile(s)"
     WriteSites(output_file, polys, data, field_name)
     WritePrjFile(output_file)
 
-    

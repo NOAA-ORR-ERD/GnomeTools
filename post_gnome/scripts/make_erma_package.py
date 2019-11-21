@@ -13,6 +13,7 @@ import datetime
 from post_gnome import make_layer_file, nc2shape
 import yaml
 
+
 def create_package(params_file):
     params = yaml.load(file(params_file))
     # make directory structure
@@ -48,13 +49,13 @@ def create_package(params_file):
     if params['folder_name'] is None:
         params['folder_name'] = "Trajectory for " + params['t2convert'].strftime('%Y-%m-%d %H:%M')
     params['folder_path'].append(params['folder_name'])
-        
-    
+
+
     if params['styling'] == 'points_simple':
         params['classitem'] = 'status'
-        
+
         #GNOME best estimate points
-        
+
         # make shapefiles
         fn = os.path.join(params['gnome_dir'], params['particle_file'])
         traj_zipfname = nc2shape.points(fn, params['package_dir'], params['t2convert'])
@@ -66,18 +67,18 @@ def create_package(params_file):
             params['title'] = 'Best estimate particles '  + params['t2convert'].strftime('%b %d %Y %H:%M')
         except AttributeError:
             params['title'] = 'Best estimate particles'
-        
+
         params['color'] = 'black'
         params['color_beached'] = 'black'
         make_layer_file.particles(params['package_dir'],'traj',params)
 
-        # Red uncertainty points if params['uncertain']=True    
+        # Red uncertainty points if params['uncertain']=True
         if params['uncertain']:
-            
+
             #make shapefiles
             ufn = os.path.join(params['gnome_dir'],params['particle_file'].split('.')[0] + '_uncertain.nc')
             uncert_zipfname = nc2shape.points(ufn,params['package_dir'],params['t2convert'])
-            
+
             #make layer file
             params['shape_zipfilename'] =  os.path.split(uncert_zipfname)[-1]
             params['color'] = 'red'
@@ -93,12 +94,12 @@ def create_package(params_file):
         params['classitem'] = 'surf_conc'
 
         # ***************Best estimate particles
-        
+
          # make shapefiles
         fn = os.path.join(params['gnome_dir'], params['particle_file'])
         print fn
         traj_zipfname = nc2shape.points(fn,params['package_dir'],params['t2convert'],status_code=2)
-     
+
         #make layer files
         params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
         print traj_zipfname
@@ -107,14 +108,14 @@ def create_package(params_file):
         except AttributeError:
             params['title'] = 'Floating Oil '
         make_layer_file.particles(params['package_dir'],'traj',params)
-        
+
        # ***************Beached particles
-        
+
         # make shapefiles
         fn = os.path.join(params['gnome_dir'], params['particle_file'])
         print fn
         traj_zipfname = nc2shape.points(fn,params['package_dir'],params['t2convert'],status_code=3, shapefile_name=params['particle_file'].split('.nc')[0]+'_beached')
-     
+
         #make layer files
         params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
         print traj_zipfname
@@ -125,9 +126,9 @@ def create_package(params_file):
         params['color'] = 'red'
         params['color_beached'] = 'red'
         params['classitem'] = 'status'
-        make_layer_file.particles(params['package_dir'],'beached',params) 
+        make_layer_file.particles(params['package_dir'],'beached',params)
        # **************Uncertainty contour if params['uncertain']=True
-        
+
         if params['uncertain']:
             # make shapefile
             ufn = os.path.join(params['gnome_dir'], params['particle_file'].split('.')[0] + '_uncertain.nc')
@@ -147,7 +148,7 @@ def create_package(params_file):
                 params['title'] = 'Uncertainty contour'
             params['attachment_file'] = None
             make_layer_file.contours(params['package_dir'],'uncert',params)
-            
+
     elif params['styling'] == 'contours_forecast':
 
         # Best estimate contours
@@ -164,7 +165,7 @@ def create_package(params_file):
         params['color'] = 'black'
         #params['SinglePoly'] = True
         make_layer_file.contours(params['package_dir'],'traj',params)
-        
+
         if params['uncertain']:
             # make shapefile
             ufn = os.path.join(params['gnome_dir'], params['particle_file'].split('.')[0] + '_uncertain.nc')
@@ -183,7 +184,7 @@ def create_package(params_file):
                 params['title'] = 'Uncertainty contour'
             params['attachment_file'] = None
             make_layer_file.contours(params['package_dir'],'uncert',params)
-        
+
         # Add beached particles
         params['classitem'] = 'status'
         # make shapefiles
@@ -206,5 +207,5 @@ def create_package(params_file):
 
 if __name__ == "__main__":
     create_package(sys.argv[1])
-   
-    
+
+
