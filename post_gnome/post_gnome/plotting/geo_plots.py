@@ -18,19 +18,19 @@ def read_bna(bna,get_bbox=True):
                 coast_polys[id] = points
             except ValueError:
                 if len(coast_polys.keys()) == 0:
-                    print 'bna did not load correctly'
+                    print('bna did not load correctly')
                 break
                 
-    if coast_polys.has_key('"Map Bounds"'):
+    if '"Map Bounds"' in coast_polys:
         mb = coast_polys.pop('"Map Bounds"') #need to get rid of this regardless for plotting
         if get_bbox==True:
-            print 'Using map bounds from bna file'
+            print('Using map bounds from bna file')
             x0 = mb[:,0].min()
             x1 = mb[:,0].max()
             y0 = mb[:,1].min()
             y1 = mb[:,1].max()
             bbox = (x0,x1,y0,y1)
-            print 'bbox:', bbox
+            print('bbox:', bbox)
         else:
             bbox = None
             
@@ -40,7 +40,7 @@ def read_bna(bna,get_bbox=True):
 
 def add_map(bbox=None,bna=None):
     
-    print 'Using mercator projection' #might want to extend to include other options?
+    print('Using mercator projection') #might want to extend to include other options?
     ax = plt.axes(projection=ccrs.Mercator())
     
     coast_polys = {}
@@ -59,7 +59,7 @@ def add_map(bbox=None,bna=None):
     ax.set_extent(bbox)
     
     if len(coast_polys.keys()) > 0:
-        for poly in coast_polys.itervalues():
+        for poly in coast_polys.values():
             ax.plot(poly[:,0],poly[:,1],'k',transform=ccrs.Geodetic())
             #ax.fill(poly[:,0],poly[:,1],'k',transform=ccrs.Geodetic())
     else:
@@ -93,7 +93,7 @@ def add_map_simple(bbox=None,bna=None):
 
     
     if len(coast_polys.keys()) > 0:
-        for poly in coast_polys.itervalues():
+        for poly in coast_polys.values():
             ax.plot(poly[:,0],poly[:,1],'k')
 
     ax.set_xlim(bbox[0:2])
@@ -105,7 +105,7 @@ def add_map_simple(bbox=None,bna=None):
     
 def setup_3d(bbox=None):
     from mpl_toolkits.mplot3d import Axes3D
-    print 'Using 3d projection' 
+    print('Using 3d projection')
     ax = plt.figure().add_subplot(111, projection='3d')
     if bbox is None:
         bbox=(-180,180,-80,80, 0, 3000)  
@@ -143,22 +143,22 @@ def contour_particles_gridded(ax,filename,t,varname,depth=0,levels=[0.1, 0.4, 0.
     x_grid = np.linspace(min(x),max(x),50)
     y_grid = np.linspace(min(y),max(y),50)
     pc_grid = np.zeros((len(y_grid),len(x_grid)),)
-    print 'Num_particles:', len(x)
+    print('Num_particles:', len(x))
     for px,py,v in zip(x,y,varname):
         ii = np.where(px>=x_grid)[0][-1]
         jj = np.where(py>=y_grid)[0][-1]
         pc_grid[jj,ii] = pc_grid[jj,ii] + 1
     
     max_value = pc_grid.max()
-    print max_value
+    print(max_value)
     levels.sort()
     particle_contours = [lev * max_value for lev in levels]
-    print particle_contours
+    print(particle_contours)
 
     ax.contourf(x_grid, y_grid, pc_grid, [2,5,8,max_value],transform=ccrs.PlateCarree())
     
     #ax.pcolor(xx,yy,f,transform=ccrs.PlateCarree())
-    print 'Closest time found: ', times[tidx]
+    print('Closest time found: ', times[tidx])
     
     return ax
     
@@ -185,10 +185,10 @@ def contour_particles(ax,filename,t,depth=0,varname=None,criteria=None,levels=[0
     if varname is None or criteria is None:
         pid = np.where((TheData['status_codes']==2) & (TheData['depth']==depth))[0]
     else:
-        print 'Applying criteria'
-        print TheData[varname].min(),TheData[varname].max()
+        print('Applying criteria')
+        print(TheData[varname].min(),TheData[varname].max())
         pid = np.where((TheData['status_codes']==2) & (TheData['depth']==depth) & (TheData[varname]<criteria))[0]
-        print len(pid)
+        print(len(pid))
 
     x = TheData['longitude'][pid]
     y = TheData['latitude'][pid]
@@ -206,7 +206,7 @@ def contour_particles(ax,filename,t,depth=0,varname=None,criteria=None,levels=[0
 
     ax.contourf(xx, yy, f, particle_contours,transform=ccrs.PlateCarree())
     #ax.pcolor(xx,yy,f,transform=ccrs.PlateCarree())
-    print 'Closest time found: ', times[tidx]
+    print('Closest time found: ', times[tidx])
     
     return ax
 
@@ -247,7 +247,7 @@ def plot_particles(ax,filename,t,depth=0,varname=None,color='k',marker='.',marke
                     ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],\
                         color=color,marker=marker,s=markersize,label=label)
                 else:
-                    ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],transform=ccrs.Geodetic(),\
+                    ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],transform=ccrs.PlateCarree(),\
                         color=color,marker=marker,s=markersize,label=label)
     else: #color in bins based on LE variables (under contstruction)
         bins=[6*3600,24*3600]
@@ -260,7 +260,7 @@ def plot_particles(ax,filename,t,depth=0,varname=None,color='k',marker='.',marke
             var2p = TheData[varname][pid]
             bins = [0] + bins + [var2p.max()]
             for ii in range(len(bins)-2,-1,-1):
-                print ii
+                print(ii)
                 id = np.where((var2p>=bins[ii]) & (var2p<=bins[ii+1]))[0]
                 if len(id) >0:
                     if not hasattr(ax,'coastlines'):
@@ -275,7 +275,7 @@ def plot_particles(ax,filename,t,depth=0,varname=None,color='k',marker='.',marke
                 ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],10,TheData[varname][pid])
             else:
                 ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid],10,TheData[varname][pid],transform=ccrs.Geodetic())
-    print 'Closest time found: ', times[tidx]
+    print('Closest time found: ', times[tidx])
     
     return ax
     
@@ -316,7 +316,7 @@ def plot_particles_3d(ax,filename,t, varname='droplet_diameter', colormap='plasm
             ax.scatter(TheData['longitude'][pid],TheData['latitude'][pid], TheData['depth'][pid],\
                 color=scalarMap.to_rgba(cs),marker=marker,label=label, s = drop_size)
 
-    print 'Closest time found: ', times[tidx]
+    print('Closest time found: ', times[tidx])
     
     return ax
     
@@ -403,7 +403,7 @@ def add_vectors(ax,filename,t,bbox=None,tvar='time',lonvar='lon',latvar='lat',uv
     d = [np.abs(((output_t - t).total_seconds())/3600) for output_t in nc_dt]
     tidx = d.index(min(d))
     
-    print 'Plotting vectors at: ', nc_dt[tidx]
+    print('Plotting vectors at: ', nc_dt[tidx])
     lon = nc.variables[lonvar][:]
     lat = nc.variables[latvar][:]
     u = nc.variables[uvar][tidx,:] #todo: add check for 3d
