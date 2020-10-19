@@ -222,8 +222,9 @@ def plot_particles(ax,filename,t,depth=0,varname=None,color='k',marker='.',marke
     times = particles.times
     dt = [np.abs(((output_t - t).total_seconds())/3600) for output_t in times]
     tidx = dt.index(min(dt))
+    variables = ['latitude', 'longitude', 'status_codes', 'depth']
     if varname is not None:
-        variables = ['latitude','longitude','status_codes','depth'] + [varname]
+        variables += [varname]
     try:
         TheData = particles.get_timestep(tidx,variables=variables)
     except: #GUI GNOME < 1.3.10
