@@ -63,6 +63,16 @@ def sync_filelist_time_units(file_list,time_var='time'):
         nc.close()
     
 
+def when(filename,tvar='time'):
+        nc = Dataset(filename)
+        t = nc.variables[tvar]
+        print('Start date: ', num2date(t[0], t.units))
+        try:
+            print('End date: ', num2date(t[-1], t.units))
+        except IndexError:
+            print('End date: ', num2date(t[0], t.units))
+        nc.close()
+            
 def shift_time(filename, tshift, tvar='time'):
     '''
     Shift time by hours in tshift

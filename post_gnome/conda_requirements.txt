@@ -1,5 +1,3 @@
-# possibly incomplete set of requirements for gnome_tools
-
 numpy
 scipy
 matplotlib
@@ -7,3 +5,4 @@ netCDF4
 pyshp
 cartopy #required for plotting
 shapely
+pyyaml

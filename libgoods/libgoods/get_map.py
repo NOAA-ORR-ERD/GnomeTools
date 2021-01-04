@@ -3,7 +3,7 @@
 """
 makes a GNOME map from the GSSHHS or NOS shorelines
 """
-
+from __future__ import print_function
 import os
 import json
 import numpy as np
@@ -95,7 +95,7 @@ def load_and_clip_gshhs(data_dir,
     for level in [1, 2, 3, 4]:
         filename = os.path.join(data_dir,
                                 '{0}/GSHHS_{0}_L{1}.shp'.format(resolution, level))
-        print "reading:", filename
+        print("reading:", filename)
         if not os.path.exists(filename):
             continue
         with fiona.open(filename) as source:

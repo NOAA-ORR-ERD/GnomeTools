@@ -1,14 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import datetime
-
-try:
-    from urllib.request import urlopen, Request   #py3
-except ImportError:
-    from urllib2 import urlopen, Request          #py2
-
-import requests
-from netCDF4 import Dataset
+from netCDF4 import Dataset, num2date
 import os, glob
 '''
 Methods for generating ordered filelist for a time series of CO-OPS data
@@ -17,36 +10,142 @@ date is unspecified or greater than datetime.utcnow() the latest forecast
 will be automatically be appended.
 
 Notes on COOPS naming and aggregations:
+
 Nowcast and forecast files are created four times a day. Output is hourly in 
-individual files. So each update generates 6 nowcast files and 48 forecast files
+individual files. So each update generates some number of nowcast files and forecast files
 The update cycle time will be the last model output timestep in the nowcast 
 files and the first timestep in the forecast files
 
-Example filenames from one update cycle (20141027.t15z):
-Nowcast:
-nos.ngofs.fields.n000.20141027.t15z.nc
-nos.ngofs.fields.n001.20141027.t15z.nc 
-...
-nos.ngofs.fields.n006.20141027.t15z.nc 
+nos.OFS.fields.nHHH.YYYYMMDD.tCCz.nc or 
+glos.OFS.fields.nHHH.YYYYMMDD.tCCz.nc (Great Lakes models)
 
-Forecast:
-nos.ngofs.fields.f000.20141027.t15z.nc
-nos.ngofs.fields.f002.20141027.t15z.nc
-...
-nos.ngofs.fields.f048.20141027.t15z.nc
+OFS = model name, eg. "DBOFS"
+nHHH = nowcast number, eg. n001-n006 or "nowcast" for old POM models
+CC = update hour, e.g. 00,06...
+
+Different models have different update cycles:
+FVCOM (non-Great Lakes): 3,9,15,21
+ROMS: 0,6,12,18
+FVCOM (Great Lakes): 0,6,12,18
+Great Lakes POM: 0,6,12,18
+Other POM: 5,11,17,23
 
 So to make a time series, use subsequent nowcasts updates strung together sequentially
-by update date/time then by n0001-n005 (leave off the last one as it overlaps with
-the next set of files)
+by update date/time then by individual nowcast files.
 
-Similarly append the forecast that is the same update cycle as the most recent nowcast
+The trick is, there is inconsistency between number of nowcast files among models.
+Here's the lowdown:
+FVCOM: nowcast numbering from 000-->006 with overlap between 6 and 0
+ROMS (except GOMOFS): nowcast numbering from 001-->006 with no overlap
+GOMOFS ROMS: nowcast 003 and 006 only - ouptut is 3 hourly, no overlap
+POM models: one nowcast file "nowcast" in file name, 6 hours, no overlap between nowcasts
+
+Then append the forecast that is the same update cycle as the most recent nowcast
 
 Confusing? Yes. Run the code and look at the output, the hard work is already done :)
 
-!!!!!Important note: this is for newer ROMS and FVCOM models only. The POM models
-still have old file structure with more than one time step per file
 
 '''
+
+    
+def make_server_filelist(model,start,end=None,test_exist=False):
+    '''
+    Create a list of model file urls for an aggregated time series based on 
+    user specified start and end dates
+    
+    Args:
+        model (string): The COOPS OFS (e.g. NGOFS)
+        
+        start (datetime.date): Look for model output beginning 
+            on this date
+        end (datetime.date): Look for model output ending before
+            this date (if None or > datetime.utcnow() append latest forecast,
+            it will not be truncated so it may go beyond end date)
+        test_exists(bool): Set to True when accessing files from COOPS server
+            and want to check existence before operating on them - can take a long time      
+
+    Returns:
+        flist (list): List of urls                 
+    '''    
+    #A bunch of special casing for the variability among models (see docstring)
+    
+    #Update cycle - every six hours beginning from hour0
+    if model.upper() in ['NGOFS','NWGOFS','NEGOFS','CREOFS','SFBOFS']:
+        hour0 = 3
+    elif model.upper() in ['NYOFS']:
+        hour0 = 5
+    else: 
+        hour0 = 0
+    
+    #Variability in file names due to model originator
+    if model.upper() in ['LOOFS','LSOFS']: #Great Lakes OFS except for LMHOFS/LEOFS which are labeled nos, nothing is consistent
+        origin = 'glofs'
+    else:
+        origin = 'nos'
+    
+    #And a difference in number of nowcast/forecast files, ugh
+    if model.upper() in ['NGOFS','NEGOFS','NWGOFS','CREOFS','SFBOFS','LEOFS','LMHOFS']:       
+        nowcast_numbers = range(0,6)
+        if model.upper() in ['LEOFS','LMHOFS']:
+            forecast_numbers = range(0,121)
+        else:
+            forecast_numbers = range(0,49)
+    elif model.upper() in ['CBOFS','DBOFS','TBOFS','CIOFS']:
+        nowcast_numbers = range(1,7)
+        forecast_numbers = range(1,49)
+    elif model.upper() in ['GOMOFS']:
+        nowcast_numbers = [3,6]
+        forecast_numbers = range(0,73)
+    else:
+        nowcast_numbers = 'nowcast'
+        forecast_numbers = 'forecast'
+        
+    #Now make the filelist based on specified dates and specific model info
+    flist = []
+    stem = 'https://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/' + model.upper() + '/MODELS/'
+    sdate = datetime.datetime.combine(start,datetime.time(hour0,0))
+    if end is None or end > datetime.datetime.utcnow().date() - datetime.timedelta(hours=8):
+        edate = datetime.datetime.utcnow() - datetime.timedelta(hours=8)
+        append_fc = 1
+    else:
+        edate = datetime.datetime.combine(end,datetime.time(hour0,0))
+        append_fc = 0
+ 
+    while sdate <= edate:
+        ym = str(sdate.year) + str(sdate.month).zfill(2)
+        ymd = ym + str(sdate.day).zfill(2)
+        h = str(sdate.hour).zfill(2)
+
+        fname = stem + ym + '/' + origin + '.' + model.lower() + '.fields.n000.' + ymd + '.t' + h + 'z.nc'
+        agg = make_agg(fname,nowcast_numbers)
+        flist.extend(agg)
+
+        sdate = sdate + datetime.timedelta(days=.25) #nowcast files are 6 hourly
+
+    if append_fc:
+        fname = stem + ym + '/' + origin + '.' + model.lower() + '.fields.f000.' + ymd + '.t' + h + 'z.nc'
+        fc_flist = make_agg(fname,forecast_numbers)
+        flist.extend(fc_flist)
+        
+    #check files exist by creating NetCDF Dataset
+    if test_exist:
+        flist = [f for f in flist if test_existence(f)]
+        
+    return flist
+    
+def make_agg(fname,num_files):
+ 
+    a,b = fname.split('000')
+
+    if isinstance(num_files,str):
+        agg = [a[:-1] + num_files + b]
+    else:
+        agg = []
+        for h in num_files:
+            agg.append(a + str(h).zfill(3) + b)
+      
+    return agg
+    
 # def specify_bnd_types(grid,segs,ss_land_nodes=[]):
     # '''
     # The node values were determined by plotting grid, they
@@ -68,6 +167,7 @@ still have old file structure with more than one time step per file
 		# ow = list(range(1,120))
 	# else:
         # ow = [1,10000]
+        
     # seg_types= []
     
     # if len(ss_land_nodes) > 0: #subset
@@ -85,66 +185,9 @@ still have old file structure with more than one time step per file
             
     # return seg_types
     
-def make_server_filelist(model,hour0,start,end=None,test_exist=False):
-    '''
-    Create a list of model file urls for an aggregated time series based on 
-    user specified start and end dates
-    
-    Args:
-        model (string): The COOPS OFS (e.g. NGOFS)
-        hour0 (int): The first hour that the model is updated on
-            For triangular grid models this is typically 3
-            For ROMS models this is typically 0
-        start (datetime.date): Look for model output beginning 
-            on this date
-        end (datetime.date): Look for model output ending before
-            this date (if None or > datetime.utcnow() append latest forecast,
-            it will not be truncated so it may go beyond end date)
-        test_exists(bool): Set to True when accessing files from COOPS server
-            and want to check existence before operating on them       
-
-    Returns:
-        flist (list): List of urls                 
-    '''    
-    
-    flist = []
-    stem = 'https://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/' + model.upper() + '/MODELS/'
-    sdate = datetime.datetime.combine(start,datetime.time(hour0,0))
-    if end is None or end > datetime.datetime.utcnow().date() - datetime.timedelta(hours=8):
-        edate = datetime.datetime.utcnow() - datetime.timedelta(hours=8)
-        append_fc = 1
-    else:
-        edate = datetime.datetime.combine(end,datetime.time(hour0,0))
-        append_fc = 0
-        
-    while sdate <= edate:
-        ym = str(sdate.year) + str(sdate.month).zfill(2)
-        ymd = ym + str(sdate.day).zfill(2)
-        h = str(sdate.hour).zfill(2)
-        fname = stem + ym + '/nos.' + model.lower() + '.fields.n000.' + ymd + '.t' + h + 'z.nc'
-        
-        agg = make_agg(fname,type='nc')
-        flist.extend(agg)
-        sdate = sdate + datetime.timedelta(days=.25) #nowcast files are 6 hourly
-        
-    #check files exist by looking for 404 error
-    if test_exist:
-        flist = [f for f in flist if test_server_existence(f + '.html')]
-
-    if append_fc:
-        last_nc = flist[-1].split('/')[-1].split('n005.')[-1]
-        fc_file0 = stem + ym + '/nos.' + model.lower() + '.fields.f000.' + last_nc
-        fc_flist = make_agg(fc_file0)
-        flist.extend(fc_flist)
-        
-    return flist
-    
 def sort_local_files(local_dir,model):
     '''
-    Create a filelist for an aggregated time series in local directory 
-    
-    
-         
+    Create a filelist for an aggregated time series in local directory     
 
     Returns:
         flist (list): List of absolute filepaths                  
@@ -173,47 +216,30 @@ def sort_local_files(local_dir,model):
     return flist, nc_complete + fc_complete
     
     
-def make_agg(fc_file0,type='fc'):
-    if type == 'fc':
-        num_files = 48
-    elif type == 'nc':
-        num_files = 5
-        # here we leave off the last file in order to make best time series of nowcast files
-        # there is a one hour overlap between adjacent nowcasts
-    elif type == 'spec':
-        num_files = [3,6]
-    else:
-        print('Type must be fc or nc')
-    a,b = fc_file0.split('000')
-    if not type == 'spec':
-        agg = [fc_file0,]
-        for h in range(1,num_files+1):
-            agg.append(a + str(h).zfill(3) + b)
-    else:
-        agg = []
-        for h in num_files:
-            agg.append(a + str(h).zfill(3) + b)
-    return agg
-
 def test_existence(url):
-    req = Request(url)
+    #Also reporting time(s) in file for checking time series is ordered correctly and units same throughout
     try:
-        urlopen(req)
+        nc = Dataset(url)
         exists = True
+        try:
+            t = nc.variables['ocean_time']           
+        except KeyError:
+            t = nc.variables['time']        
+        print(num2date(t[:],t.units))
+        print(t.units)
+        nc.close()
     except:
         print('Not found: ', url)
         exists = False
     return exists
     
-def test_server_existence(url):
-    resp = requests.get(url)
-    if resp.status_code == 200:
-        exists = True
-    else:
-        print('Not found: ', url)
-        exists = False
-    return exists
-     
+def fix_dbofs_mask(grid_file):
+    #unclear why the native grid has an error in the rho mask
+    nc = Dataset(grid_file,'r+')
+    mask_rho = nc.variables['mask_rho']
+    mask_rho[71,104:114] = 0  
+    nc.close()
+    
 def download_and_save(url,output_dir):
     nc_in = Dataset(url)
     fname = url.split('/')[-1]
@@ -234,7 +260,7 @@ def download_and_save(url,output_dir):
     nc_in.close()
     nc_out.close()
     
-def ofs_info(ofs):
+def ofs_info(ofs): #This is text to display in GOODS
 
     ofs = ofs.upper()
 
