@@ -8,8 +8,8 @@ from gnome.spill import point_line_release_spill
 from gnome.outputters import Renderer, NetCDFOutput
 from gnome.model import Model
 from gnome.map import MapFromBNA
-from gnome.movers import PyCurrentMover, GridWindMover, RandomMover, GridCurrentMover, WindMover
-from gnome.environment import Wind
+from gnome.movers import PyCurrentMover, GridWindMover, RandomMover, GridCurrentMover, WindMover, CatsMover, constant_wind_mover
+from gnome.environment import Wind, Tide
 
 from TAP_Setup import setup
 
@@ -30,12 +30,19 @@ def setup_model():
     model.map = MapFromBNA(mapfile, refloat_halflife=0.0)  # seconds
     
     print 'adding a GridCurrentMover:'
-    c_mover = GridCurrentMover(filename=setup.curr_fn,extrapolate=True)
+    if setup.curr_fn.endswith('.nc'):
+        c_mover = GridCurrentMover(filename=setup.curr_fn,extrapolate=True)
+    elif setup.curr_fn.endswith('.cur'):
+        tide = Tide(setup.tide_fn)
+        c_mover = CatsMover(filename=setup.curr_fn,tide=tide)
     model.movers += c_mover
 
     print 'adding a WindMover:'
-    w = Wind(filename=setup.wind_fn)
-    w_mover = WindMover(w)
+    if setup.wind_fn is not None:
+        w = Wind(filename=setup.wind_fn)
+        w_mover = WindMover(w)
+    elif setup.wind_data is not None:
+        w_mover = constant_wind_mover(setup.wind_data[0],setup.wind_data[1],units='knots')    
     # w_mover = GridWindMover(wind_file=setup.w_filelist)
     model.movers += w_mover
 

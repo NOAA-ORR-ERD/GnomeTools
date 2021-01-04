@@ -29,7 +29,7 @@ setup(
     packages=["libgoods"],
     scripts=["scripts/hycom2bna.py",
              "scripts/nc_time_shift.py",
-             "scripts/shape2bna",
+             "scripts/shape2bna.py",
              ],
     author="Amy MacFadyen, Christopher H. Barker",
     author_email="amy.macfadyen@noaa.gov, chris.barker@noaa.gov",

@@ -7,6 +7,7 @@ All the parameters required to set up and build TAP cubes + site.txt file should
 import os
 from netCDF4 import Dataset, MFDataset, num2date
 import numpy as np
+import datetime
 
 RootDir =  os.path.split(__file__)[0]
 print "Loading TAP Setup data from:", RootDir
@@ -14,39 +15,42 @@ print "Loading TAP Setup data from:", RootDir
 #******************************************************************************
 # Set some paths for output data and TAP viewer
 #******************************************************************************
-TrajectoriesPath = "output_files\Trajectories" # relative to RootDir
-ImagesPath = "output_files\Images"
-CubesPath = "output_files\Cubes_n" 
+TrajectoriesPath = "st_simons_output\Trajectories" # relative to RootDir
+ImagesPath = "st_simons_output\Images"
+CubesPath = "st_simons_output\Cubes_n" 
 TAPViewerSource = RootDir # where the TAP viewer, etc lives.
-TAPViewerPath = os.path.join('output_files',"TapView")
+TAPViewerPath = os.path.join('st_simons_output',"TapView")
 
 #******************************************************************************
 # Forcing data and Map
 #******************************************************************************
-Data_Dir = os.path.join(RootDir,'input_files')
+Data_Dir = os.path.join(RootDir,'st_simon_input')
 
 #If not None a GridCurrentMover is added to model
-curr_fn = os.path.join(Data_Dir,'COOPS_TBOFS.nc',)
+curr_fn = os.path.join(Data_Dir,'TidalCurrent.cur')
+tide_fn = os.path.join(Data_Dir,'Entrancesouth_C_2019-cst.txt')
 curr_topo = None
 
 #If not None a GridWindMover or WindMover is added to model
 wind_fn = None
 wind_topo = None
 wind_type = 'Point' #Point or Grid
+wind_data = ('10','45') #mag, direction
+
 
 #If not None a random mover is added to the model
 diff_coef = 10000
 
 # time span of your data set - based on currents (use MFdataset for filelist)
-t = Dataset(curr_fn).variables['time']
-DataStartEnd = (num2date(t[0],t.units),
-                num2date(t[-1],t.units))
+tstart = datetime.datetime(2019,10,1,0,0)
+tend = datetime.datetime(2019,10,31,0,0)
+DataStartEnd = (tstart,tend)
 
 DataGaps = ( ) #not sure this is well supported?
 
-MapName = "TampaBay"
-MapFileDir = os.path.join('.','input_files')
-MapFileName, MapFileType = ('coast.bna', "BNA")
+MapName = "StSimonSound"
+MapFileDir = os.path.join('.',Data_Dir)
+MapFileName, MapFileType = ('StSimonsSound.bna', "BNA")
 
 #******************************************************************************
 # Params for model start times, spill durations, output time steps
@@ -80,7 +84,7 @@ RunFiles = [] #???
 #OutputUserStrings = [str(i) + Units for i in days]
 
 #Output time in Hours
-OutputTimes = range(3,73,3)
+OutputTimes = range(3,73,12)
 Units = ' hours'
 OutputUserStrings = [str(i) + Units for i in OutputTimes]
 
@@ -119,12 +123,12 @@ CubeDataType = 'float32'
 
 class Grid:
 	pass
-Grid.min_lat = 27.25 # decimal degrees
-Grid.max_lat = 28.0
+Grid.min_lat = 30.5 # decimal degrees
+Grid.max_lat = 31.25
 Grid.dlat = 0.01       #  
 
-Grid.min_long = -83.0
-Grid.max_long = -82.5
+Grid.min_long = -81.6
+Grid.max_long = -81.2
 Grid.dlong = 0.01       # 17km wide cells at 70N, 15 at 75N, 23 at 65N
 
 Grid.num_lat = int(np.ceil(np.abs(Grid.max_lat - Grid.min_lat)/Grid.dlat) + 1)

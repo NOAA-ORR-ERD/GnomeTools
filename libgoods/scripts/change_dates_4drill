@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 '''
 This script is used to change the dates in an existing netCDF file to user specified dates
 This is used to "fake" input for drills so that an existing currents file can have
@@ -11,21 +11,21 @@ from netCDF4 import Dataset, num2date, date2num
 import datetime as dt
 import os 
 
-input_file = os.path.join(data_files_dir,'stclair_example.nc')
-drill_start = dt.datetime(2015,5,6,1,1,53)
+input_file = os.path.join(data_files_dir,'dbofs.nc')
+drill_start = dt.datetime(2015,5,6,1,0,0)
 
 nc = Dataset(input_file,'a')
 t = nc.variables['time']
 
-print 'Start date: ', num2date(t[0],t.units)
-print 'End date: ', num2date(t[-1],t.units)
+print('Start date: ', num2date(t[0],t.units))
+print('End date: ', num2date(t[-1],t.units))
 
 drill_start_nc_units = date2num(drill_start,t.units)
 tdiff = drill_start_nc_units - t[0]
 new_t = t[:] + tdiff
 
-print 'New start date: ', num2date(new_t[0],t.units)
-print 'New end date: ', num2date(new_t[-1],t.units)
+print('New start date: ', num2date(new_t[0],t.units))
+print('New end date: ', num2date(new_t[-1],t.units))
 
 nc.variables['time'][:] = new_t
 

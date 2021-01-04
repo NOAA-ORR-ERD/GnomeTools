@@ -1,10 +1,12 @@
+from __future__ import print_function
+from six import iteritems
 import json
 import os
 import matplotlib.colors as colors
 
 cnames = colors.cnames
 # Add the single letter colors.
-for name, rgb in colors.ColorConverter.colors.iteritems():
+for (name, rgb) in iteritems(colors.ColorConverter.colors):
     hex_ = colors.rgb2hex(rgb)
     cnames[name] = hex_
 
@@ -34,7 +36,7 @@ def particles(package_dir, fn, params):
     '''
     
     filename = os.path.join(package_dir, 'layers', fn + '.json')
-    f = file(filename, 'w')
+    f = open(filename, 'w')
     
     if params['classitem'] == 'status':
     
@@ -182,7 +184,7 @@ def particles(package_dir, fn, params):
               "description": "Mapserver Expressions"
             },
             "labels": [],
-            "expression": "[surf_conc] >= 10 AND [surf_conc] < 25"
+            "expression": "[surf_conc] >= 10 AND [surf_conc] < 50"
           },
           {
             "styles": [
@@ -216,14 +218,14 @@ def particles(package_dir, fn, params):
               "description": "Mapserver Expressions"
             },
             "labels": [],
-            "expression": "[surf_conc] >= 25"
+            "expression": "[surf_conc] >= 50"
           }
         ]
     
         
     else:
     
-        print 'no classitem specified for styling'
+        print('no classitem specified for styling')
 
     layer_info = {
       "layer_type": "wms internal",
@@ -275,15 +277,16 @@ def particles(package_dir, fn, params):
           "created_by": None,
           "keywords": None,
           "allow_download": True,
-          "timezone_fields": None,
+          "timezone_fields": "{\"time\": \"US/Pacific\"}",
           "content_type": "application/zip",
           "srid": 4326
         },
-        "time_column": None,
+        "time_column": "time",
         "maxscaledenom": None,
         "created_by": None,
         "labelminscaledenom": None,
         "layer_classes": layer_classes,
+        "sort_field": "surf_conc",
         "sort_order": None,
         "labelmaxscaledenom": None,
         "template": False,
@@ -334,9 +337,9 @@ def contours(package_dir, fn, params):
     '''
 
     filename = os.path.join(package_dir,'layers',fn + '.json')
-    f = file(filename,'w')
+    f = open(filename,'w')
 
-    if params.has_key('uncertain'):
+    if 'uncertain' in params:
 
         layer_classes = [
               {
@@ -372,7 +375,7 @@ def contours(package_dir, fn, params):
               }
             ]
 
-    elif params.has_key('SinglePoly'):
+    elif 'SinglePoly' in params:
     
 
         layer_classes = [

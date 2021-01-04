@@ -1,32 +1,27 @@
-from libgoods import curv_grid, data_files_dir
+from libgoods import roms_model, data_files_dir
 import os
-
+reload(roms_model)
 '''
-Sample script to retrieve data from Arakawa c-grid type model
+Sample script to retrieve data from HIROMS aggreation
 
 '''
 
 url = 'http://oos.soest.hawaii.edu/thredds/dodsC/hioos/roms_native/hiig/ROMS_Hawaii_Regional_Ocean_Model_Native_Grid_best.ncd'
 
 
-var_map = { 'time':'time',
-           }  
-           
-hiroms = curv_grid.roms(url)
-hiroms.get_dimensions(var_map)
-hiroms.data['lon'] = hiroms.data['lon_psi']
-hiroms.data['lat'] = hiroms.data['lat_psi']
+hiroms = roms_model.roms(url)
+hiroms.get_dimensions(tvar='time') #its an aggregation so  this overrides "ocean_time" roms variable
 
-#Only download last five timesteps
-ti=[len(hiroms.data['time'])-5,len(hiroms.data['time']),1]
+hiroms.write_nc(ofn='hiroms_grid.nc',grid_only=True)
 
-#hiroms.subset([21.223,-158.387,21.647,-157.799],lat='lat_psi',lon='lon_psi')
-hiroms.get_grid_info()
-hiroms.get_data(var_map)
+# Only download last five timesteps
+# ti=[len(hiroms.time)-5,len(hiroms.time),1]
 
-ofn = os.path.join(data_files_dir,'hiroms_example.nc')
+# hiroms.subset([21.223,-158.387,21.647,-157.799])
 
 
-hiroms.write_nc(ofn,is3d=False)
+# ofn = os.path.join(data_files_dir,'hiroms_example.nc')
+
+# hiroms.write_nc(ofn)
 
 

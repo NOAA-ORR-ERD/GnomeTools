@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os, sys
+from __future__ import print_function
 
 class MossPolygon():
     def __init__(self):
@@ -9,8 +10,8 @@ class MossPolygon():
         self.innerBoundaries = [] # a list of coordinate lists
         
     def Print(self):
-        print "outerBoundary:",self.outerBoundary
-        print "innerBoundaries:",self.innerBoundaries
+        print("outerBoundary:",self.outerBoundary)
+        print("innerBoundaries:",self.innerBoundaries)
 
 
 
@@ -72,7 +73,7 @@ def ReadMossPolygons(mossBaseFileName, printDiagnostic = False):
             # To support those files, we will ignore the number and just read lines based on the length of the lines
               
             if printDiagnostic: 
-                print itemNum,attributeName,numCoordinates
+                print(itemNum,attributeName,numCoordinates)
             
             readingOuterBoundary = True
             coordList = []
@@ -81,7 +82,7 @@ def ReadMossPolygons(mossBaseFileName, printDiagnostic = False):
             innerBoundaries = []
              
             if numCoordinates <= 0:
-                print "*** ignoring bad %s header line value: numCoordinates: %d ***"%(attributeName,numCoordinates)
+                print("*** ignoring bad %s header line value: numCoordinates: %d ***" % (attributeName,numCoordinates))
             
             # read the points for the polygon for this header           
             while True: #for i in range(0,numCoordinates):
@@ -136,7 +137,7 @@ def ReadMossPolygons(mossBaseFileName, printDiagnostic = False):
                 
             #filter out degenerate cases
             if len(coordList) < 4: # less than 4 would be a degenerate case
-                print "*** ignoring degenerate polygon ***"
+                print("*** ignoring degenerate polygon ***")
                 continue # on to the next header line 
                 
             # save the coordinate list                             
@@ -197,45 +198,45 @@ def ReadMossPolygons(mossBaseFileName, printDiagnostic = False):
     # note: we need to check that the polygons are valid before trying to clip to prevent shapely from crashing
     if landPolygons != None :
         if landPolygons.is_valid == False:
-            print "*** landPolygons is not valid. We will not clip to the shoreline. ***"
+            print("*** landPolygons is not valid. We will not clip to the shoreline. ***")
         else :
             if heavyPolygons != None: 
                 if heavyPolygons.is_valid == False:
-                    print "*** heavyPolygons is not valid. It will not be clipped to the shoreline. ***"
+                    print("*** heavyPolygons is not valid. It will not be clipped to the shoreline. ***")
                 elif heavyPolygons.intersects(landPolygons):
-                    print "clipping heavyPolygons to shoreline"
+                    print("clipping heavyPolygons to shoreline")
                     heavyPolygons = heavyPolygons.difference(landPolygons)
                     
             if mediumPolygons != None: 
                 if mediumPolygons.is_valid == False:
-                    print "*** mediumPolygons is not valid. It will not be clipped to the shoreline. ***"
+                    print("*** mediumPolygons is not valid. It will not be clipped to the shoreline. ***")
                 elif mediumPolygons.intersects(landPolygons):
-                    print "clipping mediumPolygons to shoreline"
+                    print("clipping mediumPolygons to shoreline")
                     mediumPolygons = mediumPolygons.difference(landPolygons)
                     
             if lightPolygons != None: 
                 if lightPolygons.is_valid == False:
-                    print "*** lightPolygons is not valid. It will not be clipped to the shoreline. ***"
+                    print("*** lightPolygons is not valid. It will not be clipped to the shoreline. ***")
                 elif lightPolygons.intersects(landPolygons):
-                    print "clipping lightPolygons to shoreline"
+                    print("clipping lightPolygons to shoreline")
                     lightPolygons = lightPolygons.difference(landPolygons)
                     
             # note: JerryM wonders we should clip the uncertainty to the shoreline.  That it looks better as simple polygons going over the land.
             if uncertaintyPolygons != None: 
                 if uncertaintyPolygons.is_valid == False:
-                    print "*** uncertaintyPolygons is not valid. It will not be clipped to the shoreline or oil polygons ***"
+                    print("*** uncertaintyPolygons is not valid. It will not be clipped to the shoreline or oil polygons ***")
                 else:
-                    print "clipping uncertaintyPolygons to shoreline and oil polygons"
+                    print("clipping uncertaintyPolygons to shoreline and oil polygons")
                     
                     for polygons,nameOfPolygons in [(lightPolygons,"lightPolygons"),(mediumPolygons,"mediumPolygons"),(heavyPolygons,"heavyPolygons"),(landPolygons,"landPolygons")]:
                         if polygons != None: 
-                            print "taking difference with",nameOfPolygons
+                            print("taking difference with",nameOfPolygons)
                             newUncertaintyPolygons = uncertaintyPolygons.difference(polygons)
-                            print "finished taking difference"
+                            print("finished taking difference")
                             if not newUncertaintyPolygons.is_valid:
                                 #print "Uncertainty Polygon is no longer valid after taking difference with",polygons,nameOfPolygons
                                 s = "*** uncertaintyPolygons have not been clipped to %s ***"%(nameOfPolygons)
-                                print s
+                                print(s)
                             else:
                                 uncertaintyPolygons = newUncertaintyPolygons
                                 
@@ -264,11 +265,11 @@ def VerifyAndFixGnomeAnalystPolygon(attributeName,outerBoundary,innerBoundaries)
     shapelyPolygon = Polygon(outerBoundary)
     if not shapelyPolygon.is_valid:
         # the problem is one we can't fix
-        print "*** ERROR: bad %s outerBoundary ***"%(attributeName)
-        print "Can't fix this problem, so omitting this polygon."
-        if attributeName ==  "MAPLAND": print "** Minor error: The result is that the oil will not be clipped to this island."
-        else: print "*** IMPORTANT ERROR:  an oiled area is being omitted."
-        print outerBoundary
+        print("*** ERROR: bad %s outerBoundary ***" % (attributeName))
+        print("Can't fix this problem, so omitting this polygon.")
+        if attributeName ==  "MAPLAND": print("** Minor error: The result is that the oil will not be clipped to this island.")
+        else: print("*** IMPORTANT ERROR:  an oiled area is being omitted.")
+        print(outerBoundary)
         return ([],[]) # can't fix it , so return empty lists, so that this part gets skipped
     # if we get here the outer boundary is OK
     # try eliminating any bad holes
@@ -279,15 +280,15 @@ def VerifyAndFixGnomeAnalystPolygon(attributeName,outerBoundary,innerBoundaries)
         if shapelyPolygon.is_valid:
             goodHoles.append(hole)
         else:
-            print "*** omitting bad hole in %s ***"%(attributeName)
-            print hole
+            print("*** omitting bad hole in %s ***"%(attributeName))
+            print(hole)
                   
     return (outerBoundary,goodHoles)
  
  
 def DiagnoseAndFixMultiPolygon(attributeName,boundariesList, printDiagnostic = False):
-    print "---"
-    print "*** %s is invalid. Running diagnostic... ***"%(attributeName)
+    print("---")
+    print("*** %s is invalid. Running diagnostic... ***"%(attributeName))
     # Note: we have already tested each polygon, so the problem is when we add them to a multipolygon
     # the likely cause is overlapping polygons, so we will automatically union those polygons 
     #printDiagnostic = True
@@ -298,75 +299,75 @@ def DiagnoseAndFixMultiPolygon(attributeName,boundariesList, printDiagnostic = F
     if useSlowerCode:
         for i in range(0,numPolygons) :
             if i % 20 == 0:
-                print "processing polygon", i
+                print("processing polygon", i)
             thisPolygon = boundariesList[i]
             shapelyMultiPoly = MultiPolygon(goodPolygons + [thisPolygon])
             if shapelyMultiPoly.is_valid:
                 goodPolygons.append(thisPolygon)
             else:
-                print "*** problem when adding polygon %d ***"%(i)
-                print thisPolygon
+                print("*** problem when adding polygon %d ***"%(i))
+                print(thisPolygon)
                 badPolygons.append(thisPolygon)
     else:
         ''' it can be very slow trying these one at a time, 
         so lets try jumping when we can and dropping back to one at a time when we have a problem
         '''
         numPolygons = len(boundariesList)
-        if printDiagnostic: print "numPolygons",numPolygons
+        if printDiagnostic: print("numPolygons",numPolygons)
         
         i = 0
         lineReported = 0
         while True:
             if i >= numPolygons:
-                if printDiagnostic: print "reached end of list"
+                if printDiagnostic: print("reached end of list")
                 break # end of list
             
             lineToReport = (i/100)*100
             if lineToReport != lineReported:
                 lineReported = lineToReport
                 if i > 0:
-                    print "processing polygon %d of %d"%(i,numPolygons)
+                    print("processing polygon %d of %d"%(i,numPolygons))
                 
             continueToTop = False
             for numToJump in [100,50,20,10]:
                 if continueToTop: continue
                 if i + numToJump > numPolygons:
                     numToJump = numPolygons - i;
-                    if printDiagnostic: print "adjusting numToJump to",numToJump
+                    if printDiagnostic: print("adjusting numToJump to",numToJump)
                 #try the jump
-                if printDiagnostic: print "trying jump"
+                if printDiagnostic: print("trying jump")
                 polygonsToAdd = boundariesList[i:i+numToJump]
                 shapelyMultiPoly = MultiPolygon(goodPolygons + polygonsToAdd)
                 if shapelyMultiPoly.is_valid:
                     goodPolygons = goodPolygons + polygonsToAdd
                     i = i + numToJump
-                    if printDiagnostic: print "jumped to %i"%(i)
+                    if printDiagnostic: print("jumped to %i"%(i))
                     continueToTop = True
                 
             if continueToTop: continue
                             
             #resort to one at a time
-            if printDiagnostic: print "resorting to one at a time. i = %d"%(i)
+            if printDiagnostic: print("resorting to one at a time. i = %d"%(i))
             for j in range(0,numToJump):              
                 thisPolygon = boundariesList[i]
                 shapelyMultiPoly = MultiPolygon(goodPolygons + [thisPolygon])
                 if shapelyMultiPoly.is_valid:
                     goodPolygons.append(thisPolygon)
                 else:
-                    if True: print "polygon %d is bad"%(i)
+                    if True: print("polygon %d is bad"%(i))
                     badPolygons.append(thisPolygon)
                 i = i+1
 
     # now automatically generate a "fixed" multipolygon by unioning the bad polygons
     shapelyMultiPoly = MultiPolygon(goodPolygons)
     if len(badPolygons) > 0: 
-        print "---"
-        print "*** Handling bad polygons ***"
+        print("---")
+        print("*** Handling bad polygons ***")
         for poly in badPolygons:
-            print "Bad polygon:", poly
+            print("Bad polygon:", poly)
             islandPoly = MultiPolygon([poly])
             if islandPoly.is_valid:
-                print "Fixed: The bad polygon was a valid polygon, it has been unioned to the whole."
+                print("Fixed: The bad polygon was a valid polygon, it has been unioned to the whole.")
                 shapelyMultiPoly = shapelyMultiPoly.union(islandPoly)
             else:
                 # try to fix this polygon
@@ -380,16 +381,16 @@ def DiagnoseAndFixMultiPolygon(attributeName,boundariesList, printDiagnostic = F
                 
                 islandPoly = MultiPolygon([(outerBoundary,[])])
                 if not islandPoly.is_valid:
-                    print "Outer boundary is not valid."
-                    print "Unable to fix this polygon."
+                    print("Outer boundary is not valid.")
+                    print("Unable to fix this polygon.")
                     if attributeName == "MAPLAND":
-                        print "This is a minor error, it just means the oil contours will not be clipped to this part of the land." 
+                        print("This is a minor error, it just means the oil contours will not be clipped to this part of the land.")
                     else:
-                        print "This is a serious error.  Part of the %s area will be missing."%(attributeName)
-                    print "---"
+                        print("This is a serious error.  Part of the %s area will be missing."%(attributeName))
+                    print("---")
                     continue # we will omit this polygon
                 
-                print "The outer boundary of the polygon is valid."
+                print("The outer boundary of the polygon is valid.")
                 
                 
                 ##############################
@@ -405,29 +406,29 @@ def DiagnoseAndFixMultiPolygon(attributeName,boundariesList, printDiagnostic = F
                 the holes were just areas to be removed.
                 '''
                 numHoles = len(innerBoundaries)
-                if numHoles > 0: print "Examing the %d holes..."%(numHoles)
+                if numHoles > 0: print("Examing the %d holes..."%(numHoles))
                 assert numHoles > 0 # the only way to get to this part of the code is for a hole to be causing the problem
                 numOmittedHoles = 0
                 for innerBoundary in innerBoundaries:
                     hole = Polygon(innerBoundary)
                     if not hole.is_valid:
                         numOmittedHoles = numOmittedHoles + 1
-                        print "Hole is not valid:", hole 
-                        print "Omitting this hole. This is a minor error."
+                        print("Hole is not valid:", hole)
+                        print("Omitting this hole. This is a minor error.")
                     else:
                         # subtract this hole from the islandPolygon
                         islandPoly = islandPoly.difference(hole)
                     
                 if numOmittedHoles > 0: 
-                    print "Partially fixed: %d invalid holes were not subtracted from this polygon, but this polygon has been unioned to the whole."%(numOmittedHoles)
+                    print("Partially fixed: %d invalid holes were not subtracted from this polygon, but this polygon has been unioned to the whole."%(numOmittedHoles))
                 elif numHoles > 0: 
-                    print "Fixed: all holes successfully subtracted from this polygon and the polygon unioned to the whole."
+                    print("Fixed: all holes successfully subtracted from this polygon and the polygon unioned to the whole.")
                 else : 
-                    print "Fixed: polygon unioned to the whole."
+                    print("Fixed: polygon unioned to the whole.")
                 
                 shapelyMultiPoly = shapelyMultiPoly.union(islandPoly)
                 
-            print "---"
+            print("---")
         
     return shapelyMultiPoly
      
@@ -484,7 +485,7 @@ def ReadSpillInfo(mossBaseFileName):
             spillInfo.setdefault(key, "") # setdefault will set the key to the default only if it is not already set
                 
     else:
-        print "File does not exist:", mossBaseFileName + extension
+        print("File does not exist:", mossBaseFileName + extension)
     return spillInfo
 
     
@@ -519,7 +520,7 @@ class LE():
         self.status = None
         
     def Print(self):
-        print self.itemNum,self.latitudeStr,self.longitudeStr,self.type,self.status
+        print(self.itemNum,self.latitudeStr,self.longitudeStr,self.type,self.status)
     def __str__(self): 
         return str( (self.itemNum, self.latitudeStr, self.longitudeStr, self.type,self.status), )
 
@@ -597,12 +598,12 @@ def ReadMossFiles(inputPath):
     # read each of the files that exist
     # verify that we have a file of the right extension
     if not os.path.exists(inputPath):
-        print "File does not exist:",inputPath 
+        print("File does not exist:",inputPath)
         return
     allowedExtentions = [".MS1",".MS2",".MS3",".MS4",".MS5",".MS6",".MS7"]
     extention = inputPath[-4:].upper() #
     if not extention.upper() in allowedExtentions:
-        print "File name must end in" + allowedExtentions
+        print("File name must end in ", allowedExtentions)
         return
     
  
@@ -634,9 +635,9 @@ if __name__ == "__main__":
         ''' 
         If called with no argument, run the sample files.
         '''
-        print "***************"
-        print "No argument provided.  Processing the sample files..."
-        print "***************"
+        print("***************")
+        print("No argument provided.  Processing the sample files...")
+        print("***************")
         os.chdir(os.path.dirname(sys.argv[0]))
 
         inputBasePath = "samplemossfiles/test1/tests"
@@ -651,9 +652,9 @@ if __name__ == "__main__":
     
         landPolygons,heavyPolygons,mediumPolygons,lightPolygons,uncertaintyPolygons = ReadMossPolygons(inputBasePath,printDiagnostic)
         #print heavyPolygons,mediumPolygons,lightPolygons
-        print landPolygons
-        print heavyPolygons
-        print mediumPolygons
-        print lightPolygons
+        print(landPolygons)
+        print(heavyPolygons)
+        print(mediumPolygons)
+        print(lightPolygons)
      
-    print "done"
+    print("done")

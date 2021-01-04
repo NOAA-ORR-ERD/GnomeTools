@@ -31,7 +31,7 @@ out_dir = 'ngofs'
     # date += datetime.timedelta(days=1)	
 #flist = ['fvcom_maine' + str(d.year) + str(d.month).zfill(2) + str(d.day).zfill(2) for d in dates]
 
-flist = noaa_coops.make_server_filelist('ngofs',3,dt.date(2019,5,30),end=None,test_exist=False)
+flist = noaa_coops.make_server_filelist('ngofs',dt.date(2020,10,21))
 
 # the utools class requires a mapping of specific model variable names (values)
 # to common names (keys) so that the class methods can work with FVCOM, SELFE,
@@ -60,8 +60,8 @@ print('Downloading grid topo variables')
 ngofs.get_grid_topo(var_map)
 
  # subset bounding box
-nl = 30.7; sl = 28.1
-wl = -90.4; el = -87.4
+nl = 30.7; sl = 28.6
+wl = -89.643; el = -87.391
 ngofs.find_nodes_eles_in_ss(nl,sl,wl,el)
 
 # find and order the boundary

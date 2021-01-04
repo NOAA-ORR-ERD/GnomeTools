@@ -1,10 +1,10 @@
 # libgoods
 setuptools
-numpy>=1.7.0   
+numpy 
 matplotlib
-#pytest>=2.3.4
-#sphinx
+fiona
+cftime
 
 # requires netcdf-4 binaries to be correctly installed
-netCDF4 
+netCDF4>1.5.3
 

@@ -25,7 +25,7 @@ if not os.path.exists(RootDir):
     raise Exception("RootDir: %s Doesn't exist"%RootDir)
 
 sys.path.insert(0, RootDir)
-setup = __import__('Eugen_params')
+setup = __import__('TAP_params')
 setup.RootDir = RootDir
 
 

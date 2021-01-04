@@ -6,6 +6,7 @@ testing code for get_map
 not proper unit tests, but something...
 
 """
+from __future__ import print_function
 import json
 import fiona
 
@@ -144,7 +145,7 @@ def test_format_for_geojson():
 
     gjdict = json.loads(gj)
 
-    print gj
+    print(gj)
 
     assert gjdict['type'] == "FeatureCollection"
     assert len(gjdict['features']) == 4

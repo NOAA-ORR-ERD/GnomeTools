@@ -14,10 +14,13 @@ from post_gnome import make_layer_file, nc2shape
 import yaml
 
 def create_package(params_file):
-    params = yaml.load(file(params_file))
+    
+    params = yaml.load(open(params_file))
+    
+    
     # make directory structure
     try:
-        print "removing:", params['package_dir']
+        print("removing:", params['package_dir'])
         shutil.rmtree(params['package_dir'])
     except OSError:
         pass
@@ -33,6 +36,7 @@ def create_package(params_file):
         if len(params['attachments']) > 0:
             for f in params['attachments']:
                 attach_filename = os.path.split(f)[-1]
+                print(attach_filename)
                 shutil.copy(f, os.path.join(params['package_dir'], 'attachments', attach_filename))
                 params['attachment_file'] = attach_filename #need to figure out this for more than one
         else:
@@ -61,7 +65,7 @@ def create_package(params_file):
 
         #make layer files
         params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
-        print traj_zipfname
+        print(traj_zipfname)
         try:
             params['title'] = 'Best estimate particles '  + params['t2convert'].strftime('%b %d %Y %H:%M')
         except AttributeError:
@@ -96,12 +100,10 @@ def create_package(params_file):
         
          # make shapefiles
         fn = os.path.join(params['gnome_dir'], params['particle_file'])
-        print fn
         traj_zipfname = nc2shape.points(fn,params['package_dir'],params['t2convert'],status_code=2)
      
         #make layer files
         params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
-        print traj_zipfname
         try:
             params['title'] = 'Floating Oil at '  + params['t2convert'].strftime('%b %d %Y %H:%M')
         except AttributeError:
@@ -112,12 +114,10 @@ def create_package(params_file):
         
         # make shapefiles
         fn = os.path.join(params['gnome_dir'], params['particle_file'])
-        print fn
         traj_zipfname = nc2shape.points(fn,params['package_dir'],params['t2convert'],status_code=3, shapefile_name=params['particle_file'].split('.nc')[0]+'_beached')
      
         #make layer files
         params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
-        print traj_zipfname
         try:
             params['title'] = 'Beached particles at '  + params['t2convert'].strftime('%b %d %Y %H:%M')
         except AttributeError:
@@ -131,7 +131,6 @@ def create_package(params_file):
         if params['uncertain']:
             # make shapefile
             ufn = os.path.join(params['gnome_dir'], params['particle_file'].split('.')[0] + '_uncertain.nc')
-            print "uncertainty file name:", ufn
             uncert_zipfname = nc2shape.contours(ufn,
                                                 params['package_dir'],
                                                 params['t2convert'],
@@ -168,7 +167,6 @@ def create_package(params_file):
         if params['uncertain']:
             # make shapefile
             ufn = os.path.join(params['gnome_dir'], params['particle_file'].split('.')[0] + '_uncertain.nc')
-            print "params['uncertain']ty file name:", ufn
             uncert_zipfname = nc2shape.contours(ufn,
                                                 params['package_dir'],
                                                 params['t2convert'],
@@ -190,7 +188,6 @@ def create_package(params_file):
         traj_zipfname = nc2shape.points(fn, params['package_dir'], params['t2convert'], beached_only=True, shapefile_name = 'Beached')
         #make layer files
         params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
-        print 'beached zipfilename ', traj_zipfname
         try:
             params['title'] = 'Beached particles '  + params['t2convert'].strftime('%b %d %Y %H:%M')
         except AttributeError:
@@ -200,11 +197,13 @@ def create_package(params_file):
         make_layer_file.particles(params['package_dir'],'beached',params)
 
     else:
-        print 'Must specify either points or contours'
+        print('Must specify either points or contours')
 
     shutil.make_archive(params['package_dir'],'zip',root_dir=params['package_dir'])
 
 if __name__ == "__main__":
+
     create_package(sys.argv[1])
+
    
     
