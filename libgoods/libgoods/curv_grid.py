@@ -324,7 +324,7 @@ class cgrid():
                     ufill = 999.
                     vfill = 999.
                     
-            if self.atts.has_key('wind'):
+            if 'wind' in self.atts:
                 nc_u = nc.createVariable('air_u','f4',('time','yc','xc'), \
                     fill_value=ufill)
                 nc_v = nc.createVariable('air_v','f4',('time','yc','xc'), \
@@ -378,25 +378,25 @@ class cgrid():
                 nc_depth = nc.createVariable('depth','f4',('yc','xc'))
                 nc_depth[:] = self.grid['depth']
                 
-            if self.grid.has_key('mask'):
+            if 'mask' in self.grid:
                 nc_mask = nc.createVariable('mask','f4',('yc','xc'))
                 nc_mask[:] = self.grid['mask']
                 setattr(nc_mask,'standard_name','mask on center points')
                 setattr(nc_mask,'coordinates',u'latc lonc')
     
             # add variable attributes from 'atts' (nested dict object)
-            for key,val in self.atts['time'].iteritems():
+            for key,val in self.atts['time'].items():
                 if not key.startswith('_'):
                     setattr(nc_time,key,val)
                 
             self.atts['u']['coordinates'] = u'latc lonc'
-            for key,val in self.atts['u'].iteritems():
+            for key,val in self.atts['u'].items():
                 if not key.startswith('_'):
                     setattr(nc_u,key,val)
             setattr(nc_u,'time','time')
                     
             self.atts['v']['coordinates'] = u'latc lonc'
-            for key,val in self.atts['v'].iteritems():
+            for key,val in self.atts['v'].items():
 
                 if not key.startswith('_'):
                     setattr(nc_v,key,val)
@@ -406,7 +406,7 @@ class cgrid():
                 nc_var = nc.createVariable(var,'f4',('time','yc','xc'))
                 nc_var[:] = self.data[var]
                 setattr(nc_var,'coordinates',u'time latc lonc')
-                for key,val in self.atts[var].iteritems():
+                for key,val in self.atts[var].items():
                     if not key.startswith('_'):
                         setattr(nc_var,key,val)
             

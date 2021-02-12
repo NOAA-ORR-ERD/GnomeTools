@@ -1,16 +1,19 @@
+from __future__ import print_function
+
 from libgoods import curv_grid, nctools, data_files_dir
 import os
 
+
 out_dir = data_files_dir
-mon = 10
-bbox = [22,-80,28,-73]
+mon = 1
+bbox = [36,-123,37.5,-121]
 
 firsttime = True
 
-for day in range(17,20):
+for day in range(26,31):
 
-    fl = 'http://data.oceansmap.com/thredds/dodsC/EDS/NAM5K/NAM5K2017' + str(mon).zfill(2) +str(day).zfill(2) + '.nc'
-    print fl
+    fl = 'http://data.oceansmap.com/thredds/dodsC/EDS/NAM5K/NAM5K2021' + str(mon).zfill(2) +str(day).zfill(2) + '.nc'
+    print(fl)
 
     var_map = {'time':'time','longitude':'longitude','latitude':'latitude','u_velocity':'u','v_velocity':'v'}
 
