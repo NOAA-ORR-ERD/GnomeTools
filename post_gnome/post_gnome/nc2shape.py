@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 from netCDF4 import Dataset
 from post_gnome import nc_particles
 import shapefile as shp
@@ -24,15 +24,15 @@ def write_proj_file(prj_filename):
 
 
 def zip_shape_files(shp_fdir, shp_fname):
-    print 'zipping'
+    print('zipping')
     files = glob.glob(os.path.join(shp_fdir, shp_fname) + '*')
-    print files
+    print(files)
     zipfname = os.path.join(shp_fdir, shp_fname) + '.zip'
     zipf = zipfile.ZipFile(zipfname, 'w', compression=zipfile.ZIP_DEFLATED)
     for f in files:
         if f.split('.')[0] == os.path.join(
                 shp_fdir, shp_fname) and f.split('.')[1] != 'zip':
-            print f
+            print(f)
             zipf.write(f, arcname=os.path.split(f)[-1])
             os.remove(f)
     zipf.close()
@@ -78,13 +78,16 @@ def mpl_contours_2_shape(cs, levs, t, shp_fdir, shp_fname):
     zip_shape_files(shp_fdir, shp_fname)
 
 
-def points(fn, package_dir, t2convert, status_code=None, shapefile_name=None):
+def points(fn, package_dir, t2convert=None, status_code=None, shapefile_name=None):
     '''
     status_code = 3 for beached only, status_code = 2 for floating only
     '''
     nc = Dataset(fn)
     particles = nc_particles.Reader(nc)
     times = particles.times
+    
+    if shapefile_name is None:
+        shapefile_name = os.path.split(fn)[-1].split('.')[0]
 
     w = shp.Writer(shp.POINT)
     w.autobalance = 1
@@ -106,7 +109,7 @@ def points(fn, package_dir, t2convert, status_code=None, shapefile_name=None):
         ts = [dt.index(min(dt))]
 
     for t in ts:
-        print 'Converting output from: ', times[t]
+        print('Converting output from: ', times[t])
         TheData = particles.get_timestep(t,
                                          variables=[
                                              'latitude', 'longitude', 'id',
@@ -117,14 +120,14 @@ def points(fn, package_dir, t2convert, status_code=None, shapefile_name=None):
         if status_code is not None:
             sc = TheData['status_codes']
             id = np.where(sc == status_code)[0]
-            print 'found this many pts', len(id)
+            print('found this many pts', len(id))
             for key in TheData.keys():
                 TheData[key] = TheData[key][id]
 
         if t == 0:
-            print 'first time step'
-            print np.unique(TheData['longitude'])
-            print np.unique(TheData['latitude'])
+            print('first time step')
+            print(np.unique(TheData['longitude']))
+            print(np.unique(TheData['latitude']))
 
         for k, p in enumerate(zip(TheData['longitude'], TheData['latitude'])):
             w.point(p[0], p[1])
@@ -136,17 +139,14 @@ def points(fn, package_dir, t2convert, status_code=None, shapefile_name=None):
     source_fdir = os.path.join(package_dir, 'source_files')
     #shapefile_name = os.path.split(fn)[-1].split('.')[0]
 
-    if shapefile_name is None:
-        shapefile_name = os.path.split(fn)[-1].split('.')[0]
-
     if t2convert is None:
         shapefile_name = shapefile_name + '_all'
     else:
         shapefile_name = shapefile_name + '_' + times[t].strftime(
             '%Y%b%d_%H%M')
 
-    print 'sfn:', shapefile_name
-    print os.path.join(source_fdir, shapefile_name)
+    print('sfn:', shapefile_name)
+    print(os.path.join(source_fdir, shapefile_name))
 
     w.save(os.path.join(source_fdir, shapefile_name))
 
@@ -157,7 +157,7 @@ def points(fn, package_dir, t2convert, status_code=None, shapefile_name=None):
     write_proj_file(prj_filename)
 
     zipfname = zip_shape_files(source_fdir, shapefile_name)
-    print 'zipfname', zipfname
+    print('zipfname', zipfname)
 
     return zipfname
 
@@ -170,7 +170,7 @@ def contours(fn,
              shapefile_name=None,
              include_beached=False):
 
-    print "contouring data in:", fn
+    print("contouring data in:", fn)
     nc = Dataset(fn)
     particles = nc_particles.Reader(nc)
     times = particles.times
@@ -195,7 +195,7 @@ def contours(fn,
     for t in ts:
 
         if t > 0:
-            print 'Converting output from: ', times[t]
+            print('Converting output from: ', times[t])
             TheData = particles.get_timestep(t,
                                              variables=[
                                                  'latitude', 'longitude', 'id',
@@ -253,8 +253,8 @@ def contours(fn,
         shapefile_name = shapefile_name + '_' + times[t].strftime(
             '%Y%b%d_%H%M')
 
-    print 'sfn:', shapefile_name
-    print os.path.join(source_fdir, shapefile_name)
+    print('sfn:', shapefile_name)
+    print(os.path.join(source_fdir, shapefile_name))
 
     w.save(os.path.join(source_fdir, shapefile_name))
 
@@ -265,6 +265,6 @@ def contours(fn,
     write_proj_file(prj_filename)
 
     zipfname = zip_shape_files(source_fdir, shapefile_name)
-    print 'zipfname', zipfname
+    print('zipfname', zipfname)
 
-    return zipfname
+    return(zipfname)
