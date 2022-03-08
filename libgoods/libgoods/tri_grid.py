@@ -295,8 +295,7 @@ class ugrid:
         
         # test u/v dimensions
         if self.data['u'].shape != self.data['v'].shape:
-            print('u/v dimensions differ')
-            raise
+            raise Exception('u/v dimensions differ')
         
         # determine if its a subset in time
         t_key = 'time'

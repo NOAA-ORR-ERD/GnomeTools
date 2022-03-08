@@ -4,8 +4,8 @@
 script that reads netcdf particle files from GNOME, contours the particles,
 makes shape files of the particles, and creates and ERMA data pacakge out
 of all of it.
-
 """
+
 import os
 import sys
 import shutil
@@ -18,7 +18,7 @@ def create_package(params_file):
     params = yaml.load(file(params_file))
     # make directory structure
     try:
-        print "removing:", params['package_dir']
+        print("removing:", params['package_dir'])
         shutil.rmtree(params['package_dir'])
     except OSError:
         pass
@@ -62,7 +62,7 @@ def create_package(params_file):
 
         #make layer files
         params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
-        print traj_zipfname
+        print(traj_zipfname)
         try:
             params['title'] = 'Best estimate particles '  + params['t2convert'].strftime('%b %d %Y %H:%M')
         except AttributeError:
@@ -97,12 +97,12 @@ def create_package(params_file):
 
          # make shapefiles
         fn = os.path.join(params['gnome_dir'], params['particle_file'])
-        print fn
+        print(fn)
         traj_zipfname = nc2shape.points(fn,params['package_dir'],params['t2convert'],status_code=2)
 
         #make layer files
         params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
-        print traj_zipfname
+        print(traj_zipfname)
         try:
             params['title'] = 'Floating Oil at '  + params['t2convert'].strftime('%b %d %Y %H:%M')
         except AttributeError:
@@ -113,12 +113,12 @@ def create_package(params_file):
 
         # make shapefiles
         fn = os.path.join(params['gnome_dir'], params['particle_file'])
-        print fn
+        print(fn)
         traj_zipfname = nc2shape.points(fn,params['package_dir'],params['t2convert'],status_code=3, shapefile_name=params['particle_file'].split('.nc')[0]+'_beached')
 
         #make layer files
         params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
-        print traj_zipfname
+        print(traj_zipfname)
         try:
             params['title'] = 'Beached particles at '  + params['t2convert'].strftime('%b %d %Y %H:%M')
         except AttributeError:
@@ -132,7 +132,7 @@ def create_package(params_file):
         if params['uncertain']:
             # make shapefile
             ufn = os.path.join(params['gnome_dir'], params['particle_file'].split('.')[0] + '_uncertain.nc')
-            print "uncertainty file name:", ufn
+            print("uncertainty file name:", ufn)
             uncert_zipfname = nc2shape.contours(ufn,
                                                 params['package_dir'],
                                                 params['t2convert'],
@@ -169,7 +169,7 @@ def create_package(params_file):
         if params['uncertain']:
             # make shapefile
             ufn = os.path.join(params['gnome_dir'], params['particle_file'].split('.')[0] + '_uncertain.nc')
-            print "params['uncertain']ty file name:", ufn
+            print("params['uncertain']ty file name:", ufn)
             uncert_zipfname = nc2shape.contours(ufn,
                                                 params['package_dir'],
                                                 params['t2convert'],
@@ -191,7 +191,7 @@ def create_package(params_file):
         traj_zipfname = nc2shape.points(fn, params['package_dir'], params['t2convert'], beached_only=True, shapefile_name = 'Beached')
         #make layer files
         params['shape_zipfilename'] =  os.path.split(traj_zipfname)[-1]
-        print 'beached zipfilename ', traj_zipfname
+        print('beached zipfilename ', traj_zipfname)
         try:
             params['title'] = 'Beached particles '  + params['t2convert'].strftime('%b %d %Y %H:%M')
         except AttributeError:
@@ -201,11 +201,59 @@ def create_package(params_file):
         make_layer_file.particles(params['package_dir'],'beached',params)
 
     else:
-        print 'Must specify either points or contours'
+        print('Must specify either points or contours')
 
     shutil.make_archive(params['package_dir'],'zip',root_dir=params['package_dir'])
 
+USAGE = """
+make_erma_data_package.py params.yml
+
+params.yml holds the configuration for how you want the data packet configured
+
+if you don't pass in a config file -- this script will dump a sample one to update
+"""
+
+EXAMPLE_PARAMS_FILE = """
+gnome_dir : .
+particle_file : Guam_particles2.nc
+uncertain : True # include uncertainty contour (boolean)
+
+# If not null -- the one timestep to output
+t2convert : 2019-03-12 03:00 # null for animation time series or %Y-%m-%d %H:%M
+metadata : [Hypothetical trajectory for Guam Science of Oil Spills Training Class, March 11-15, 2019]
+
+# you can attach arbitrary other files -- PDFs, etc.
+attachments : ['file1','file2'] # relative path 2 single file OR list of paths or []
+
+# This will be a name of the resulting zipfile
+package_dir : 24hr_fc # name of directory to create files in (will be created and destroyed if need be
+
+# Styling options:
+#   points_simple (floating/beached)
+#   points_forecast (surface_concentation)
+#   contours_forecast (only the contours, not points)
+styling : points_forecast  # points_simple (floating/beached); points_forecast (surface_concentation); or contours_forecast
+
+# ERMA Site name
+site_name : pacific
+event : Guam SOS Training Scenario (DRILL)
+
+# ERMA's folder structure
+folder_path : [Incidents & Drills, Guam SOS/SCAT Training Class Scenario, Trajectories]
+folder_name : 12 hour trajectory # if null folder will be named "Trajectory for %Y-%m-%d %H:%M"
+"""
+
+
 if __name__ == "__main__":
-    create_package(sys.argv[1])
+    try:
+        params_file = sys.argv[1]
+        create_package(params_file)
+    except IndexError:
+        print(USAGE)
+        with open("example_params.yml", 'w', encoding='utf-8') as outfile:
+            outfile.write(EXAMPLE_PARAMS_FILE)
+
+
+
 
 
