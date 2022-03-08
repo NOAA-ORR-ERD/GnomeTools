@@ -7,7 +7,7 @@ a series of GNOME moss files
 In this version the template and pngs are embedded.
 
 """
-
+from __future__ import print_function
 from mako.template import Template
 import zipfile, base64
 import os,sys
@@ -62,7 +62,7 @@ def buildkmzSeries(mossSeriesFilename,printDiagnostic = False):
     seriesDescription = GetDescription(mossSeriesFilename)
 
     outfilename = basePathAndName+".kmz"
-    print "rendering: %s"%outfilename
+    print("rendering: ", outfilename)
 
     BestGuess_Series = []
     Uncertainty_Series = []
@@ -70,7 +70,7 @@ def buildkmzSeries(mossSeriesFilename,printDiagnostic = False):
 
     for i in range(0,999) :
         mossfilename =  "%s%03d"%(basePathAndName,i)
-        print "Processing",mossfilename
+        print("Processing: ",mossfilename)
 
         extension = ".ms3"
         if not os.path.exists(mossfilename + extension):
@@ -141,7 +141,7 @@ def buildkmzSeries(mossSeriesFilename,printDiagnostic = False):
         and len(Uncertainty_Series) == 0
         and len(Polygon_Series) == 0
         ):
-        print "no files processed"
+        print("no files processed")
         return
 
     # set the end times
@@ -167,9 +167,9 @@ def buildkmzSeries(mossSeriesFilename,printDiagnostic = False):
     kmzfile.writestr(Name+".kml", kmlstring)
     kmzfile.close()
 
-    if printDiagnostic: print kmlstring
+    if printDiagnostic: print(kmlstring)
 
-    print "done"
+    print("done")
 
 
 def GetDescription(mossfilename):
@@ -293,9 +293,9 @@ if __name__ == "__main__":
         '''
         If called with no argument, run the sample files.
         '''
-        print "***************"
-        print "No argument provided.  Processing the sample files..."
-        print "***************"
+        print("***************")
+        print("No argument provided.  Processing the sample files...")
+        print("***************")
         os.chdir(os.path.abspath(os.path.dirname(sys.argv[0])))
         for filePath in ["samplemossfiles/jerryseries/jerryseries000"]:
             buildkmzSeries(filePath)

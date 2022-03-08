@@ -10,7 +10,7 @@ This needs additions like drawing LEs on the beach differently, not drawing
 LEs that are off teh mpa, or evaporated, or ...
 
 """
-
+from __future__ import print_function
 from mako.template import Template
 import zipfile, base64
 
@@ -38,7 +38,7 @@ def buildkmz(mossfilename):
     mytemplate = Template(LE_Template)
 
     outfilename = mossfilename+".kmz"
-    print "rendering: %s"%outfilename
+    print("rendering: ", outfilename)
 
     kmlstring = mytemplate.render(LEs=BestGuess, LEs_U=Uncertainty, IconName="DotIcon", name=Name)
 

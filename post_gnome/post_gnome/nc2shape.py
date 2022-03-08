@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 from netCDF4 import Dataset
 from post_gnome import nc_particles
 import shapefile as shp
-import os
-import glob
+import os,glob
 import zipfile
 import numpy as np
 import scipy.stats as st
 from matplotlib.pyplot import contour
 from shapely import geometry
-
+import datetime, pytz
 
 def write_proj_file(prj_filename):
     prj = open("%s.prj" % prj_filename, "w")
@@ -22,41 +21,36 @@ def write_proj_file(prj_filename):
     prj.write(epsg)
     prj.close()
 
-
-def zip_shape_files(shp_fdir, shp_fname):
+def zip_shape_files(shp_fdir,shp_fname):
     print('zipping')
     files = glob.glob(os.path.join(shp_fdir, shp_fname) + '*')
-    print(files)
-    zipfname = os.path.join(shp_fdir, shp_fname) + '.zip'
-    zipf = zipfile.ZipFile(zipfname, 'w', compression=zipfile.ZIP_DEFLATED)
+    zipfname = os.path.join(shp_fdir,shp_fname) + '.zip'
+    zipf = zipfile.ZipFile(zipfname, 'w',compression=zipfile.ZIP_DEFLATED)
     for f in files:
-        if f.split('.')[0] == os.path.join(
-                shp_fdir, shp_fname) and f.split('.')[1] != 'zip':
-            print(f)
+        if f.split('.')[0] == os.path.join(shp_fdir, shp_fname) and f.split('.')[1] != 'zip':
             zipf.write(f, arcname=os.path.split(f)[-1])
             os.remove(f)
     zipf.close()
     return zipfname
 
-
-def mpl_contours_2_shape(cs, levs, t, shp_fdir, shp_fname):
+def mpl_contours_2_shape(cs,levs,t,shp_fdir,shp_fname):
 
     w = shp.Writer(shp.POLYGON)
     w.autobalance = 1
     w.field('Time', 'C')
     w.field('Value', 'C')
 
-    for c, col in enumerate(cs.collections):
+    for c,col in enumerate(cs.collections):
         # Loop through all polygons that have the same intensity level
         for contour_path in col.get_paths():
             # Create the polygon for this intensity level
             # The first polygon in the path is the main one, the following ones are "holes"
             # Right now I am only using the exterior so maybe no holes?
-            for ncp, cp in enumerate(contour_path.to_polygons()):
-                x = cp[:, 0]
-                y = cp[:, 1]
+            for ncp,cp in enumerate(contour_path.to_polygons()):
+                x = cp[:,0]
+                y = cp[:,1]
 
-                new_shape = geometry.Polygon([(i[0], i[1]) for i in zip(x, y)])
+                new_shape = geometry.Polygon([(i[0], i[1]) for i in zip(x,y)])
                 if ncp == 0:
                     poly = new_shape
                 else:
@@ -75,80 +69,88 @@ def mpl_contours_2_shape(cs, levs, t, shp_fdir, shp_fname):
     prj_filename = os.path.join(shp_fdir, shp_fname)
     write_proj_file(prj_filename)
 
-    zip_shape_files(shp_fdir, shp_fname)
+    zip_shape_files(shp_fdir,shp_fname)
 
-
-def points(fn, package_dir, t2convert=None, status_code=None, shapefile_name=None):
+def points(fn, package_dir, t2convert, status_code = None, shapefile_name=None):
     '''
     status_code = 3 for beached only, status_code = 2 for floating only
     '''
+
     nc = Dataset(fn)
     particles = nc_particles.Reader(nc)
     times = particles.times
 
-    if shapefile_name is None:
-        shapefile_name = os.path.split(fn)[-1].split('.')[0]
-
-    w = shp.Writer(shp.POINT)
-    w.autobalance = 1
-    w.field('Time', 'C')
-    w.field('LE id', 'N')
-    w.field('Depth', 'N')
-    w.field('Mass', 'N')
-    w.field('Age', 'N')
-    w.field('status', 'N')
-    w.field('Surf_Conc', 'N', decimal=4)
-
     if t2convert is None:
-        ts = range(0, len(times))
+        ts = range(0,len(times))
+
     else:
-        dt = [
-            np.abs(((output_t - t2convert).total_seconds()) / 3600)
-            for output_t in times
-        ]
+        dt = [np.abs(((output_t - t2convert).total_seconds()) / 3600) for output_t in times]
         ts = [dt.index(min(dt))]
 
     for t in ts:
+
+        if shapefile_name is None:
+            shapefile_name = os.path.split(fn)[-1].split('.')[0]
+
+        if t2convert is None and t == ts[0]:
+            shapefile_name = shapefile_name + '_all'
+
+        if t2convert is not None:
+            shapefile_name = shapefile_name + '_' + times[t].strftime('%Y%b%d_%H%M')
+
+        print('sfn:', shapefile_name)
+        source_fdir = os.path.join(package_dir, 'source_files')
+
+        print(os.path.join(source_fdir, shapefile_name))
+
+        if t2convert is not None or t == ts[0]:
+            w = shp.Writer(os.path.join(source_fdir, shapefile_name), shp.POINT)
+            w.autobalance = 1
+            w.field('Time', 'C')
+            w.field('LE id', 'N')
+            w.field('Depth', 'N')
+            w.field('Mass', 'N')
+            w.field('Age', 'N')
+            w.field('status', 'N')
+            w.field('Surf_Conc', 'N', decimal=4)
+
         print('Converting output from: ', times[t])
-        TheData = particles.get_timestep(t,
-                                         variables=[
-                                             'latitude', 'longitude', 'id',
-                                             'depth', 'mass', 'age',
-                                             'status_codes',
-                                             'surface_concentration'
-                                         ])
+        TheData = particles.get_timestep(t, variables=['latitude',
+                                                       'longitude',
+                                                       'id',
+                                                       'depth',
+                                                       'mass',
+                                                       'age',
+                                                       'status_codes',
+                                                       'surface_concentration']
+                                       )
         if status_code is not None:
             sc = TheData['status_codes']
-            id = np.where(sc == status_code)[0]
+            id = np.where(sc==status_code)[0]
             print('found this many pts', len(id))
             for key in TheData.keys():
                 TheData[key] = TheData[key][id]
 
-        if t == 0:
+        if t==0:
             print('first time step')
             print(np.unique(TheData['longitude']))
             print(np.unique(TheData['latitude']))
 
         for k, p in enumerate(zip(TheData['longitude'], TheData['latitude'])):
-            w.point(p[0], p[1])
-            w.record(times[t].strftime('%Y-%m-%dT%H:%M:%S'), TheData['id'][k],
-                     TheData['depth'][k], TheData['mass'][k],
-                     TheData['age'][k], TheData['status_codes'][k],
-                     TheData['surface_concentration'][k] * 1000.0)
+                w.point(p[0],p[1])
+                w.record(times[t].strftime('%Y-%m-%dT%H:%M:%S'),
+                         TheData['id'][k],
+                         TheData['depth'][k],
+                         TheData['mass'][k],
+                         TheData['age'][k],
+                         TheData['status_codes'][k],
+                         TheData['surface_concentration'][k]*1000.0)
 
-    source_fdir = os.path.join(package_dir, 'source_files')
-    #shapefile_name = os.path.split(fn)[-1].split('.')[0]
 
-    if t2convert is None:
-        shapefile_name = shapefile_name + '_all'
-    else:
-        shapefile_name = shapefile_name + '_' + times[t].strftime(
-            '%Y%b%d_%H%M')
 
-    print('sfn:', shapefile_name)
-    print(os.path.join(source_fdir, shapefile_name))
 
-    w.save(os.path.join(source_fdir, shapefile_name))
+
+    w.close()
 
     nc.close()
 
@@ -156,7 +158,7 @@ def points(fn, package_dir, t2convert=None, status_code=None, shapefile_name=Non
     prj_filename = os.path.join(source_fdir, shapefile_name)
     write_proj_file(prj_filename)
 
-    zipfname = zip_shape_files(source_fdir, shapefile_name)
+    zipfname = zip_shape_files(source_fdir,shapefile_name)
     print('zipfname', zipfname)
 
     return zipfname
@@ -168,40 +170,63 @@ def contours(fn,
              levels=[0.1, 0.4, 0.8],
              names=['Light', 'Medium', 'Heavy'],
              shapefile_name=None,
-             include_beached=False):
+             include_beached=False
+             ):
 
     print("contouring data in:", fn)
     nc = Dataset(fn)
     particles = nc_particles.Reader(nc)
     times = particles.times
 
-    w = shp.Writer(shp.POLYGON)
-    w.autobalance = 1
 
-    w.field('Time', 'C')
-    w.field('Depth', 'N')
-    w.field('Type', 'C')
-    w.field('Test', 'N', decimal=4)
 
     if t2convert is None:
-        ts = range(0, len(times))
+        ts = range(0,len(times))
     else:
-        dt = [
-            np.abs(((output_t - t2convert).total_seconds()) / 3600)
-            for output_t in times
-        ]
+        dt = [np.abs(((output_t - t2convert).total_seconds()) / 3600) for output_t in times]
         ts = [dt.index(min(dt))]
+
+    source_fdir = os.path.join(package_dir, 'source_files')
+    if shapefile_name is None:
+        shapefile_name = os.path.split(fn)[-1].split('.')[0] + 'c'
 
     for t in ts:
 
-        if t > 0:
+        if shapefile_name is None:
+            shapefile_name = os.path.split(fn)[-1].split('.')[0]
+
+        if t2convert is None and t == ts[0]:
+            shapefile_name = shapefile_name + '_all'
+
+        if t2convert is not None:
+            shapefile_name = shapefile_name + '_' + times[t].strftime('%Y%b%d_%H%M')
+
+        # if t2convert is None:
+            # shapefile_name = shapefile_name + '_all'
+        # else:
+            # shapefile_name = shapefile_name + '_' + times[t].strftime('%Y%b%d_%H%M')
+
+        print('sfn:', shapefile_name)
+        print(os.path.join(source_fdir, shapefile_name))
+
+        if t2convert is not None or t == ts[0]:
+            w = shp.Writer(os.path.join(source_fdir, shapefile_name),shp.POLYGON)
+            w.autobalance = 1
+
+            w.field('Time', 'C')
+            w.field('Depth', 'N')
+            w.field('Type', 'C')
+            w.field('Test', 'N', decimal=4)
+
+        if t>0:
             print('Converting output from: ', times[t])
-            TheData = particles.get_timestep(t,
-                                             variables=[
-                                                 'latitude', 'longitude', 'id',
-                                                 'depth', 'mass', 'age',
-                                                 'status_codes'
-                                             ])
+            TheData = particles.get_timestep(t, variables=['latitude',
+                                                           'longitude',
+                                                           'id',
+                                                           'depth',
+                                                           'mass',
+                                                           'age',
+                                                           'status_codes'])
 
             # contouring
             status = TheData['status_codes']
@@ -214,9 +239,7 @@ def contours(fn,
                 y = TheData['latitude']
 
             # Peform the kernel density estimate
-            xx, yy = np.mgrid[min(x) - .1:max(x) + .1:100j,
-                              min(y) - .1:max(y) +
-                              .1:100j]  # to do:should the grid be static?
+            xx, yy = np.mgrid[min(x) - .1:max(x) + .1:100j, min(y) - .1:max(y) + .1:100j] #to do:should the grid be static?
             positions = np.vstack([xx.ravel(), yy.ravel()])
             values = np.vstack([x, y])
             kernel = st.gaussian_kde(values)
@@ -228,35 +251,24 @@ def contours(fn,
 
             cs = contour(xx, yy, f, particle_contours)
 
-            if 0:  # plot it
+            if 0: #plot it
                 import matplotlib as mpl
-                mpl.pyplot.plot(x, y, 'k.')
-                contour(xx, yy, f, particle_contours)
+                mpl.pyplot.plot(x,y,'k.')
+                contour(xx,yy,f,particle_contours)
                 mpl.pyplot.show()
+
 
             for c in range(len(cs.collections)):
                 p = cs.collections[c].get_paths()[0]
                 v = p.vertices
                 coords = [[[i[0], i[1]] for i in v]]
 
-                w.poly(shapeType=5, parts=coords)
-                w.record(times[t].strftime('%Y-%m-%dT%H:%M:%S'),
-                         TheData['depth'][c], names[c], v[:, 0].min())
+                w.poly(coords)
+                w.record(times[t].strftime('%Y-%m-%dT%H:%M:%S'),TheData['depth'][c], names[c], v[:,0].min())
 
-    source_fdir = os.path.join(package_dir, 'source_files')
-    if shapefile_name is None:
-        shapefile_name = os.path.split(fn)[-1].split('.')[0] + 'c'
 
-    if t2convert is None:
-        shapefile_name = shapefile_name + '_all'
-    else:
-        shapefile_name = shapefile_name + '_' + times[t].strftime(
-            '%Y%b%d_%H%M')
 
-    print('sfn:', shapefile_name)
-    print(os.path.join(source_fdir, shapefile_name))
-
-    w.save(os.path.join(source_fdir, shapefile_name))
+    w.close()
 
     nc.close()
 
@@ -264,7 +276,7 @@ def contours(fn,
     prj_filename = os.path.join(source_fdir, shapefile_name)
     write_proj_file(prj_filename)
 
-    zipfname = zip_shape_files(source_fdir, shapefile_name)
+    zipfname = zip_shape_files(source_fdir,shapefile_name)
     print('zipfname', zipfname)
 
-    return(zipfname)
+    return zipfname

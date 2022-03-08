@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # for py2/3 compatibility
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import print_function, absolute_import, division,  unicode_literals
 
 
 """

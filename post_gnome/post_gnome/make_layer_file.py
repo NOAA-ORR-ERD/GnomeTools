@@ -1,10 +1,12 @@
+from __future__ import print_function
+from six import iteritems
 import json
 import os
 import matplotlib.colors as colors
 
 cnames = colors.cnames
 # Add the single letter colors.
-for name, rgb in colors.ColorConverter.colors.items():
+for (name, rgb) in iteritems(colors.ColorConverter.colors):
     hex_ = colors.rgb2hex(rgb)
     cnames[name] = hex_
 
@@ -18,8 +20,8 @@ sites['gulfofmexico'] = {'site_id': 4, 'zoom': 4, 'longitude': -90.42, 'latitude
 sites['northwest'] = {'site_id': 6, 'zoom': 6, 'longitude': -125.00, 'latitude': 47.00}
 sites['pacific'] = {'site_id': 7, 'zoom': 4, 'longitude': -178.00, 'latitude': 11.00}
 sites['southwest'] = {'site_id': 8, 'zoom': 6, 'longitude': -122.00, 'latitude': 37.00}
-
-
+    
+            
 def particles(package_dir, fn, params):
     '''
     params is a dict with the following keys:
@@ -32,12 +34,12 @@ def particles(package_dir, fn, params):
         color - matplotlib named colors (e.g. "r" or "red")
         folder_path - a list with the hierarchy of subfolders in TOC
     '''
-
+    
     filename = os.path.join(package_dir, 'layers', fn + '.json')
-    f = file(filename, 'w')
-
+    f = open(filename, 'w')
+    
     if params['classitem'] == 'status':
-
+    
         layer_classes = [
           {
             "styles": [
@@ -71,7 +73,7 @@ def particles(package_dir, fn, params):
               "description": "Exact Value"
             },
             "labels": [
-
+              
             ],
             "expression": "3"
           },
@@ -112,9 +114,9 @@ def particles(package_dir, fn, params):
             "expression": "2"
           }
         ]
-
+        
     elif params['classitem'] == 'surf_conc':
-
+    
         layer_classes = [
           {
             "styles": [
@@ -125,11 +127,11 @@ def particles(package_dir, fn, params):
                 "map_layer_class": 169684,
                 "ordering": 1,
                 "symbol": {
-                  "symbol_def": "NAME 'filledcircle'\nTYPE ellipse\nFILLED true\nPOINTS\n 1 1\nEND\n",
-                  "symbol_name": "filledcircle",
-                  "style_text": None,
+                  "symbol_def": "NAME 'filledcircle'\nTYPE ellipse\nFILLED true\nPOINTS\n 1 1\nEND\n", 
+                  "symbol_name": "filledcircle", 
+                  "style_text": None, 
                   "symbol_desc": "Circle (Filled)"
-                },
+                }, 
                 "size_field": None,
                 "color": "#00ffff",
                 "style_width": None,
@@ -159,11 +161,11 @@ def particles(package_dir, fn, params):
                 "map_layer_class": 169683,
                 "ordering": 1,
                 "symbol": {
-                  "symbol_def": "NAME 'filledcircle'\nTYPE ellipse\nFILLED true\nPOINTS\n 1 1\nEND\n",
-                  "symbol_name": "filledcircle",
-                  "style_text": None,
+                  "symbol_def": "NAME 'filledcircle'\nTYPE ellipse\nFILLED true\nPOINTS\n 1 1\nEND\n", 
+                  "symbol_name": "filledcircle", 
+                  "style_text": None, 
                   "symbol_desc": "Circle (Filled)"
-                },
+                }, 
                 "size_field": None,
                 "color": "#007fff",
                 "style_width": None,
@@ -182,7 +184,7 @@ def particles(package_dir, fn, params):
               "description": "Mapserver Expressions"
             },
             "labels": [],
-            "expression": "[surf_conc] >= 10 AND [surf_conc] < 25"
+            "expression": "[surf_conc] >= 10 AND [surf_conc] < 50"
           },
           {
             "styles": [
@@ -193,11 +195,11 @@ def particles(package_dir, fn, params):
                 "map_layer_class": 169682,
                 "ordering": 1,
                 "symbol": {
-                  "symbol_def": "NAME 'filledcircle'\nTYPE ellipse\nFILLED true\nPOINTS\n 1 1\nEND\n",
-                  "symbol_name": "filledcircle",
-                  "style_text": None,
+                  "symbol_def": "NAME 'filledcircle'\nTYPE ellipse\nFILLED true\nPOINTS\n 1 1\nEND\n", 
+                  "symbol_name": "filledcircle", 
+                  "style_text": None, 
                   "symbol_desc": "Circle (Filled)"
-                },
+                }, 
                 "size_field": None,
                 "color": "#0000ff",
                 "style_width": None,
@@ -216,13 +218,13 @@ def particles(package_dir, fn, params):
               "description": "Mapserver Expressions"
             },
             "labels": [],
-            "expression": "[surf_conc] >= 25"
+            "expression": "[surf_conc] >= 50"
           }
         ]
-
-
+    
+        
     else:
-
+    
         print('no classitem specified for styling')
 
     layer_info = {
@@ -275,15 +277,16 @@ def particles(package_dir, fn, params):
           "created_by": None,
           "keywords": None,
           "allow_download": True,
-          "timezone_fields": None,
+          "timezone_fields": "{\"time\": \"US/Pacific\"}",
           "content_type": "application/zip",
           "srid": 4326
         },
-        "time_column": None,
+        "time_column": "time",
         "maxscaledenom": None,
         "created_by": None,
         "labelminscaledenom": None,
         "layer_classes": layer_classes,
+        "sort_field": "surf_conc",
         "sort_order": None,
         "labelmaxscaledenom": None,
         "template": False,
@@ -334,9 +337,9 @@ def contours(package_dir, fn, params):
     '''
 
     filename = os.path.join(package_dir,'layers',fn + '.json')
-    f = file(filename,'w')
+    f = open(filename,'w')
 
-    if params.has_key('uncertain'):
+    if 'uncertain' in params:
 
         layer_classes = [
               {
@@ -372,8 +375,8 @@ def contours(package_dir, fn, params):
               }
             ]
 
-    elif params.has_key('SinglePoly'):
-
+    elif 'SinglePoly' in params:
+    
 
         layer_classes = [
               {
@@ -501,7 +504,7 @@ def contours(package_dir, fn, params):
                 "expression": "Light"
               }
               ]
-
+              
     layer_info = {
         "layer_type": "wms internal",
         "folder_path": ' > '.join(params['folder_path']),
