@@ -15,7 +15,7 @@ import yaml
 
 
 def create_package(params_file):
-    params = yaml.load(file(params_file))
+    params = yaml.safe_load(open(params_file, encoding='utf-8'))
     # make directory structure
     try:
         print("removing:", params['package_dir'])
