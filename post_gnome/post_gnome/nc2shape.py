@@ -85,7 +85,7 @@ def points(fn, package_dir, t2convert=None, status_code=None, shapefile_name=Non
     nc = Dataset(fn)
     particles = nc_particles.Reader(nc)
     times = particles.times
-    
+
     if shapefile_name is None:
         shapefile_name = os.path.split(fn)[-1].split('.')[0]
 
