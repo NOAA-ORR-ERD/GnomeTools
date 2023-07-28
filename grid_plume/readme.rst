@@ -41,4 +41,13 @@ Build and Install
 
     pip install .
 
+Usage
+-----
+
+The gridplume package installs the following scripts::
+
+    gp_grid_plume
+    gp_merge_grids
+    gp_swept_area
+
 

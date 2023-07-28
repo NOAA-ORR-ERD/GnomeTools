@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Assorted utilities for plotting grid_plume results
+
 @author: brian.zelenke
 """
 
@@ -11,7 +13,6 @@ import shutil
 import os
 import datetime
 from dateutil import parser
-
 
 
 #==============================================================================

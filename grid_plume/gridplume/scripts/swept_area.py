@@ -5,7 +5,7 @@ Script to compute area swept -- highest concentration at each point over all tim
 
 """
 
-from __future__ import division #Change the / operator to ensure true division throughout (Zelenke).
+ #Change the / operator to ensure true division throughout (Zelenke).
 import sys #Replacement for commented-out line below which imported unused modules (Zelenke).
 #import sys, os, glob, shutil
 import numpy as np
@@ -18,7 +18,7 @@ def create_new_grid_file(infilename, outfilename):
     
     """
     
-    print "opening:", infilename
+    print("opening:", infilename)
     nc_old = nc.Dataset(infilename)
     #print nc_old
     nc_new = nc.Dataset(outfilename, "w", format = "NETCDF3_CLASSIC" )

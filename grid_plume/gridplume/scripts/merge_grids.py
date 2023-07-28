@@ -7,7 +7,7 @@ Only handles "flat" grids at the moment
 
 """
 
-from __future__ import division #Change the / operator to ensure true division throughout (Zelenke).
+ #Change the / operator to ensure true division throughout (Zelenke).
 import sys, glob #Replacement for commented-out line below which imported unused modules (Zelenke).
 #import sys, os, glob, shutil
 import numpy as np
@@ -21,7 +21,7 @@ def create_new_grid_file(infilename, outfilename):
     
     """
     
-    print "opening:", infilename
+    print("opening:", infilename)
     nc_old = nc.Dataset(infilename)
     #print nc_old
     nc_new = nc.Dataset(outfilename, "w", format = "NETCDF3_CLASSIC" )
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     # round times to tenths of an hour!
     time1[:] = np.round(time1[:], 1)
     for infile in files:
-        print "processing :", infile
+        print("processing :", infile)
         nc2 = nc.Dataset(infile)
         conc2 = nc2.variables['concentration'][:] # now a numpy array
         # loop through time:
@@ -113,9 +113,9 @@ if __name__ == "__main__":
             else: #not a match add a time:
                 ind = conc1.shape[0]
                 if t <= time1[-1]:
-                    print "TIME OUT of ORDER!!!"
-                    print time1[:]
-                    print t
+                    print("TIME OUT of ORDER!!!")
+                    print(time1[:])
+                    print(t)
                     raise Exception("Time is out of order")
                 time1[ind] = t
                 conc1 = np.concatenate((conc1, conc2[i:i+1,:,:]), axis=0)
