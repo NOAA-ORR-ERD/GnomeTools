@@ -6,13 +6,9 @@
 ##    since they have binary dependencies. Following packages are commented
 ##    so pip does not try to install them. Please look at install directions
 ##    in README.md for instructions on installing for your OS.
-#
-#setuptools      # needed before pip can be installed
-#numpy>=1.7.0   
-#Cython>=0.17.1
-#netCDF4         # requires netcdf-4 binaries 
-#pyproj          # core C code along with Cython wrapper for doing geodetic conversions
-#
-## End Binary packages ##
-#
-distribute  # required for cythonize to automatically generate code
+
+python>=3.10
+numpy
+cython
+netCDF4         # requires netcdf-4 binaries
+pyproj          # core C code along with Cython wrapper for doing geodetic conversions

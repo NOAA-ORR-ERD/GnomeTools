@@ -61,12 +61,12 @@ class particle_trajectory:
             setattr(nc, 'creation_date', datetime.now().isoformat())
 
         # add Dimensions
-        print "num timesteps:", len(self.Trajectory)
+        print("num timesteps:", len(self.Trajectory))
         nc.createDimension('time', len(self.Trajectory))
         nc.createDimension('data', None)
 
         # create variables
-        print "creating variables"
+        print("creating variables")
         ## fixme: should be able to create these from Trajectory dtype.
         Variables = { 'time' : nc.createVariable('time',  'f4',('time',)),
                       'particle_count': nc.createVariable('particle_count', 'i4',('time')),
@@ -84,7 +84,7 @@ class particle_trajectory:
         #release_time  = nc.createVariable('release_time', 'f4',('time','particle'))
 
         # add data
-        print "adding data"
+        print("adding data")
         ##fixme -- should be able to add on by time -- how?
         for field in self.Trajectory[0].dtype.names:
             data = []

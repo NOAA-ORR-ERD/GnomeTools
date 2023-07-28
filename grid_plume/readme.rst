@@ -15,16 +15,30 @@ Requirements
 
 The following python packages and binary packages are required before building grid_plume packages
 
-* setuptools      # needed for pip and setup
-* distribute      # required for cythonize to work properly
-* numpy>=1.7.0   
-* Cython>=0.17.1
-* netCDF4         # requires netcdf-4 binaries 
+* numpy>=1.25
+* Cython>=3.0
+* netCDF4
 * pyproj  
 
-Instructions
--------------
+Install
+-------
 
-* **Mac**: one option is to build from source using pip install.
-* **Linux**: use appropriate package manager (eg. apt-get for Ubuntu) or build from source using pip.
-* **Windows 7**: binaries for these packages are available from `Chris Gohlke's website: <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.
+Dependencies
+............
+
+All dependencies are available on conda-forge:
+
+`conda install -c conda-forge --file conda_requirements.txt`
+
+Build and Install
+.................
+
+::
+
+    pip install -e .
+
+    or
+
+    pip install .
+
+

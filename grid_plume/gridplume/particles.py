@@ -1,6 +1,7 @@
+
 import numpy as np
-#import netCDF4 as nc #Commented-out import of unused module (Zelenke).
-import nc_particles as ncp
+
+from . import nc_particles as ncp
 
 
 def load_particles(particle_dataset):

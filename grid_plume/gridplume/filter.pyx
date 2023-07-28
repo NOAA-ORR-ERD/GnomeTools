@@ -1,4 +1,5 @@
-from __future__ import division #Change the / operator to ensure true division throughout (Zelenke).
+#cython: language_level=3
+
 import cython
 import numpy as np
 cimport numpy as np
@@ -11,8 +12,7 @@ cimport numpy as np
 #    alpha can be anything -- 0.5 for "classic" diffusion, 3/2 for the theoretical solution, etc.
 #    
 #    for "classic diffusion: alpha=0.5 C = 2D.
-#
-    
+
 
 
 cdef extern from "math.h" nogil:
